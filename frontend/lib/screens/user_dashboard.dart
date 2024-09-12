@@ -719,7 +719,7 @@ class _UserDashboardState extends State<UserDashboard> {
                     Container(
                       height: screenHeight * 0.5,
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.black, width: 4),
                       ),
@@ -807,7 +807,7 @@ class _UserDashboardState extends State<UserDashboard> {
                     Container(
                       height: screenHeight * 0.5,
                       decoration: BoxDecoration(
-                        color: Colors.green[50],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.black, width: 4),
                       ),

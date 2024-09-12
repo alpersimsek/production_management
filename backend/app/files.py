@@ -9,7 +9,7 @@ from pathlib import Path
 import logging
 from time import sleep
 import csv
-from scapy.all import rdpcap, wrpcap, Ether, IP, ARP, UDP, TCP, sniff
+from scapy.all import rdpcap, wrpcap, Ether, IP, ARP, UDP, TCP, sniff, CookedLinux
 import re
 import ipaddress
 import random
@@ -57,18 +57,34 @@ def ensure_gdpr_map_file(username: str):
 # Load the GDPR mask map (original -> masked)
 def load_gdpr_map():
     gdpr_map = {}
+    highest_ip = ipaddress.IPv4Address('10.0.0.0')  # Start from 10.0.0.0 by default
+    highest_mac = MASKED_MAC_START  # Start MAC from 00:00:00:00:00:00
+
     try:
         with open(GDPR_MAP_PATH, mode='r') as file:
             reader = csv.reader(file)
+            next(reader, None)  # Skip header
             for row in reader:
                 if len(row) == 2:
                     original, masked = row
                     gdpr_map[original] = masked
+                    try:
+                        # Only process masked values that are valid IP addresses
+                        masked_ip = ipaddress.IPv4Address(masked)
+                        if masked_ip > highest_ip:
+                            highest_ip = masked_ip
+                    except ValueError:
+                        # Check for MAC addresses and update the highest MAC
+                        if re.match(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}', masked):
+                            if masked > highest_mac:
+                                highest_mac = masked
+                        continue
+                    
     except FileNotFoundError:
         # Create the file if it does not exist
         with open(GDPR_MAP_PATH, mode='w'):
             pass
-    return gdpr_map
+    return gdpr_map, highest_ip, highest_mac
 
 # Save the updated GDPR map (masked IPs/MACs)
 def save_gdpr_map(gdpr_map):
@@ -85,10 +101,107 @@ def is_ip_address(ip):
     except ValueError:
         return False
 
+# Increment an IP address
+def increment_ip(ip):
+    ip_obj = ipaddress.IPv4Address(ip)
+    next_ip = ip_obj + 1
+    return str(next_ip)
+
+# Helper function to increment MAC address
+def increment_mac(mac_address):
+    # Convert MAC address from hex string to int, increment, and convert back to hex string
+    mac_int = int(mac_address.replace(':', ''), 16)
+    mac_int += 1
+    mac_hex = f'{mac_int:012x}'  # 12 hex digits
+    return ':'.join(mac_hex[i:i+2] for i in range(0, 12, 2))  # Format back to MAC address
+
+# Check if an IP is within private ranges (RFC 1918)
+def is_in_private_ip_range(ip):
+    ip_obj = ipaddress.IPv4Address(ip)
+    return any(ip_obj in private_range for private_range in PRIVATE_IP_RANGES)
+
+
+# Function to get the highest masked IP address from the GDPR map
+def get_highest_masked_ip(gdpr_map):
+    highest_ip = ipaddress.IPv4Address('10.0.0.0')
+    for masked in gdpr_map.values():
+        try:
+            # Ignore MAC addresses and only process valid IP addresses
+            masked_ip = ipaddress.IPv4Address(masked)
+            if masked_ip > highest_ip:
+                highest_ip = masked_ip
+        except ValueError:
+            # Ignore non-IP values (likely MAC addresses)
+            continue
+    return highest_ip + 1  # Return the next IP
+
 # Generate a new random private IP address
 def generate_new_ip():
     network = random.choice(PRIVATE_IP_RANGES)
     return str(ipaddress.IPv4Address(network.network_address + random.randint(1, network.num_addresses - 2)))
+
+
+# Main function to mask IP and MAC addresses in a given text
+def mask_ip_mac(text):
+    # Load GDPR map and get the highest masked IP and MAC during the load
+    gdpr_map, highest_ip, highest_mac = load_gdpr_map()
+    new_gdpr_map = {}
+    masked_text = text
+
+    # Start masking from the next IP address after the highest one found
+    current_ip = highest_ip + 1
+
+    # Start masking from the next MAC address after the highest one found
+    current_mac = increment_mac(highest_mac)
+
+    # Regex patterns to match IPv4 and MAC addresses
+    ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
+    mac_pattern = re.compile(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}')
+
+    # Store all replacements in a set to prevent unnecessary multiple replacements
+    replacements = {}
+
+    # Search for IP addresses in the text
+    for match in ip_pattern.findall(text):
+        if match in gdpr_map:
+            # If already masked, use the existing masked IP
+            masked_ip = gdpr_map[match]
+        else:
+            # Mask the IP and update the GDPR map
+            masked_ip = str(current_ip)
+            new_gdpr_map[match] = masked_ip
+            current_ip += 1  # Increment to the next IP
+
+        # Save the replacement to avoid multiple replacements
+        replacements[match] = masked_ip
+
+    # Search for MAC addresses in the text
+    for match in mac_pattern.findall(text):
+        if match in gdpr_map:
+            # If already masked, use the existing masked MAC
+            masked_mac = gdpr_map[match]
+        else:
+            # Mask the MAC and update the GDPR map
+            masked_mac = current_mac
+            new_gdpr_map[match] = masked_mac
+            current_mac = increment_mac(current_mac)  # Increment to the next MAC
+
+        # Save the replacement to avoid multiple replacements
+        replacements[match] = masked_mac
+
+    # Replace all matches (both IPs and MACs) in the text with their masked values
+    for original, masked in replacements.items():
+        masked_text = masked_text.replace(original, masked)
+
+    # Update the GDPR mask map
+    gdpr_map.update(new_gdpr_map)
+    save_gdpr_map(gdpr_map)
+
+    return masked_text
+
+# Function to check if a string is a valid MAC address
+def is_mac_address(mac):
+    return re.match(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}', mac)
 
 # Function to update progress
 def update_unzip_progress(unzip_task_id, progress):
@@ -220,10 +333,10 @@ def mask_files_with_progress(mask_task_id, username: str, file_path: str):
                 file_full_path = os.path.join(root, file)
                 if is_packet_file(file_full_path):
                     print("PACKET")
-                    mask_packet_file(file_full_path, gdpr_map_path, processed_dir)
+                    mask_packet_file(file_full_path, processed_dir)
                 else:
                     print("FILE")
-                    mask_text_file(file_full_path, gdpr_map_path, processed_dir)
+                    mask_text_file(file_full_path, processed_dir)
                 masked_files += 1
                 update_mask_task_progress(mask_task_id, int((masked_files / total_files) * 100))
     except Exception as e:
@@ -235,28 +348,115 @@ def mask_files_with_progress(mask_task_id, username: str, file_path: str):
     update_mask_task_progress(mask_task_id, 100)
 
 
-# Function to mask a packet file (PCAP or packet-like files) and save to processed directory
-def mask_packet_file(file_path, gdpr_map_path, output_dir):
+# Function to safely decode bytes-like objects to string
+def safe_decode_bytes(data):
+    if isinstance(data, bytes):
+        return data.decode('utf-8', errors='ignore')  # Decode to string, ignore errors
+    return data
+
+# Function to mask IP addresses using the GDPR map and update the map
+def mask_ip_packet(ip_address, gdpr_map, current_ip):
+    if ip_address in gdpr_map:
+        return gdpr_map[ip_address]
+    else:
+        masked_ip = str(current_ip)
+        gdpr_map[ip_address] = masked_ip
+        return masked_ip
+
+# Function to mask MAC addresses using the GDPR map
+def mask_mac_packet(mac_address, gdpr_map, current_mac):
+    if mac_address in gdpr_map:
+        return gdpr_map[mac_address]
+    else:
+        masked_mac = current_mac
+        gdpr_map[mac_address] = masked_mac
+        return masked_mac
+
+# Function to mask a packet file (PCAP or packet-like files) and save to the processed directory
+def mask_packet_file(file_path, output_dir):
     packets = rdpcap(file_path)
+
+    gdpr_map, highest_ip, highest_mac = load_gdpr_map()
     
+    # Process each packet in the file
     for packet in packets:
-        # Mask MAC addresses in the Ethernet layer, if present
-        if Ether in packet:
-            if is_mac_address(packet[Ether].src):
-                packet[Ether].src = mask_mac(packet[Ether].src)
-            if is_mac_address(packet[Ether].dst):
-                packet[Ether].dst = mask_mac(packet[Ether].dst)
+        try:
+            # Mask MAC addresses in the Ethernet layer, if present
+            if packet.haslayer(Ether):
+                if Ether in packet:
+                    if is_mac_address(safe_decode_bytes(packet[Ether].src)):
+                        packet[Ether].src = mask_mac_packet(safe_decode_bytes(packet[Ether].src), gdpr_map, highest_mac)
+                        highest_mac = increment_mac(highest_mac)  # Increment the MAC
+                    if is_mac_address(safe_decode_bytes(packet[Ether].dst)):
+                        packet[Ether].dst = mask_mac_packet(safe_decode_bytes(packet[Ether].dst), gdpr_map, highest_mac)
+                        highest_mac = increment_mac(highest_mac)
 
-        # Mask IP addresses in the IP layer, if present
-        if IP in packet:
-            if is_ip_address(packet[IP].src):
-                packet[IP].src = mask_ip(packet[IP].src)
-            if is_ip_address(packet[IP].dst):
-                packet[IP].dst = mask_ip(packet[IP].dst)
+            # Mask IP addresses in the IP layer, if present
+            if packet.haslayer(IP):
+                if IP in packet:
+                    if is_ip_address(safe_decode_bytes(packet[IP].src)):
+                        packet[IP].src = mask_ip_packet(safe_decode_bytes(packet[IP].src), gdpr_map, highest_ip)
+                        highest_ip += 1  # Increment the IP
+                    if is_ip_address(safe_decode_bytes(packet[IP].dst)):
+                        packet[IP].dst = mask_ip_packet(safe_decode_bytes(packet[IP].dst), gdpr_map, highest_ip)
+                        highest_ip += 1
 
-    
+            # Mask MAC and IP addresses in the ARP layer, if present
+            if packet.haslayer(ARP):
+                if ARP in packet:
+                    if is_mac_address(safe_decode_bytes(packet[ARP].hwsrc)):
+                        packet[ARP].hwsrc = mask_mac_packet(safe_decode_bytes(packet[ARP].hwsrc), gdpr_map, highest_mac)
+                        highest_mac = increment_mac(highest_mac)
+                    if is_mac_address(safe_decode_bytes(packet[ARP].hwdst)):
+                        packet[ARP].hwdst = mask_mac_packet(safe_decode_bytes(packet[ARP].hwdst), gdpr_map, highest_mac)
+                        highest_mac = increment_mac(highest_mac)
+                    if is_ip_address(safe_decode_bytes(packet[ARP].psrc)):
+                        packet[ARP].psrc = mask_ip_packet(safe_decode_bytes(packet[ARP].psrc), gdpr_map, highest_ip)
+                        highest_ip += 1
+                    if is_ip_address(safe_decode_bytes(packet[ARP].pdst)):
+                        packet[ARP].pdst = mask_ip_packet(safe_decode_bytes(packet[ARP].pdst), gdpr_map, highest_ip)
+                        highest_ip += 1
+
+            # Mask IP and MAC addresses in CookedLinux layer, if present
+            #if CookedLinux in packet:
+            #    if is_mac_address(safe_decode_bytes(packet[CookedLinux].src)):
+            #        packet[CookedLinux].src = mask_mac_packet#(safe_decode_bytes(packet[CookedLinux].src), gdpr_map, highest_mac)
+            #        highest_mac = increment_mac(highest_mac)
+            #    if is_mac_address(safe_decode_bytes(packet[CookedLinux].dst)):
+            #        packet[CookedLinux].dst = mask_mac_packet(safe_decode_bytes(packet[CookedLinux].dst), gdpr_map, highest_mac)
+            #        highest_mac = increment_mac(highest_mac)
+
+            # Mask SIP payload in UDP packets (if SIP port 5060 is used)
+            if packet.haslayer(UDP):
+                if packet.haslayer(UDP) and (packet[UDP].sport == 5060 or packet[UDP].dport == 5060):
+                    # Decode the SIP payload and mask IPs in the payload
+                    sip_payload = bytes(packet[UDP].payload)
+                    masked_sip_payload = mask_sip_payload(sip_payload.decode('utf-8', errors="backslashreplace"), gdpr_map, highest_ip)
+
+                    # Replace the original payload with the masked payload
+                    packet[UDP].remove_payload()
+                    packet[UDP].add_payload(masked_sip_payload)
+
+
+            # Mask IP addresses in the TCP layer, if present
+            if packet.haslayer(TCP):
+                if TCP in packet:
+                    if is_ip_address(safe_decode_bytes(packet[IP].src)):
+                        packet[IP].src = mask_ip_packet(safe_decode_bytes(packet[IP].src), gdpr_map, highest_ip)
+                        highest_ip += 1
+                    if is_ip_address(safe_decode_bytes(packet[IP].dst)):
+                        packet[IP].dst = mask_ip_packet(safe_decode_bytes(packet[IP].dst), gdpr_map, highest_ip)
+                        highest_ip += 1
+        except Exception as e:
+            print(e)
+            continue
+       
+       
+
     original_filename, original_extension = os.path.splitext(os.path.basename(file_path))  # Get filename and extension
     output_file = os.path.join(output_dir, f"{original_filename}_masked{original_extension}")
+    print(original_filename)
+    print(original_extension)
 
     # Create the processed directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -266,22 +466,35 @@ def mask_packet_file(file_path, gdpr_map_path, output_dir):
     return output_file
 
 
+# Function to mask SIP payload by masking IP addresses within it using the GDPR map
+def mask_sip_payload(payload, gdpr_map, highest_ip):
+    # Regex pattern to match IPv4 addresses
+    ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+
+    # Function that masks IPs using the existing gdpr_map and highest_ip
+    def mask_ip_in_payload(match):
+        ip_address = match.group(0)
+        # Use the existing mask_ip function to ensure consistent IP masking
+        masked_ip = mask_ip_packet(ip_address, gdpr_map, highest_ip)
+        return masked_ip
+
+    # Use regex to find and mask IP addresses in the SIP payload
+    masked_payload = re.sub(ip_pattern, mask_ip_in_payload, payload)
+
+    return masked_payload
+
 # Function to mask a text file and save it in <username>/processed/<filename>/
-def mask_text_file(file_path, gdpr_map_path, processed_dir):
+def mask_text_file(file_path, processed_dir):
     with open(file_path, 'r') as file:
         content = file.read()
 
     # Mask IP addresses
-    masked_content = mask_ip(content)
-
-    # Mask MAC addresses
-    masked_content = mask_mac(masked_content)
+    masked_content = mask_ip_mac(content)
 
     # Construct the new path in the processed directory
     relative_path = os.path.relpath(file_path, start=processed_dir.replace("processed", "process_zip"))  # Find the relative path
     original_filename, original_extension = os.path.splitext(relative_path)  # Preserve original extension
     processed_file_path = os.path.join(processed_dir, f"{original_filename}_masked{original_extension}")
-
 
     # Ensure the directory structure exists in the processed directory
     os.makedirs(os.path.dirname(processed_file_path), exist_ok=True)
@@ -289,88 +502,6 @@ def mask_text_file(file_path, gdpr_map_path, processed_dir):
     # Save the masked content to the processed directory
     with open(processed_file_path, 'w') as masked_file:
         masked_file.write(masked_content)
-
-# Main function to mask IP addresses in a given text
-def mask_ip(text):
-    gdpr_map = load_gdpr_map()
-    new_gdpr_map = {}
-    masked_text = text
-
-    # Regex pattern to match IPv4 and IPv6 addresses
-    ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
-
-    # Find all IP addresses in the text
-    for match in ip_pattern.findall(text):
-        ip_address = match
-
-        # If the IP is already masked, use the existing value
-        if ip_address in gdpr_map:
-            masked_ip = gdpr_map[ip_address]
-        else:
-            # Generate a new private IP address for masking
-            masked_ip = generate_new_ip()
-            new_gdpr_map[ip_address] = masked_ip
-
-        # Replace the IP address with the masked IP in the text
-        masked_text = masked_text.replace(ip_address, masked_ip)
-
-    # Update the GDPR mask map
-    gdpr_map.update(new_gdpr_map)
-    save_gdpr_map(gdpr_map)
-
-    return masked_text
-
-
-# Increment the MAC address
-def increment_mac(mac):
-    mac_bytes = [int(x, 16) for x in mac.split(":")]
-    for i in range(5, -1, -1):
-        mac_bytes[i] += 1
-        if mac_bytes[i] > 255:
-            mac_bytes[i] = 0
-        else:
-            break
-    return ":".join(f"{byte:02x}" for byte in mac_bytes)
-
-# Check if the string is a MAC address
-def is_mac_address(mac):
-    # MAC address regex: 6 pairs of hexadecimal digits separated by ':', '-', or no separator
-    mac_pattern = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$|^[0-9A-Fa-f]{12}$')
-
-    macOK = bool(re.match(mac_pattern, mac))
-    return macOK
-
-# Main function to mask MAC addresses in a given text
-def mask_mac(mac_address):
-    # Check if the input is a valid MAC address
-    if not is_mac_address(mac_address):
-        # If it's not a MAC address, just return it unmodified
-        return mac_address
-
-    gdpr_map = load_gdpr_map()
-    new_gdpr_map = {}
-
-    # Track the last masked MAC address
-    last_masked_mac = MASKED_MAC_START
-    # Iterate over the gdpr_map to find only masked MAC addresses
-    for original, masked in gdpr_map.items():
-        if is_mac_address(masked):
-            if last_masked_mac == MASKED_MAC_START or masked > last_masked_mac:
-                last_masked_mac = masked
-
-    # If the MAC address is already masked, use the existing value
-    if mac_address in gdpr_map:
-        masked_mac = gdpr_map[mac_address]
-    else:
-        # Generate a new masked MAC address
-        last_masked_mac = increment_mac(last_masked_mac)
-        masked_mac = last_masked_mac
-        new_gdpr_map[mac_address] = masked_mac
-
-    # Update GDPR map and save
-    gdpr_map.update(new_gdpr_map)
-    save_gdpr_map(gdpr_map)
-    return masked_mac
 
 def zip_file_with_progress(zip_mask_task_id, username: str, file_path: str):
 

@@ -24,7 +24,6 @@ def create_user_folders(username):
     user_dir = f"users/{username}"
     os.makedirs(f"{user_dir}/uploads", exist_ok=True)
     os.makedirs(f"{user_dir}/processed", exist_ok=True)
-    os.makedirs(f"{user_dir}/extracted", exist_ok=True)
     os.makedirs(f"{user_dir}/process_zip", exist_ok=True)
 
 def remove_user_folders(username):
