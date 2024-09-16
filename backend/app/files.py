@@ -143,7 +143,7 @@ def generate_new_ip():
 
 
 # Main function to mask IP and MAC addresses in a given text
-def mask_ip_mac(text):
+def mask_text_files(text):
     # Load GDPR map and get the highest masked IP and MAC during the load
     gdpr_map, highest_ip, highest_mac = load_gdpr_map()
     new_gdpr_map = {}
@@ -155,12 +155,40 @@ def mask_ip_mac(text):
     # Start masking from the next MAC address after the highest one found
     current_mac = increment_mac(highest_mac)
 
+    # Start masking from the next username as 'user1', 'user2', etc.
+    user_count = sum(1 for value in gdpr_map.values() if value[0] == "USER") + 1 
+    # Start user count
+
+    domain_count = sum(1 for value in gdpr_map.values() if value[0] == "DOMAIN") + 1  # Start domain count for uniqueness
+
+    dn_count = sum(1 for value in gdpr_map.values() if value[0] in ["E164", "NATIONAL_DN"]) + 1  # Start DN count
+
+
     # Regex patterns to match IPv4 and MAC addresses
     ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
     mac_pattern = re.compile(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}')
+    username_pattern = re.compile(r'(?i)(\[?(user(?:name)?\s*:\s*)([A-Za-z0-9_@.]+)\]?)')
+    sip_uri_pattern = re.compile(r'(sip[s]?:[A-Za-z0-9_+%.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})')
+    domain_pattern = re.compile(r'\b[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b')  # Matches domain-like patterns
+    e164_pattern = re.compile(r'\+?\d{10,15}')  # Matches E164 format (+1234567890)
+    dn_pattern = re.compile(r'\b\d{7,10}\b')  # Matches national dial numbers
+    dn_block_pattern = re.compile(r'\[DN:\s*([\d\s]+)\]')  # Matches [DN: XXXXXXXXXX YYYYYYYYYY]
+
 
     # Store all replacements in a set to prevent unnecessary multiple replacements
     replacements = {}
+
+    # Function to mask a DN number and ensure it's in the GDPR map
+    def mask_dn(dn):
+        nonlocal dn_count
+        if dn in gdpr_map:
+            return gdpr_map[dn][1]  # Use the existing masked DN
+        else:
+            # Mask the national DN and save it
+            masked_dn = f"000{dn_count}"
+            new_gdpr_map[dn] = ("NATIONAL_DN", masked_dn)  # Save with TYPE "NATIONAL_DN"
+            dn_count += 1
+            return masked_dn
 
     # Search for IP addresses in the text
     for match in ip_pattern.findall(text):
@@ -189,6 +217,85 @@ def mask_ip_mac(text):
 
         # Save the replacement to avoid multiple replacements
         replacements[match] = masked_mac
+
+    # Search for usernames in the text
+    for full_match, prefix, username in username_pattern.findall(text):
+        if username in gdpr_map:
+            # If already masked, use the existing masked username
+            masked_username = gdpr_map[username][1]  # Retrieve the masked username from the map
+        else:
+            # Mask the username and update the GDPR map
+            masked_username = f"user{user_count}"
+            new_gdpr_map[username] = ("USER", masked_username)  # Save with TYPE "USER"
+            user_count += 1  # Increment to the next user number
+
+        # Save the replacement to avoid multiple replacements
+        replacements[full_match] = f"{prefix}{masked_username}]"
+
+    # Search for SIP URIs and other unique identifiers
+    for match in sip_uri_pattern.findall(text):
+        user_part, domain_part = match.split('@')
+
+        # Check if the domain has already been masked
+        if domain_part in gdpr_map:
+            masked_domain = gdpr_map[domain_part][1]  # Use the existing masked domain
+        else:
+            # Create a new unique masked domain
+            masked_domain = f"masked{domain_count}.com"
+            new_gdpr_map[domain_part] = ("DOMAIN", masked_domain)  # Save with TYPE "DOMAIN"
+            domain_count += 1  # Increment to the next domain number
+
+        # Create the masked SIP URI
+        masked_uri = f"user{user_count}@{masked_domain}"
+        new_gdpr_map[match] = ("SIP_URI", masked_uri)  # Save with TYPE "SIP_URI"
+        user_count += 1  # Increment to the next user number
+        replacements[match] = masked_uri
+
+    # Search for standalone domains in the text
+    for domain in domain_pattern.findall(text):
+        if domain in gdpr_map:
+            masked_domain = gdpr_map[domain][1]  # Use the existing masked domain
+        else:
+            # Create a new unique masked domain
+            masked_domain = f"masked{domain_count}.com"
+            new_gdpr_map[domain] = ("DOMAIN", masked_domain)  # Save with TYPE "DOMAIN"
+            domain_count += 1  # Increment to the next domain number
+        replacements[domain] = masked_domain
+
+    # Search for E164 international numbers
+    for e164 in e164_pattern.findall(text):
+        if e164 in gdpr_map:
+            masked_e164 = gdpr_map[e164][1]  # Use the existing masked E164 number
+        else:
+            # Mask the E164 number and save it
+            masked_e164 = f"+{dn_count}000000000"
+            new_gdpr_map[e164] = ("E164", masked_e164)  # Save with TYPE "E164"
+            dn_count += 1
+        replacements[e164] = masked_e164
+
+    # Search for national dial numbers
+    for dn in dn_pattern.findall(text):
+        if dn in gdpr_map:
+            masked_dn = gdpr_map[dn][1]  # Use the existing masked DN
+        else:
+            # Mask the national DN and save it
+            masked_dn = f"000{dn_count}"
+            new_gdpr_map[dn] = ("NATIONAL_DN", masked_dn)  # Save with TYPE "NATIONAL_DN"
+            dn_count += 1
+        replacements[dn] = masked_dn
+
+    # Search for [DN: XXXXXXXXXX YYYYYYYYYY] format and mask each number within
+    for dn_block in dn_block_pattern.findall(text):
+        masked_block = []
+        dn_list = dn_block.split()  # Split the numbers in the block
+        for dn in dn_list:
+            masked_dn = mask_dn(dn)
+            masked_block.append(masked_dn)
+
+        # Replace the original block with the masked block
+        masked_block_str = "[DN: " + " ".join(masked_block) + "]"
+        replacements[f"[DN: {dn_block}]"] = masked_block_str
+
 
     # Replace all matches (both IPs and MACs) in the text with their masked values
     for original, masked in replacements.items():
@@ -490,7 +597,7 @@ def mask_text_file(file_path, processed_dir):
         content = file.read()
 
     # Mask IP addresses
-    masked_content = mask_ip_mac(content)
+    masked_content = mask_text_files(content)
 
     # Construct the new path in the processed directory
     relative_path = os.path.relpath(file_path, start=processed_dir.replace("processed", "process_zip"))  # Find the relative path
@@ -681,9 +788,7 @@ async def get_process_progress_mask_zip(task_id: str):
 
 @router.get("/gdpr_map/")
 async def get_gdpr_map():
-    print("HERE")
     gdpr_map_path = os.path.join(BASE_DIR, "gdpr_map", GDPR_MASK_FILE)
-    print(gdpr_map_path)
     if not os.path.exists(gdpr_map_path):
         raise HTTPException(status_code=404, detail="GDPR map file not found")
 
