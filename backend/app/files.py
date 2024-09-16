@@ -51,7 +51,7 @@ def ensure_gdpr_map_file(username: str):
         with open(GDPR_MAP_PATH, 'w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
             # Write the column headers
-            writer.writerow(['ORIGINAL', 'MASKED'])
+            writer.writerow(['TYPE', 'ORIGINAL', 'MASKED'])
     return GDPR_MAP_PATH
 
 # Load the GDPR mask map (original -> masked)
@@ -65,33 +65,34 @@ def load_gdpr_map():
             reader = csv.reader(file)
             next(reader, None)  # Skip header
             for row in reader:
-                if len(row) == 2:
-                    original, masked = row
-                    gdpr_map[original] = masked
-                    try:
-                        # Only process masked values that are valid IP addresses
-                        masked_ip = ipaddress.IPv4Address(masked)
-                        if masked_ip > highest_ip:
-                            highest_ip = masked_ip
-                    except ValueError:
-                        # Check for MAC addresses and update the highest MAC
+                if len(row) == 3:
+                    entry_type, original, masked = row
+                    gdpr_map[original] = (entry_type, masked)
+
+                    # Update the highest IP or MAC based on the entry type
+                    if entry_type == "IP":
+                        try:
+                            masked_ip = ipaddress.IPv4Address(masked)
+                            if masked_ip > highest_ip:
+                                highest_ip = masked_ip
+                        except ValueError:
+                            pass  # Ignore invalid IP addresses
+                    elif entry_type == "MAC":
                         if re.match(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}', masked):
                             if masked > highest_mac:
                                 highest_mac = masked
-                        continue
-                    
     except FileNotFoundError:
         # Create the file if it does not exist
-        with open(GDPR_MAP_PATH, mode='w'):
-            pass
+        ensure_gdpr_map_file()
     return gdpr_map, highest_ip, highest_mac
 
-# Save the updated GDPR map (masked IPs/MACs)
+# Save the updated GDPR map with TYPE, ORIGINAL, and MASKED
 def save_gdpr_map(gdpr_map):
     with open(GDPR_MAP_PATH, mode='w', newline='') as file:
         writer = csv.writer(file)
-        for original, masked in gdpr_map.items():
-            writer.writerow([original, masked])
+        writer.writerow(['TYPE', 'ORIGINAL', 'MASKED'])  # Write the header with TYPE
+        for original, (entry_type, masked) in gdpr_map.items():
+            writer.writerow([entry_type, original, masked])
 
 # Check if the string is an IP address
 def is_ip_address(ip):
@@ -165,11 +166,11 @@ def mask_ip_mac(text):
     for match in ip_pattern.findall(text):
         if match in gdpr_map:
             # If already masked, use the existing masked IP
-            masked_ip = gdpr_map[match]
+            masked_ip = gdpr_map[match][1]  # Retrieve the masked IP from the map
         else:
             # Mask the IP and update the GDPR map
             masked_ip = str(current_ip)
-            new_gdpr_map[match] = masked_ip
+            new_gdpr_map[match] = ("IP", masked_ip)  # Save with TYPE "IP"
             current_ip += 1  # Increment to the next IP
 
         # Save the replacement to avoid multiple replacements
@@ -179,11 +180,11 @@ def mask_ip_mac(text):
     for match in mac_pattern.findall(text):
         if match in gdpr_map:
             # If already masked, use the existing masked MAC
-            masked_mac = gdpr_map[match]
+            masked_mac = gdpr_map[match][1]  # Retrieve the masked MAC from the map
         else:
             # Mask the MAC and update the GDPR map
             masked_mac = current_mac
-            new_gdpr_map[match] = masked_mac
+            new_gdpr_map[match] = ("MAC", masked_mac)  # Save with TYPE "MAC"
             current_mac = increment_mac(current_mac)  # Increment to the next MAC
 
         # Save the replacement to avoid multiple replacements
@@ -354,22 +355,22 @@ def safe_decode_bytes(data):
         return data.decode('utf-8', errors='ignore')  # Decode to string, ignore errors
     return data
 
-# Function to mask IP addresses using the GDPR map and update the map
+# Function to mask IP addresses using the GDPR map and update the map with TYPE "IP"
 def mask_ip_packet(ip_address, gdpr_map, current_ip):
     if ip_address in gdpr_map:
-        return gdpr_map[ip_address]
+        return gdpr_map[ip_address][1]  # Return the masked IP from the map
     else:
         masked_ip = str(current_ip)
-        gdpr_map[ip_address] = masked_ip
+        gdpr_map[ip_address] = ("IP", masked_ip)  # Save with TYPE "IP"
         return masked_ip
 
-# Function to mask MAC addresses using the GDPR map
+# Function to mask MAC addresses using the GDPR map and update the map with TYPE "MAC"
 def mask_mac_packet(mac_address, gdpr_map, current_mac):
     if mac_address in gdpr_map:
-        return gdpr_map[mac_address]
+        return gdpr_map[mac_address][1]  # Return the masked MAC from the map
     else:
         masked_mac = current_mac
-        gdpr_map[mac_address] = masked_mac
+        gdpr_map[mac_address] = ("MAC", masked_mac)  # Save with TYPE "MAC"
         return masked_mac
 
 # Function to mask a packet file (PCAP or packet-like files) and save to the processed directory

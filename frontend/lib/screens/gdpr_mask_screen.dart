@@ -83,7 +83,8 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
         _filteredGdprMapData = _gdprMapData
             .where((row) =>
                 row[0].toString().toLowerCase().contains(query.toLowerCase()) ||
-                row[1].toString().toLowerCase().contains(query.toLowerCase()))
+                row[1].toString().toLowerCase().contains(query.toLowerCase()) ||
+                row[2].toString().toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -181,14 +182,15 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
                           itemCount: _filteredGdprMapData.length,
                           itemBuilder: (context, index) {
                             final row = _filteredGdprMapData[index];
-                            final original = row[0].toString();
-                            final masked = row[1].toString();
+                            final type = row[0].toString();
+                            final original = row[1].toString();
+                            final masked = row[2].toString();
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
                               child: ListTile(
                                 title: SelectableText(
-                                  'Original: $original, Masked: $masked',
+                                  'Type: $type, Original: $original, Masked: $masked',
                                   contextMenuBuilder:
                                       (context, editableTextState) {
                                     return AdaptiveTextSelectionToolbar(
