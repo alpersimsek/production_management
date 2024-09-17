@@ -8,7 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:frontend/models/user_model.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:frontend/screens/styles/app_colors.dart';
+import 'package:frontend/screens/styles/app_styles.dart';
 import 'dart:html' as html;
+
+import 'package:frontend/screens/styles/progress_indicator.dart';
 
 class UserDashboard extends StatefulWidget {
   final UserModel user;
@@ -360,16 +364,21 @@ class _UserDashboardState extends State<UserDashboard> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'GDPR Processor',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          style: (montserrat.copyWith(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: AppColors.mainBackColor)),
         ),
         leading: IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.security,
-              size: 40,
-            )),
+          alignment: Alignment.centerRight,
+          onPressed: () {},
+          icon: Image.asset(
+            filterQuality: FilterQuality.high,
+            'icons/document.png',
+          ),
+        ),
         actions: [
           if (widget.user.role == 'admin')
             IconButton(
@@ -388,9 +397,8 @@ class _UserDashboardState extends State<UserDashboard> {
               },
             ),
           IconButton(
-            icon: const Icon(
-              Icons.map_outlined,
-              size: 40,
+            icon: Image.asset(
+              'icons/mask_map.png',
             ),
             onPressed: () {
               Navigator.of(context).pushReplacement(
@@ -418,481 +426,412 @@ class _UserDashboardState extends State<UserDashboard> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              ElevatedButton(
+                onPressed: pickFile,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width * 0.01,
+                    vertical: MediaQuery.of(context).size.height * 0.02,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  backgroundColor: AppColors.mainBackColor,
+                ),
+                child: Row(
+                  mainAxisSize:
+                      MainAxisSize.min, // Keep the button tight to the content
+                  children: [
+                    Image.asset(
+                      'icons/add.png', // Image path
+                      height: 40,
+                      color: Colors.white, // Adjust the height of the image
+                    ),
+                    const SizedBox(
+                        width: 8), // Add space between image and text
+                    Text(
+                      'Select File',
+                      style: (ralewayStyle.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.whiteColor)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (selectedFile != null)
                 Column(
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: pickFile,
-                      icon: const Icon(
-                        Icons.select_all_outlined,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Select File',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                    Text(
+                      'Selected File: ${selectedFile!.name}',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: uploadFile,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 24), // Button padding
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(8), // Rounded corners
+                        padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.width * 0.01,
+                          vertical: MediaQuery.of(context).size.height * 0.02,
                         ),
-                        textStyle:
-                            const TextStyle(fontSize: 20, color: Colors.white),
-                        backgroundColor:
-                            Colors.blueAccent, // Button background color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        backgroundColor: AppColors.mainBackColor,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize
+                            .min, // Keep the button tight to the content
+                        children: [
+                          Image.asset(
+                            'icons/submit.png', // Image path
+                            height: 40,
+                            color:
+                                Colors.white, // Adjust the height of the image
+                          ),
+                          const SizedBox(
+                              width: 8), // Add space between image and text
+                          Text(
+                            'Upload Selected',
+                            style: (ralewayStyle.copyWith(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.whiteColor)),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
-                    if (selectedFile != null)
-                      Column(
-                        children: [
-                          Text(
-                            'Selected File: ${selectedFile!.name}',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton.icon(
-                            onPressed: uploadFile,
-                            icon: const Icon(
-                              Icons.upload_file,
-                              color: Colors.white,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                  horizontal: 24), // Button padding
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(8), // Rounded corners
-                              ),
-                              textStyle: const TextStyle(
-                                  fontSize: 20, color: Colors.white),
-                              backgroundColor:
-                                  Colors.blueAccent, // Button background color
-                            ),
-                            label: const Text(
-                              'Upload File',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
                   ],
                 ),
+              if (isUploading)
                 Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (selectedProcFile != null)
-                      DataTable(
-                        headingRowHeight: 56,
-                        columnSpacing: 50,
-                        columns: const [
-                          DataColumn(
-                            headingRowAlignment: MainAxisAlignment.center,
-                            label: Text(
-                              'Filename',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            headingRowAlignment: MainAxisAlignment.center,
-                            label: Text(
-                              'Actions',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
-                        rows: [
-                          DataRow(
-                            cells: [
-                              DataCell(
-                                Text(
-                                  selectedProcFile!,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.black87,
+                    const Text(
+                      'Uploading...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GradientProgressIndicator(
+                      progress: uploadProgress,
+                      color1: Colors.grey,
+                      color2: Colors.blue,
+                      color3: Colors.green,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Upload Progress: ${(uploadProgress * 100).toStringAsFixed(2)}%',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              // Display processing progress
+              if (processProgress > 0 && processProgress < 100)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Processing...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orangeAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: processProgress / 100,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.orangeAccent),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Processing Progress: ${(processProgress).toStringAsFixed(2)}%',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              if (maskingProgress > 0 && maskingProgress < 100)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Masking...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: maskingProgress / 100,
+                      minHeight: 20,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.greenAccent),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Masking Progress: ${(maskingProgress).toStringAsFixed(2)}%',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              if (zipMaskProgress > 0 && zipMaskProgress < 100)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Archiving...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purpleAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: zipMaskProgress / 100,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.purpleAccent),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Archive Progress: ${(zipMaskProgress).toStringAsFixed(2)}%',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(
+                height: 50,
+              ),
+              SizedBox(
+                height: screenHeight *
+                    0.5, // Set the height to half of the screen height
+                child: GridView.count(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: screenWidth /
+                      (screenHeight *
+                          0.9), // Adjust the ratio for the grid cells
+                  children: [
+                    if (uploadFileExist)
+                      Container(
+                        height: screenHeight * 0.5,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black, width: 4),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            children: [
+                              if (uploadFileExist)
+                                const Text(
+                                  'Uploaded Files',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              if (uploadedFiles.isNotEmpty)
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: uploadedFiles.length,
+                                    itemBuilder: (context, index) {
+                                      return Card(
+                                        margin: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        child: ListTile(
+                                          title: Text(
+                                            uploadedFiles[index],
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    selectedProcFile =
+                                                        uploadedFiles[index];
+                                                  });
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      vertical: 12,
+                                                      horizontal:
+                                                          24), // Button padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8), // Rounded corners
+                                                  ),
+                                                  textStyle: const TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                  backgroundColor: Colors
+                                                      .blueAccent, // Button background color
+                                                ),
+                                                child: const Text(
+                                                  'Process This File',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                  size: 30,
+                                                ),
+                                                onPressed: () =>
+                                                    _deleteUploadFile(
+                                                        uploadedFiles[index]),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
-                              ),
-                              DataCell(
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      _processFile(selectedProcFile!),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                        horizontal: 24), // Button padding
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          8), // Rounded corners
-                                    ),
-                                    textStyle: const TextStyle(
-                                        fontSize: 20, color: Colors.white),
-                                    backgroundColor: Colors
-                                        .blueAccent, // Button background color
-                                  ),
-                                  child: const Text(
-                                    'Process File',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ),
+                              const SizedBox(height: 20),
                             ],
                           ),
-                        ],
-                        dataRowMinHeight: 20, // Row height
-                        dividerThickness:
-                            1, // Thickness of divider between rows
-                        headingRowColor: WidgetStateProperty.resolveWith(
-                            (states) => Colors
-                                .grey[200]!), // Background color for headers
+                        ),
+                      ),
+                    if (processedFileExists)
+                      Container(
+                        height: screenHeight * 0.5,
                         decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Colors.grey[300]!,
-                              width: 1), // Border for table
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black, width: 4),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            children: [
+                              if (processedFileExists)
+                                const Text(
+                                  'Processed Files',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              if (processedFiles.isNotEmpty)
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: processedFiles.length,
+                                    itemBuilder: (context, index) {
+                                      return Card(
+                                        margin: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        child: ListTile(
+                                          title: Text(
+                                            processedFiles[index],
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  _downloadFile(
+                                                      processedFiles[index]);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      vertical: 12,
+                                                      horizontal:
+                                                          24), // Button padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8), // Rounded corners
+                                                  ),
+                                                  textStyle: const TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                  backgroundColor: Colors
+                                                      .blueAccent, // Button background color
+                                                ),
+                                                child: const Text(
+                                                  'Download',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                  size: 30,
+                                                ),
+                                                onPressed: () =>
+                                                    _deleteProcessFile(
+                                                        processedFiles[index]),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
                         ),
                       ),
                   ],
                 ),
-              ],
-            ),
-            if (isUploading)
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Uploading...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: uploadProgress,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey[300],
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Colors.blue),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Upload Progress: ${(uploadProgress * 100).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
               ),
-            // Display processing progress
-            if (processProgress > 0 && processProgress < 100)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Processing...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orangeAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: processProgress / 100,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.orangeAccent),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Processing Progress: ${(processProgress).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            if (maskingProgress > 0 && maskingProgress < 100)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Masking...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.greenAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: maskingProgress / 100,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey[300],
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Masking Progress: ${(maskingProgress).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            if (zipMaskProgress > 0 && zipMaskProgress < 100)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Archiving...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.purpleAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: zipMaskProgress / 100,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.purpleAccent),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Archive Progress: ${(zipMaskProgress).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-
-            const SizedBox(
-              height: 50,
-            ),
-            SizedBox(
-              height: screenHeight *
-                  0.5, // Set the height to half of the screen height
-              child: GridView.count(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: screenWidth /
-                    (screenHeight * 0.9), // Adjust the ratio for the grid cells
-                children: [
-                  if (uploadFileExist)
-                    Container(
-                      height: screenHeight * 0.5,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.black, width: 4),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          children: [
-                            if (uploadFileExist)
-                              const Text(
-                                'Uploaded Files',
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                            if (uploadedFiles.isNotEmpty)
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: uploadedFiles.length,
-                                  itemBuilder: (context, index) {
-                                    return Card(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      child: ListTile(
-                                        title: Text(
-                                          uploadedFiles[index],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  selectedProcFile =
-                                                      uploadedFiles[index];
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding: const EdgeInsets
-                                                    .symmetric(
-                                                    vertical: 12,
-                                                    horizontal:
-                                                        24), // Button padding
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          8), // Rounded corners
-                                                ),
-                                                textStyle: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: Colors.white),
-                                                backgroundColor: Colors
-                                                    .blueAccent, // Button background color
-                                              ),
-                                              child: const Text(
-                                                'Add To Processor',
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
-                                                size: 30,
-                                              ),
-                                              onPressed: () =>
-                                                  _deleteUploadFile(
-                                                      uploadedFiles[index]),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (processedFileExists)
-                    Container(
-                      height: screenHeight * 0.5,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.black, width: 4),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          children: [
-                            if (processedFileExists)
-                              const Text(
-                                'Processed Files',
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                            if (processedFiles.isNotEmpty)
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: processedFiles.length,
-                                  itemBuilder: (context, index) {
-                                    return Card(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      child: ListTile(
-                                        title: Text(
-                                          processedFiles[index],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                _downloadFile(
-                                                    processedFiles[index]);
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding: const EdgeInsets
-                                                    .symmetric(
-                                                    vertical: 12,
-                                                    horizontal:
-                                                        24), // Button padding
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          8), // Rounded corners
-                                                ),
-                                                textStyle: const TextStyle(
-                                                    fontSize: 20,
-                                                    color: Colors.white),
-                                                backgroundColor: Colors
-                                                    .blueAccent, // Button background color
-                                              ),
-                                              child: const Text(
-                                                'Download',
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
-                                                size: 30,
-                                              ),
-                                              onPressed: () =>
-                                                  _deleteProcessFile(
-                                                      processedFiles[index]),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
