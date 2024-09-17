@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: AppColors.mainBackColor,
                       child: Center(
                         child: Image.asset(
-                          "images/logo2.png",
+                          "images/logo.png",
                           width: width * 0.30,
                           height: height * 0.6,
                           fit: BoxFit.cover,
