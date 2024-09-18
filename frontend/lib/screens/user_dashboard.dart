@@ -487,7 +487,7 @@ class _UserDashboardState extends State<UserDashboard> {
                         Text(
                           'Select File',
                           style: (ralewayStyle.copyWith(
-                              fontSize: 22,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: AppColors.whiteColor)),
                         ),
@@ -498,8 +498,10 @@ class _UserDashboardState extends State<UserDashboard> {
                 if (selectedFile != null)
                   Text(
                     'Selected File: ${selectedFile!.name}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                 if (selectedFile != null)
                   Container(
@@ -531,7 +533,7 @@ class _UserDashboardState extends State<UserDashboard> {
                           Text(
                             'Upload Selected',
                             style: (ralewayStyle.copyWith(
-                                fontSize: 22,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.whiteColor)),
                           ),
