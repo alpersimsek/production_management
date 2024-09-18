@@ -548,13 +548,12 @@ class _UserDashboardState extends State<UserDashboard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Uploading...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                   const SizedBox(height: 10),
                   GradientProgressIndicator(
@@ -565,12 +564,11 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Upload Progress: ${(uploadProgress * 100).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
+                    'Upload Progress: ${(uploadProgress * 100).toStringAsFixed(0)}%',
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                 ],
               ),
@@ -579,13 +577,12 @@ class _UserDashboardState extends State<UserDashboard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Processing...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orangeAccent,
-                    ),
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                   const SizedBox(height: 10),
                   GradientProgressIndicator(
@@ -596,12 +593,11 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Processing Progress: ${(processProgress).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
+                    'Processing Progress: ${(processProgress).toStringAsFixed(0)}%',
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                 ],
               ),
@@ -609,13 +605,12 @@ class _UserDashboardState extends State<UserDashboard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Masking...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.greenAccent,
-                    ),
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                   const SizedBox(height: 10),
                   GradientProgressIndicator(
@@ -626,12 +621,11 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Masking Progress: ${(maskingProgress).toStringAsFixed(2)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
+                    'Masking Progress: ${(maskingProgress).toStringAsFixed(0)}%',
+                    style: (ralewayStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor)),
                   ),
                 ],
               ),
