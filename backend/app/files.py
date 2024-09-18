@@ -425,6 +425,27 @@ def is_packet_file(file_path):
     except:
         return False
 
+# Utility to detect if a file is text-based
+def is_text_file(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            file.read()  # Try to read the file as text
+        return True  # If no exception, it's a text file
+    except:
+        return False  # If any exception, it's not a text file (could be binary or other)
+
+# Function to move binary files to the processed directory
+def move_binary_file(file_full_path, processed_dir):
+    try:
+        # Construct destination path
+        destination = os.path.join(processed_dir, os.path.basename(file_full_path))
+        # Create directory if it does not exist
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        # Move the file
+        shutil.move(file_full_path, destination)
+    except Exception as e:
+        print(f"Error moving file {file_full_path}: {str(e)}")
+
 # Function to mask IP and MAC addresses in files
 def mask_files_with_progress(mask_task_id, username: str, file_path: str):
     process_path = os.path.join(BASE_DIR, username, "process_zip", file_path)
@@ -442,9 +463,11 @@ def mask_files_with_progress(mask_task_id, username: str, file_path: str):
                 if is_packet_file(file_full_path):
                     print("PACKET")
                     mask_packet_file(file_full_path, processed_dir)
-                else:
+                elif is_text_file(file_full_path):
                     print("FILE")
                     mask_text_file(file_full_path, processed_dir)
+                else:
+                    print(f"BINARY FILE: {file_full_path}")
                 masked_files += 1
                 update_mask_task_progress(mask_task_id, int((masked_files / total_files) * 100))
     except Exception as e:
@@ -563,8 +586,6 @@ def mask_packet_file(file_path, output_dir):
 
     original_filename, original_extension = os.path.splitext(os.path.basename(file_path))  # Get filename and extension
     output_file = os.path.join(output_dir, f"{original_filename}_masked{original_extension}")
-    print(original_filename)
-    print(original_extension)
 
     # Create the processed directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -612,12 +633,26 @@ def mask_text_file(file_path, processed_dir):
         masked_file.write(masked_content)
 
 def zip_file_with_progress(zip_mask_task_id, username: str, file_path: str):
-
     processed_dir = os.path.join(BASE_DIR, username, "processed", file_path)
-    archive_path = os.path.join(BASE_DIR, username, "processed", f"{file_path}_archive.zip")
+    archive_path = os.path.join(BASE_DIR, username, "processed", f"{file_path}_masked.zip")
+    process_zip_dir = os.path.join(BASE_DIR, username, "process_zip", file_path)
     
     total_files = sum([len(files) for r, d, files in os.walk(processed_dir)])
     zipped_files = 0
+    binary_files = []
+
+
+    for root, _, files in os.walk(process_zip_dir, username):
+            for file in files:
+                file_full_path = os.path.join(root, file)
+                if not is_packet_file(file_full_path):
+                    if not is_text_file(file_full_path):
+                        binary_files.append(file_full_path)
+    
+    if binary_files:
+        for file in binary_files:
+            move_binary_file(file, processed_dir)
+
 
     try:
         with zipfile.ZipFile(archive_path, 'w') as zipf:
@@ -628,7 +663,11 @@ def zip_file_with_progress(zip_mask_task_id, username: str, file_path: str):
                     zipped_files += 1
                     progress = (zipped_files / total_files) * 100
                     update_mask_zip_task_progress(zip_mask_task_id, int(progress))  # Reuse the mask progress tracker
-                   
+        
+        shutil.rmtree(process_zip_dir)
+        shutil.rmtree(processed_dir)
+
+
         update_mask_zip_task_progress(zip_mask_task_id, 100)  # Mark as completed
     except Exception as e:
         update_mask_zip_task_progress(zip_mask_task_id, -1)  # Indicate failure
@@ -697,9 +736,7 @@ async def delete_file(username: str, filename: str, folder: str = "uploads"):
 # Download a file from the processed folder
 @router.get("/download/{username}/{filename}")
 async def download_file(username: str, filename: str):
-    print(filename)
     file_path = os.path.join(BASE_DIR, username, "processed", filename)
-    print(file_path)
 
     if os.path.exists(file_path):
         return FileResponse(file_path)

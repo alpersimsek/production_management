@@ -42,14 +42,12 @@ class _UserDashboardState extends State<UserDashboard> {
   String? maskTaskId;
   String? zipMaskTaskId;
   String? selectedProcFile;
-  late final ScrollController controller;
 
   @override
   void initState() {
     super.initState();
     _fetchUploadedFiles();
     _fetchProcessedFiles();
-    controller = ScrollController();
   }
 
   @override
@@ -356,6 +354,27 @@ class _UserDashboardState extends State<UserDashboard> {
     }
   }
 
+  BoxDecoration neumorphicDecoration({double borderRadius = 12.0}) {
+    return BoxDecoration(
+      color: AppColors.backColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.shade300,
+          offset: const Offset(-5, -5),
+          blurRadius: 15,
+          spreadRadius: 1,
+        ),
+        BoxShadow(
+          color: Colors.grey.shade800,
+          offset: const Offset(5, 5),
+          blurRadius: 15,
+          spreadRadius: 1,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get the screen dimensions
@@ -367,6 +386,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.grey.shade200,
         title: Text(
           'GDPR Processor',
           style: (montserrat.copyWith(
@@ -378,6 +398,7 @@ class _UserDashboardState extends State<UserDashboard> {
           alignment: Alignment.centerRight,
           onPressed: () {},
           icon: Image.asset(
+            color: Colors.blueGrey,
             filterQuality: FilterQuality.high,
             'icons/document.png',
           ),
@@ -400,8 +421,9 @@ class _UserDashboardState extends State<UserDashboard> {
               },
             ),
           IconButton(
-            icon: Image.asset(
-              'icons/mask_map.png',
+            icon: const Icon(
+              Icons.map,
+              size: 40,
             ),
             onPressed: () {
               Navigator.of(context).pushReplacement(
@@ -429,6 +451,7 @@ class _UserDashboardState extends State<UserDashboard> {
           ),
         ],
       ),
+      backgroundColor: AppColors.greyColor,
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -436,48 +459,10 @@ class _UserDashboardState extends State<UserDashboard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
-                  onPressed: pickFile,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width * 0.01,
-                      vertical: MediaQuery.of(context).size.height * 0.02,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    backgroundColor: AppColors.mainBackColor,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize
-                        .min, // Keep the button tight to the content
-                    children: [
-                      Image.asset(
-                        'icons/add.png', // Image path
-                        height: 40,
-                        color: Colors.white, // Adjust the height of the image
-                      ),
-                      const SizedBox(
-                          width: 8), // Add space between image and text
-                      Text(
-                        'Select File',
-                        style: (ralewayStyle.copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.whiteColor)),
-                      ),
-                    ],
-                  ),
-                ),
-                if (selectedFile != null)
-                  Text(
-                    'Selected File: ${selectedFile!.name}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                if (selectedFile != null)
-                  ElevatedButton(
-                    onPressed: uploadFile,
+                Container(
+                  decoration: neumorphicDecoration(borderRadius: 16),
+                  child: ElevatedButton(
+                    onPressed: pickFile,
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(
                         horizontal: MediaQuery.of(context).size.width * 0.01,
@@ -493,20 +478,65 @@ class _UserDashboardState extends State<UserDashboard> {
                           .min, // Keep the button tight to the content
                       children: [
                         Image.asset(
-                          'icons/submit.png', // Image path
+                          'icons/add.png', // Image path
                           height: 40,
                           color: Colors.white, // Adjust the height of the image
                         ),
                         const SizedBox(
                             width: 8), // Add space between image and text
                         Text(
-                          'Upload Selected',
+                          'Select File',
                           style: (ralewayStyle.copyWith(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: AppColors.whiteColor)),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                if (selectedFile != null)
+                  Text(
+                    'Selected File: ${selectedFile!.name}',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                if (selectedFile != null)
+                  Container(
+                    decoration: neumorphicDecoration(borderRadius: 16),
+                    child: ElevatedButton(
+                      onPressed: uploadFile,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.width * 0.01,
+                          vertical: MediaQuery.of(context).size.height * 0.02,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        backgroundColor: AppColors.mainBackColor,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize
+                            .min, // Keep the button tight to the content
+                        children: [
+                          Image.asset(
+                            'icons/submit.png', // Image path
+                            height: 40,
+                            color:
+                                Colors.white, // Adjust the height of the image
+                          ),
+                          const SizedBox(
+                              width: 8), // Add space between image and text
+                          Text(
+                            'Upload Selected',
+                            style: (ralewayStyle.copyWith(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.whiteColor)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -556,12 +586,11 @@ class _UserDashboardState extends State<UserDashboard> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: processProgress / 100,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.orangeAccent),
+                  GradientProgressIndicator(
+                    progress: processProgress / 100,
+                    color1: Colors.grey,
+                    color2: Colors.blue,
+                    color3: Colors.green,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -587,12 +616,11 @@ class _UserDashboardState extends State<UserDashboard> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: maskingProgress / 100,
-                    minHeight: 20,
-                    backgroundColor: Colors.grey[300],
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                  GradientProgressIndicator(
+                    progress: maskingProgress / 100,
+                    color1: Colors.grey,
+                    color2: Colors.blue,
+                    color3: Colors.green,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -636,247 +664,209 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
                 ],
               ),
-
             const SizedBox(
               height: 50,
             ),
             SizedBox(
               height: screenHeight *
-                  0.55, // Set the height to half of the screen height
+                  0.07, // Set the height to half of the screen height
               child: Column(
                 children: [
                   if (uploadFileExist)
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisAlignment: processedFileExists
+                          ? MainAxisAlignment.spaceAround
+                          : MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Uploaded Files',
-                          style: (ralewayStyle.copyWith(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.blueDarkColor)),
-                        ),
-                        Text(
-                          'Processed Files',
-                          style: (ralewayStyle.copyWith(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.blueDarkColor)),
-                        ),
+                        uploadFileExist
+                            ? Text(
+                                'Uploaded Files',
+                                style: (ralewayStyle.copyWith(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.blueDarkColor)),
+                              )
+                            : SizedBox.shrink(),
+                        processedFileExists
+                            ? Text(
+                                'Processed Files',
+                                style: (ralewayStyle.copyWith(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.blueDarkColor)),
+                              )
+                            : SizedBox.shrink()
                       ],
                     ),
-                  Expanded(
-                    child: GridView.count(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 5,
-                      mainAxisSpacing: 5,
-                      children: [
-                        if (uploadFileExist)
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Column(
-                              children: [
-                                if (uploadedFiles.isNotEmpty)
-                                  Expanded(
-                                    child: ElasticListView.builder(
-                                      controller: controller,
-                                      elasticityFactor: 8,
-                                      itemCount: uploadedFiles.length,
-                                      itemBuilder: (context, index) {
-                                        return Container(
-                                          height: 75,
-                                          margin: const EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color:
-                                                  Colors.black, // Border color
-                                              width: 3.0, // Border width
-                                            ),
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: ListTile(
-                                            contentPadding:
-                                                const EdgeInsets.all(10),
-                                            title: Text(
-                                              uploadedFiles[index],
-                                              style: (ralewayStyle.copyWith(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      AppColors.blueDarkColor)),
-                                            ),
-                                            trailing: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      selectedProcFile =
-                                                          uploadedFiles[index];
-                                                    });
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.01,
-                                                      vertical:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              0.02,
-                                                    ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    backgroundColor:
-                                                        AppColors.mainBackColor,
-                                                  ),
-                                                  child: const Text(
-                                                    'Process',
-                                                    style: TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                IconButton(
-                                                  icon: const Icon(
-                                                    Icons.delete,
-                                                    color: Colors.red,
-                                                    size: 30,
-                                                  ),
-                                                  onPressed: () =>
-                                                      _deleteUploadFile(
-                                                          uploadedFiles[index]),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        if (processedFileExists)
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Column(
-                              children: [
-                                if (processedFiles.isNotEmpty)
-                                  Expanded(
-                                    child: ElasticListView.builder(
-                                      controller: controller,
-                                      elasticityFactor: 8,
-                                      itemCount: processedFiles.length,
-                                      itemBuilder: (context, index) {
-                                        return Container(
-                                          height: 75,
-                                          margin: const EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color:
-                                                  Colors.black, // Border color
-                                              width: 3.0, // Border width
-                                            ),
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: ListTile(
-                                            contentPadding:
-                                                const EdgeInsets.all(10),
-                                            title: Text(
-                                              processedFiles[index],
-                                              style: (ralewayStyle.copyWith(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      AppColors.blueDarkColor)),
-                                            ),
-                                            trailing: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    _downloadFile(
-                                                        processedFiles[index]);
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.01,
-                                                      vertical:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              0.02,
-                                                    ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    backgroundColor:
-                                                        AppColors.mainBackColor,
-                                                  ),
-                                                  child: const Text(
-                                                    'Download',
-                                                    style: TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                IconButton(
-                                                  icon: const Icon(
-                                                    Icons.delete,
-                                                    color: Colors.red,
-                                                    size: 30,
-                                                  ),
-                                                  onPressed: () =>
-                                                      _deleteUploadFile(
-                                                          uploadedFiles[index]),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (uploadFileExist)
+                    Flexible(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: ElasticListView.builder(
+                          itemCount: uploadedFiles.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              height: 75,
+                              margin: const EdgeInsets.fromLTRB(5, 5, 20, 5),
+                              decoration:
+                                  neumorphicDecoration(borderRadius: 16),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(10),
+                                title: Text(
+                                  uploadedFiles[index],
+                                  style: (ralewayStyle.copyWith(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.blueDarkColor)),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      decoration: neumorphicDecoration(
+                                          borderRadius: 16),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            selectedProcFile =
+                                                uploadedFiles[index];
+                                          });
+                                          _processFile(selectedProcFile!);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.01,
+                                            vertical: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.02,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          backgroundColor:
+                                              AppColors.mainBackColor,
+                                        ),
+                                        child: const Text(
+                                          'Process',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 30,
+                                      ),
+                                      onPressed: () => _deleteUploadFile(
+                                          uploadedFiles[index]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  if (processedFileExists)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: ElasticListView.builder(
+                          elasticityFactor: 8,
+                          itemCount: processedFiles.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              height: 75,
+                              margin: const EdgeInsets.fromLTRB(5, 5, 20, 5),
+                              decoration:
+                                  neumorphicDecoration(borderRadius: 16),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(10),
+                                title: Text(
+                                  processedFiles[index],
+                                  style: (ralewayStyle.copyWith(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.blueDarkColor)),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      decoration: neumorphicDecoration(
+                                          borderRadius: 16),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          _downloadFile(processedFiles[index]);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.01,
+                                            vertical: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.02,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          backgroundColor:
+                                              AppColors.mainBackColor,
+                                        ),
+                                        child: const Text(
+                                          'Download',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 30,
+                                      ),
+                                      onPressed: () => {
+                                        _deleteProcessFile(
+                                            processedFiles[index]),
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            )
           ],
         ),
       ),

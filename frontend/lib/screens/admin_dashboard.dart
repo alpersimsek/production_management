@@ -5,6 +5,8 @@ import 'package:frontend/models/user_model.dart';
 import 'package:frontend/screens/add_user_dialog.dart';
 import 'package:frontend/screens/gdpr_mask_screen.dart';
 import 'package:frontend/screens/login_screen.dart';
+import 'package:frontend/screens/styles/app_colors.dart';
+import 'package:frontend/screens/styles/app_styles.dart';
 import 'package:frontend/screens/user_dashboard.dart';
 import 'package:frontend/widgets/app_drawer.dart';
 import 'package:http/http.dart' as http;
@@ -124,6 +126,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  BoxDecoration neumorphicDecoration({double borderRadius = 12.0}) {
+    return BoxDecoration(
+      color: AppColors.backColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.shade300,
+          offset: const Offset(-5, -5),
+          blurRadius: 15,
+          spreadRadius: 1,
+        ),
+        BoxShadow(
+          color: Colors.grey.shade800,
+          offset: const Offset(5, 5),
+          blurRadius: 15,
+          spreadRadius: 1,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -138,15 +161,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
+          backgroundColor: Colors.grey.shade200,
+          title: Text(
             'Admin Dashboard',
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+            style: (montserrat.copyWith(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: AppColors.mainBackColor)),
           ),
           leading: IconButton(
+            alignment: Alignment.centerRight,
             onPressed: () {},
-            icon: const Icon(
-              Icons.security,
-              size: 40,
+            icon: Image.asset(
+              color: Colors.blueGrey,
+              filterQuality: FilterQuality.high,
+              'icons/document.png',
             ),
           ),
           actions: [
@@ -189,13 +218,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 context.read<AuthBloc>().add(AuthLogoutEvent());
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (context) => LoginScreen(),
+                    builder: (context) => const LoginScreen(),
                   ),
                 );
               },
             ),
           ],
         ),
+        backgroundColor: AppColors.greyColor,
         body: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -205,24 +235,46 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 height: 30,
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  const Text(
+                  Text(
                     'User Management',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: (montserrat.copyWith(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blueDarkColor)),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _showAddUserDialog,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add User'),
+                  ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.of(context).size.width * 0.01,
+                        vertical: MediaQuery.of(context).size.height * 0.02,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      backgroundColor: AppColors.mainBackColor,
+                    ),
+                    onPressed: _showAddUserDialog,
+                    child: Row(
+                      mainAxisSize: MainAxisSize
+                          .min, // Keep the button tight to the content
+                      children: [
+                        const Icon(
+                          Icons.add,
+                          size: 30,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(
+                            width: 8), // Add space between image and text
+                        Text(
+                          'Add New User',
+                          style: (ralewayStyle.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.whiteColor)),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -231,7 +283,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: const [
                       BoxShadow(
@@ -245,7 +297,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     itemCount: users.length,
                     itemBuilder: (context, index) {
                       final user = users[index];
-                      return Card(
+                      return Container(
+                        decoration: neumorphicDecoration(borderRadius: 16),
                         margin: const EdgeInsets.symmetric(
                             horizontal: 100, vertical: 10),
                         child: ListTile(
@@ -253,14 +306,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               horizontal: 20, vertical: 10),
                           title: Text(
                             user['username'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                            style: (ralewayStyle.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textColor)),
                           ),
                           subtitle: Text(
                             user['role'],
-                            style: const TextStyle(color: Colors.grey),
+                            style: (ralewayStyle.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.mainBlueColor)),
                           ),
                           trailing: SizedBox(
                             width: 300,
@@ -274,7 +330,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     style: TextButton.styleFrom(
                                       foregroundColor: Colors.blueAccent,
                                     ),
-                                    child: const Text('Update Pass'),
+                                    child: Text(
+                                      'Update Pass',
+                                      style: (ralewayStyle.copyWith(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textColor)),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -285,7 +347,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     style: TextButton.styleFrom(
                                       foregroundColor: Colors.redAccent,
                                     ),
-                                    child: const Text('Delete'),
+                                    child: Text(
+                                      'Delete',
+                                      style: (ralewayStyle.copyWith(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      )),
+                                    ),
                                   ),
                                 ),
                               ],

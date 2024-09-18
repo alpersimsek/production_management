@@ -3,10 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_elastic_list_view/flutter_elastic_list_view.dart';
 import 'package:frontend/blocs/auth_bloc.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:frontend/screens/admin_dashboard.dart';
 import 'package:frontend/screens/login_screen.dart';
+import 'package:frontend/screens/styles/app_colors.dart';
+import 'package:frontend/screens/styles/app_styles.dart';
 import 'package:frontend/screens/user_dashboard.dart';
 
 class GdprMapScreen extends StatefulWidget {
@@ -90,20 +93,49 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
     });
   }
 
+  BoxDecoration neumorphicDecoration({double borderRadius = 12.0}) {
+    return BoxDecoration(
+      color: AppColors.backColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.shade300,
+          offset: const Offset(-5, -5),
+          blurRadius: 15,
+          spreadRadius: 1,
+        ),
+        BoxShadow(
+          color: Colors.grey.shade800,
+          offset: const Offset(5, 5),
+          blurRadius: 15,
+          spreadRadius: 1,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        backgroundColor: Colors.grey.shade200,
+        title: Text(
           'GDPR Processor',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          style: (montserrat.copyWith(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: AppColors.mainBackColor)),
         ),
         leading: IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.security,
-              size: 40,
-            )),
+          alignment: Alignment.centerRight,
+          onPressed: () {},
+          icon: Image.asset(
+            color: Colors.blueGrey,
+            filterQuality: FilterQuality.high,
+            'icons/document.png',
+          ),
+        ),
         actions: [
           if (widget.user.role == 'admin')
             IconButton(
@@ -123,7 +155,7 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
             ),
           IconButton(
             icon: const Icon(
-              Icons.home_outlined,
+              Icons.home,
               size: 40,
             ),
             onPressed: () {
@@ -145,13 +177,14 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
               context.read<AuthBloc>().add(AuthLogoutEvent());
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                  builder: (context) => LoginScreen(),
+                  builder: (context) => const LoginScreen(),
                 ),
               );
             },
           ),
         ],
       ),
+      backgroundColor: AppColors.greyColor,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _gdprMapData.isEmpty
@@ -160,65 +193,80 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      const Text(
-                        "Select and copy an entry",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                      Text(
+                        "Match Masked Values with Original Values",
+                        style: (montserrat.copyWith(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blueDarkColor)),
                       ),
                       const SizedBox(height: 20),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Search',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      Container(
+                        width: screenWidth * 0.5,
+                        decoration: neumorphicDecoration(borderRadius: 16),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            labelText: 'Search',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
+                          onChanged: _filterGdprMap,
                         ),
-                        onChanged: _filterGdprMap,
                       ),
                       const SizedBox(height: 20),
                       Expanded(
-                        child: ListView.builder(
-                          itemCount: _filteredGdprMapData.length,
-                          itemBuilder: (context, index) {
-                            final row = _filteredGdprMapData[index];
-                            final type = row[0].toString();
-                            final original = row[1].toString();
-                            final masked = row[2].toString();
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: ElasticListView.builder(
+                            itemCount: _filteredGdprMapData.length,
+                            curve: Easing.linear,
+                            itemBuilder: (context, index) {
+                              final row = _filteredGdprMapData[index];
+                              final type = row[0].toString();
+                              final original = row[1].toString();
+                              final masked = row[2].toString();
 
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                title: SelectableText(
-                                  'Type: $type, Original: $original, Masked: $masked',
-                                  contextMenuBuilder:
-                                      (context, editableTextState) {
-                                    return AdaptiveTextSelectionToolbar(
-                                      anchors:
-                                          editableTextState.contextMenuAnchors,
-                                      children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            _copyToClipboard(
-                                                'Original: $original, Masked: $masked');
-                                            Navigator.pop(
-                                                context); // Close context menu
-                                          },
-                                          child: const Text('Copy'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                  style: const TextStyle(fontSize: 16),
+                              return Container(
+                                padding: const EdgeInsets.all(20),
+                                width: screenWidth * 0.5,
+                                decoration:
+                                    neumorphicDecoration(borderRadius: 2),
+                                child: ListTile(
+                                  title: SelectableText(
+                                    'Type: $type, Original: $original, Masked: $masked',
+                                    contextMenuBuilder:
+                                        (context, editableTextState) {
+                                      return AdaptiveTextSelectionToolbar(
+                                        anchors: editableTextState
+                                            .contextMenuAnchors,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () {
+                                              _copyToClipboard(
+                                                  'Original: $original, Masked: $masked');
+                                              Navigator.pop(
+                                                  context); // Close context menu
+                                            },
+                                            child: const Text('Copy'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                    style: (ralewayStyle.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18)),
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.copy),
+                                    onPressed: () => _copyToClipboard(
+                                        'Original: $original, Masked: $masked'),
+                                  ),
                                 ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.copy),
-                                  onPressed: () => _copyToClipboard(
-                                      'Original: $original, Masked: $masked'),
-                                ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
