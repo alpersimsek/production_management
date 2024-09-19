@@ -685,22 +685,47 @@ def background_mask_process(mask_task_id, username: str, file_path: str):
 def background_zip_mask_process (zip_mask_task_id, username: str, file_path: str):
     zip_file_with_progress(zip_mask_task_id, username, file_path)
 
-# Upload a file to /users/<username>/uploads
+# Upload a file to /users/<username>/uploads with support for chunking
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...), 
-    username: str = Form(...)
+    username: str = Form(...),
+    chunk_index: int = Form(None),   # Current chunk index, if provided
+    total_chunks: int = Form(None),  # Total number of chunks, if provided
+    file_size: int = Form(None)      # Total file size, if provided (optional)
 ):
+    # Define the upload directory for the user
     user_upload_path = os.path.join(BASE_DIR, username, "uploads")
-    ensure_dir(user_upload_path)  # Ensure upload directory exists
+    ensure_dir(user_upload_path)  # Ensure the upload directory exists
 
-    # Save the uploaded file
-    file_path = os.path.join(user_upload_path, file.filename)
-    with open(file_path, 'wb') as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # If chunked upload is provided, handle chunk processing
+    if chunk_index is not None and total_chunks is not None:
+        # Path for the temporary file to store chunks
+        temp_file_path = os.path.join(user_upload_path, f"{file.filename}.part")
 
-    return {"detail": f"File '{file.filename}' uploaded successfully"}
+        # Write the current chunk to the temporary file (append mode)
+        with open(temp_file_path, 'ab') as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
+        # If this is the last chunk, finalize the upload
+        if chunk_index + 1 == total_chunks:
+            # Move the completed file from temp to final destination
+            final_file_path = os.path.join(user_upload_path, file.filename)
+            os.rename(temp_file_path, final_file_path)
+            return {"detail": f"File '{file.filename}' uploaded successfully in chunks"}
+
+        else:
+            print(f"Chunk {chunk_index + 1}/{total_chunks} uploaded successfully")
+            return {"detail": f"Chunk {chunk_index + 1}/{total_chunks} uploaded successfully"}
+
+    # Handle regular (non-chunked) file uploads
+    else:
+        file_path = os.path.join(user_upload_path, file.filename)
+        with open(file_path, 'wb') as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        return {"detail": f"File '{file.filename}' uploaded successfully"}
+    
 # List user files in a specific folder (uploads/processed)
 @router.get("/{username}/{folder}")
 async def list_user_files(username: str, folder: str):

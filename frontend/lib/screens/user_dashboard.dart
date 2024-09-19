@@ -1,3 +1,4 @@
+import 'package:chunked_uploader/chunked_uploader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_elastic_list_view/flutter_elastic_list_view.dart';
 import 'package:frontend/blocs/auth_bloc.dart';
@@ -12,8 +13,10 @@ import 'package:dio/dio.dart';
 import 'package:frontend/screens/styles/app_colors.dart';
 import 'package:frontend/screens/styles/app_styles.dart';
 import 'dart:html' as html;
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:frontend/screens/styles/progress_indicator.dart';
+import 'dart:typed_data'; // For handling byte arrays
+import 'package:http_parser/http_parser.dart'; // For setting MediaType
 
 class UserDashboard extends StatefulWidget {
   final UserModel user;
@@ -72,45 +75,152 @@ class _UserDashboardState extends State<UserDashboard> {
       setState(() {
         isUploading = true;
       });
-      String fileName = selectedFile!.name;
 
-      FormData formData = FormData.fromMap({
-        "username": widget.user.username,
-        "file":
-            MultipartFile.fromBytes(selectedFile!.bytes!, filename: fileName),
-      });
+      String? fileName = selectedFile!.name;
+      int? fileSize = selectedFile!.size;
+      Uint8List? fileBytes = selectedFile!.bytes;
 
-      try {
-        var response = await dio.post(
-          "http://localhost:8000/files/upload",
-          data: formData,
-          onSendProgress: (int sent, int total) {
-            setState(() {
-              uploadProgress = sent / total;
-            });
-          },
+      if (fileName == null || fileSize == null || fileBytes == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid file selected!")),
         );
+        setState(() {
+          isUploading = false;
+        });
+        return;
+      }
 
-        if (response.statusCode == 200) {
+      print("File Size: $fileSize");
+
+      // Check if file size is greater than 500 MB (500 * 1024 * 1024 bytes)
+      if (fileSize > 500 * 1024 * 1024) {
+        // Large file, implement chunked upload manually
+        print("Large file detected");
+
+        const int chunkSize = 200 * 1024 * 1024; // 200 MB chunks
+        int totalChunks = (fileSize / chunkSize).ceil();
+
+        try {
+          for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = start + chunkSize;
+
+            // Handle last chunk which might be smaller
+            if (end > fileSize) {
+              end = fileSize;
+            }
+
+            // Slice the file bytes to get the current chunk
+            Uint8List chunkBytes = fileBytes.sublist(start, end);
+
+            FormData formData = FormData.fromMap({
+              "username": widget.user.username,
+              "chunk_index": chunkIndex,
+              "total_chunks": totalChunks,
+              "file": MultipartFile.fromBytes(
+                chunkBytes,
+                filename: fileName,
+                contentType: MediaType.parse(
+                    'application/octet-stream'), // Set content type
+              ),
+            });
+
+            // Send the chunk
+            var response = await dio.post(
+              "http://localhost:8000/files/upload",
+              data: formData,
+              onSendProgress: (int sent, int total) {
+                setState(() {
+                  uploadProgress = sent / total;
+                });
+              },
+            );
+
+            if (response.statusCode != 200) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(
+                        "Chunk ${chunkIndex + 1}/$totalChunks upload failed!")),
+              );
+              setState(() {
+                isUploading = false;
+              });
+              return;
+            }
+
+            print(
+                "Chunk ${chunkIndex + 1}/$totalChunks uploaded successfully!");
+          }
+
+          // All chunks uploaded successfully
           setState(() {
             selectedFile = null;
             uploadProgress = 0.0;
             isUploading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("File uploaded successfully!")),
+            const SnackBar(content: Text("Large file uploaded successfully!")),
           );
           _fetchUploadedFiles();
-        } else {
+        } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("File upload failed!")),
+            SnackBar(content: Text("Error: $e")),
           );
+          setState(() {
+            isUploading = false;
+          });
         }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
-        );
+      } else {
+        // Normal upload for smaller files
+        try {
+          FormData formData = FormData.fromMap({
+            "username": widget.user.username,
+            "file": MultipartFile.fromBytes(
+              fileBytes,
+              filename: fileName,
+              contentType: MediaType.parse(
+                  'application/octet-stream'), // Set content type
+            ),
+          });
+
+          var response = await dio.post(
+            "http://localhost:8000/files/upload",
+            data: formData,
+            onSendProgress: (int sent, int total) {
+              setState(() {
+                uploadProgress = sent / total;
+              });
+            },
+          );
+
+          if (response.statusCode == 200) {
+            setState(() {
+              selectedFile = null;
+              uploadProgress = 0.0;
+              isUploading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("File uploaded successfully!")),
+            );
+            _fetchUploadedFiles();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("File upload failed!")),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e")),
+          );
+          setState(() {
+            isUploading = false;
+          });
+        }
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No file selected for upload!")),
+      );
     }
   }
 
