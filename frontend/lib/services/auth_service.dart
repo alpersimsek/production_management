@@ -1,25 +1,44 @@
+import 'package:flutter/material.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For local storage of JWT
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For local storage of JWT on mobile
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart'; // For checking if running on Web
 
 class AuthService {
-  final _storage = const FlutterSecureStorage(); // For storing the JWT securely
+  // Secure storage for mobile, SharedPreferences for web
+  final _storage = kIsWeb
+      ? null
+      : const FlutterSecureStorage(); // For storing JWT securely on mobile
 
-  // Store JWT token in secure storage
+  // Store JWT token in appropriate storage based on platform
   Future<void> saveToken(String token) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    await _storage.write(key: 'jwt_token', value: token);
+    if (kIsWeb) {
+      // For Web: Use SharedPreferences (or localStorage/sessionStorage)
+      await prefs.setString('jwt_token', token);
+    } else {
+      // For Mobile: Use FlutterSecureStorage
+      await _storage?.write(key: 'jwt_token', value: token);
+    }
 
     final DateTime now = DateTime.now();
     await prefs.setString('token_timestamp', now.toIso8601String());
   }
 
-  // Get JWT token from secure storage
+  // Get JWT token from storage based on platform
   Future<String?> getToken() async {
-    return await _storage.read(key: 'jwt_token');
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (kIsWeb) {
+      // For Web: Retrieve token from SharedPreferences
+      return prefs.getString('jwt_token');
+    } else {
+      // For Mobile: Retrieve token from FlutterSecureStorage
+      return await _storage?.read(key: 'jwt_token');
+    }
   }
 
   // Perform login and save the JWT
@@ -30,6 +49,8 @@ class AuthService {
       body: jsonEncode({'username': userName, 'password': password}),
     );
 
+    print(response.body);
+
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       final String token = data['access_token'];
@@ -37,6 +58,7 @@ class AuthService {
       final String role = decodeJwt(token)['role'];
       return UserModel(username: userName, role: role);
     } else {
+      print("LOGIN FAILED");
       throw Exception('Failed to login');
     }
   }
@@ -45,20 +67,24 @@ class AuthService {
   Future<bool> isTokenValid() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = await getToken();
+    print("TOKEN:");
+    print(token);
     final String? timestampString = prefs.getString('token_timestamp');
+    print("TIMESTAMP:");
+    print(timestampString);
 
-    if (token != null && timestampString != null) {
+    if (timestampString != null) {
       final DateTime tokenTimestamp = DateTime.parse(timestampString);
       final DateTime now = DateTime.now();
       final Duration difference = now.difference(tokenTimestamp);
 
-      // Check if the token is still valid (within 10 minutes)
       if (difference.inMinutes < 10) {
         return true; // Token is valid
       } else {
         await logout(); // Token expired, clear token and timestamp
       }
     }
+
     return false; // No valid token
   }
 
@@ -66,7 +92,13 @@ class AuthService {
   Future<void> logout() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    await _storage.delete(key: 'jwt_token'); // Clear the stored JWT token
+    if (kIsWeb) {
+      // For Web: Remove JWT from SharedPreferences
+      await prefs.remove('jwt_token');
+    } else {
+      // For Mobile: Clear JWT from FlutterSecureStorage
+      await _storage?.delete(key: 'jwt_token');
+    }
 
     await prefs.remove('token_timestamp'); // Clear the token timestamp
   }
