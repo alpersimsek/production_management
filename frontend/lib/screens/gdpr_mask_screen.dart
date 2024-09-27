@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_elastic_list_view/flutter_elastic_list_view.dart';
 import 'package:frontend/blocs/auth_bloc.dart';
 import 'package:frontend/models/user_model.dart';
@@ -26,6 +27,7 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
   List<List<dynamic>> _filteredGdprMapData = [];
   bool _loading = true;
   String _searchQuery = '';
+  String backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:8000';
 
   @override
   void initState() {
@@ -37,7 +39,7 @@ class _GdprMapScreenState extends State<GdprMapScreen> {
     try {
       Dio dio = Dio();
       final response = await dio.get(
-        'http://localhost:8000/files/gdpr_map/',
+        '$backendUrl/files/gdpr_map/',
         options: Options(responseType: ResponseType.bytes),
       );
 

@@ -1,5 +1,6 @@
 import 'package:chunked_uploader/chunked_uploader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_elastic_list_view/flutter_elastic_list_view.dart';
 import 'package:frontend/blocs/auth_bloc.dart';
 import 'package:frontend/screens/admin_dashboard.dart';
@@ -45,6 +46,7 @@ class _UserDashboardState extends State<UserDashboard> {
   String? maskTaskId;
   String? zipMaskTaskId;
   String? selectedProcFile;
+  String backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:8000';
 
   @override
   void initState() {
@@ -80,7 +82,7 @@ class _UserDashboardState extends State<UserDashboard> {
       int? fileSize = selectedFile!.size;
       Uint8List? fileBytes = selectedFile!.bytes;
 
-      if (fileName == null || fileSize == null || fileBytes == null) {
+      if (fileBytes == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Invalid file selected!")),
         );
@@ -127,7 +129,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
             // Send the chunk
             var response = await dio.post(
-              "http://localhost:8000/files/upload",
+              "$backendUrl/files/upload",
               data: formData,
               onSendProgress: (int sent, int total) {
                 setState(() {
@@ -184,7 +186,7 @@ class _UserDashboardState extends State<UserDashboard> {
           });
 
           var response = await dio.post(
-            "http://localhost:8000/files/upload",
+            "$backendUrl/files/upload",
             data: formData,
             onSendProgress: (int sent, int total) {
               setState(() {
@@ -226,7 +228,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _fetchUploadedFiles() async {
     final response = await dio.get(
-      'http://localhost:8000/files/${widget.user.username}/uploads',
+      '$backendUrl/files/${widget.user.username}/uploads',
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -238,7 +240,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _fetchProcessedFiles() async {
     final response = await dio.get(
-      'http://localhost:8000/files/${widget.user.username}/processed',
+      '$backendUrl/files/${widget.user.username}/processed',
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -250,7 +252,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _deleteUploadFile(String filename) async {
     final response = await dio.delete(
-      'http://localhost:8000/files/delete/${widget.user.username}/uploads/$filename',
+      '$backendUrl/files/delete/${widget.user.username}/uploads/$filename',
     );
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -266,7 +268,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _deleteProcessFile(String filename) async {
     final response = await dio.delete(
-      'http://localhost:8000/files/delete/${widget.user.username}/processed/$filename',
+      '$backendUrl/files/delete/${widget.user.username}/processed/$filename',
     );
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -284,7 +286,7 @@ class _UserDashboardState extends State<UserDashboard> {
   void startPollingProgress(String taskId) {
     progressTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final progressResponse = await dio.get(
-        'http://localhost:8000/files/process/progress/$taskId',
+        '$backendUrl/files/process/progress/$taskId',
       );
       final progress = progressResponse.data['progress'];
 
@@ -310,7 +312,7 @@ class _UserDashboardState extends State<UserDashboard> {
   // Process selected file
   Future<void> _processFile(String filename) async {
     final response = await dio.post(
-      'http://localhost:8000/files/process/$filename',
+      '$backendUrl/files/process/$filename',
       data: {"username": widget.user.username},
     );
     if (response.statusCode == 200) {
@@ -332,7 +334,7 @@ class _UserDashboardState extends State<UserDashboard> {
   void startPollingMasking(String taskId) {
     progressTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final progressResponse = await dio.get(
-        'http://localhost:8000/files/masking/progress/$taskId',
+        '$backendUrl/files/masking/progress/$taskId',
       );
       final progress = progressResponse.data['progress'];
       print(progress);
@@ -360,7 +362,7 @@ class _UserDashboardState extends State<UserDashboard> {
   // Process selected file
   Future<void> _maskFiles(String filename) async {
     final response = await dio.post(
-      'http://localhost:8000/files/mask/$filename',
+      '$backendUrl/files/mask/$filename',
       data: {"username": widget.user.username},
     );
     if (response.statusCode == 200) {
@@ -383,7 +385,7 @@ class _UserDashboardState extends State<UserDashboard> {
   void startPollingMaskZip(String taskId) {
     progressTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final progressResponse = await dio.get(
-        'http://localhost:8000/files/masking/zip/$taskId',
+        '$backendUrl/files/masking/zip/$taskId',
       );
       final progress = progressResponse.data['progress'];
 
@@ -410,7 +412,7 @@ class _UserDashboardState extends State<UserDashboard> {
     try {
       // Make the request to download the file
       final response = await dio.get(
-        'http://localhost:8000/files/download/${widget.user.username}/$filename',
+        '$backendUrl/files/download/${widget.user.username}/$filename',
         options: Options(responseType: ResponseType.bytes),
       );
 
@@ -446,7 +448,7 @@ class _UserDashboardState extends State<UserDashboard> {
   // Process selected file
   Future<void> _zipMaskFiles(String filename) async {
     final response = await dio.post(
-      'http://localhost:8000/files/zipMask/$filename',
+      '$backendUrl/files/zipMask/$filename',
       data: {"username": widget.user.username},
     );
     if (response.statusCode == 200) {
@@ -554,7 +556,7 @@ class _UserDashboardState extends State<UserDashboard> {
               context.read<AuthBloc>().add(AuthLogoutEvent());
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                  builder: (context) => LoginScreen(),
+                  builder: (context) => const LoginScreen(),
                 ),
               );
             },
@@ -792,7 +794,7 @@ class _UserDashboardState extends State<UserDashboard> {
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.blueDarkColor)),
                               )
-                            : SizedBox.shrink(),
+                            : const SizedBox.shrink(),
                         processedFileExists
                             ? Text(
                                 'Processed Files',
@@ -801,7 +803,7 @@ class _UserDashboardState extends State<UserDashboard> {
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.blueDarkColor)),
                               )
-                            : SizedBox.shrink()
+                            : const SizedBox.shrink()
                       ],
                     ),
                 ],

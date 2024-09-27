@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -11,6 +12,8 @@ class AuthService {
   final _storage = kIsWeb
       ? null
       : const FlutterSecureStorage(); // For storing JWT securely on mobile
+
+  String backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:8000';
 
   // Store JWT token in appropriate storage based on platform
   Future<void> saveToken(String token) async {
@@ -44,7 +47,7 @@ class AuthService {
   // Perform login and save the JWT
   Future<UserModel> login(String userName, String password) async {
     final response = await http.post(
-      Uri.parse('http://localhost:8000/auth/login'),
+      Uri.parse('$backendUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': userName, 'password': password}),
     );
@@ -66,12 +69,8 @@ class AuthService {
   // Check if the stored token is still valid (within 10-minute window)
   Future<bool> isTokenValid() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = await getToken();
-    print("TOKEN:");
-    print(token);
+
     final String? timestampString = prefs.getString('token_timestamp');
-    print("TIMESTAMP:");
-    print(timestampString);
 
     if (timestampString != null) {
       final DateTime tokenTimestamp = DateTime.parse(timestampString);

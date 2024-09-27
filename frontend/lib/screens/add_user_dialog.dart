@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -16,10 +17,11 @@ class _AddUserDialogState extends State<AddUserDialog> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String _selectedRole = 'user';
+  String backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:8000';
 
   Future<void> _createUser() async {
     final response = await http.post(
-      Uri.parse('http://localhost:8000/admin/create_user'),
+      Uri.parse('$backendUrl/admin/create_user'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': _usernameController.text,

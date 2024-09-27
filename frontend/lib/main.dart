@@ -5,8 +5,10 @@ import 'package:frontend/screens/user_dashboard.dart';
 import 'blocs/auth_bloc.dart';
 import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(GDPRApp());
 }
 
@@ -38,7 +40,7 @@ class GDPRApp extends StatelessWidget {
               return UserDashboard(user: snapshot.data!);
             } else {
               // If no valid token, show login screen
-              return LoginScreen();
+              return const LoginScreen();
             }
           },
         ),

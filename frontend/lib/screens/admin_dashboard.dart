@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/blocs/auth_bloc.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:frontend/screens/add_user_dialog.dart';
@@ -23,6 +24,7 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   List users = [];
   final String role = 'admin'; // Set role to 'admin' for this screen
+  String backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:8000';
 
   @override
   void initState() {
@@ -32,7 +34,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> fetchUsers() async {
     final response = await http.get(
-      Uri.parse('http://localhost:8000/admin/list_users'),
+      Uri.parse('$backendUrl/admin/list_users'),
     );
 
     if (response.statusCode == 200) {
@@ -59,7 +61,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     String newPassword = await _showUpdatePasswordDialog(username);
     if (newPassword.isNotEmpty) {
       final response = await http.put(
-        Uri.parse('http://localhost:8000/admin/update_password/$username'),
+        Uri.parse('$backendUrl/admin/update_password/$username'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'password': newPassword}),
       );
@@ -111,7 +113,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _deleteUser(String username) async {
     final response = await http.delete(
-      Uri.parse('http://localhost:8000/admin/delete_user/$username'),
+      Uri.parse('$backendUrl/admin/delete_user/$username'),
     );
 
     if (response.statusCode == 200) {
@@ -155,7 +157,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           // Navigate to login screen on logout
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => LoginScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
           );
         }
       },
