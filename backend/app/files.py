@@ -359,7 +359,7 @@ def unzip_file_with_progress(unzip_task_id, file_path, extract_dir):
                     shutil.copyfileobj(gz_file, out_file)
             update_unzip_progress(unzip_task_id, 100)
         else:
-            shutil.move(file_path, file_extract_dir)
+            shutil.copy(file_path, file_extract_dir)
             update_unzip_progress(unzip_task_id, 100)
     except Exception as e:
         update_unzip_progress(unzip_task_id, -1)  # Indicate failure

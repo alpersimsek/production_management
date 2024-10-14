@@ -5,25 +5,58 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "frontend",
+            "name": "Flutter (debug mode)",
             "cwd": "frontend",
             "request": "launch",
             "type": "dart",
-            "program": "lib/main.dart"
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "web-server",
+                "--web-renderer",
+                "html",
+                "--web-port",
+                "80",
+                "--web-hostname",
+                "0.0.0.0",
+                // "--no-sound-null-safety"
+            ],
+            // "deviceId": "web-server",
         },
         {
-            "name": "frontend (profile mode)",
-            "cwd": "frontend",
+            "name": "Python Debugger: Uvicorn",
+            "type": "debugpy",
             "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "frontend (release mode)",
-            "cwd": "frontend",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
+            "module": "uvicorn",
+            "args": [
+                "app.main:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--reload"
+            ],
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONUNBUFFERED": "1" // for real-time logging
+            },
+            "jinja": false
         }
+        // {
+        //     "name": "Flutter (profile mode)",
+        //     "cwd": "frontend",
+        //     "request": "launch",
+        //     "type": "dart",
+        //     "flutterMode": "profile"
+        // },
+        // {
+        //     "name": "Flutter (release mode)",
+        //     "cwd": "frontend",
+        //     "request": "launch",
+        //     "type": "dart",
+        //     "flutterMode": "release"
+        // }
     ]
 }

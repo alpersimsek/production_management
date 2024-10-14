@@ -25,7 +25,8 @@ async def startup_event():
     init_db()
     create_required_directories()
     create_admin_user()
-
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
-app.include_router(users_router, prefix="/admin", tags=["users"])
-app.include_router(files_router, prefix="/files", tags=["files"])
+    
+api_prefix = '/api/v1'
+app.include_router(auth_router, prefix=f"{api_prefix}/auth", tags=["auth"])
+app.include_router(users_router, prefix=f"{api_prefix}/admin", tags=["users"])
+app.include_router(files_router, prefix=f"{api_prefix}/files", tags=["files"])
