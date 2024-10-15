@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    container_name: backend
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - data:/data
+      - ./:/app # dev env
+    ports:
+      - 8000:8000
+    networks:
+      gdpr-network:
+    command: sleep infinity
+
+networks:
+  gdpr-network:
+    external: true
+
+volumes:
+  sqlite_data:
+  data:
