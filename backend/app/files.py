@@ -634,7 +634,9 @@ def mask_text_file(file_path, processed_dir):
 
 def zip_file_with_progress(zip_mask_task_id, username: str, file_path: str):
     processed_dir = os.path.join(BASE_DIR, username, "processed", file_path)
-    archive_path = os.path.join(BASE_DIR, username, "processed", f"{file_path}_masked.zip")
+    archive_dir = os.path.join(BASE_DIR, username, "processed_zip")
+    os.makedirs(archive_dir, exist_ok=True)
+    archive_path = os.path.join(BASE_DIR, username, "processed_zip", f"{file_path}_masked.zip")
     process_zip_dir = os.path.join(BASE_DIR, username, "process_zip", file_path)
     
     total_files = sum([len(files) for r, d, files in os.walk(processed_dir)])
@@ -653,25 +655,23 @@ def zip_file_with_progress(zip_mask_task_id, username: str, file_path: str):
         for file in binary_files:
             move_binary_file(file, processed_dir)
 
-
     try:
         with zipfile.ZipFile(archive_path, 'w') as zipf:
             for root, dirs, files in os.walk(processed_dir):
                 for file in files:
                     file_full_path = os.path.join(root, file)
-                    zipf.write(file_full_path, os.path.relpath(file_full_path, processed_dir))
+                    zipf.write(file_full_path, os.path.relpath(file_full_path, archive_dir))
                     zipped_files += 1
                     progress = (zipped_files / total_files) * 100
-                    update_mask_zip_task_progress(zip_mask_task_id, int(progress))  # Reuse the mask progress tracker
-        
-        shutil.rmtree(process_zip_dir)
-        shutil.rmtree(processed_dir)
-
-
+                    update_mask_zip_task_progress(zip_mask_task_id, int(progress))  # Reuse the mask progress tracker    
+ 
         update_mask_zip_task_progress(zip_mask_task_id, 100)  # Mark as completed
+        
     except Exception as e:
         update_mask_zip_task_progress(zip_mask_task_id, -1)  # Indicate failure
         raise HTTPException(status_code=500, detail=f"File zipping failed: {str(e)}")
+    
+    shutil.rmtree(processed_dir)
 
 # Background task for file processing
 def background_unzip_process(unzip_task_id, file_path, extracted_dir):
@@ -729,8 +729,9 @@ async def upload_file(
 # List user files in a specific folder (uploads/processed)
 @router.get("/{username}/{folder}")
 async def list_user_files(username: str, folder: str):
-    valid_folders = ["uploads", "processed"]
+    valid_folders = ["uploads", "processed", "processed_zip"]
 
+   
     # Ensure folder name is valid
     if folder not in valid_folders:
         raise HTTPException(status_code=400, detail="Invalid folder")
@@ -836,7 +837,7 @@ async def process_zip(filename: str, background_tasks: BackgroundTasks, data: di
 
     zip_mask_task_id = f"{username}_mask_{filename}"
     background_tasks.add_task(background_zip_mask_process, zip_mask_task_id, username, filename)
-
+    shutil.rmtree(os.path.join(BASE_DIR, username, "process_zip", filename))
     return {"detail": f"Masking of file '{filename}' started.", "zipMaskTask_id": zip_mask_task_id}
 
 # Polling endpoint to check processing progress

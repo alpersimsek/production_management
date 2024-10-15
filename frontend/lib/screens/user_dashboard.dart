@@ -240,7 +240,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _fetchProcessedFiles() async {
     final response = await dio.get(
-      '$backendUrl/files/${widget.user.username}/processed',
+      '$backendUrl/files/${widget.user.username}/processed_zip',
     );
     if (response.statusCode == 200) {
       setState(() {

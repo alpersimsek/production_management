@@ -54,7 +54,7 @@ def get_user_files(username):
     """
     user_dir = f"users/{username}"
     uploaded_dir = os.path.join(user_dir, 'uploads')
-    processed_dir = os.path.join(user_dir, 'processed')
+    processed_dir = os.path.join(user_dir, 'processed_zip')
     
     uploaded_files = []
     processed_files = []
