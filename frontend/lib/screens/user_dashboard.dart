@@ -268,7 +268,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _deleteProcessFile(String filename) async {
     final response = await dio.delete(
-      '$backendUrl/files/delete/${widget.user.username}/processed/$filename',
+      '$backendUrl/files/delete/${widget.user.username}/processed_zip/$filename',
     );
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(

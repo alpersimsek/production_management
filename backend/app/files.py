@@ -745,7 +745,7 @@ async def list_user_files(username: str, folder: str):
 # Delete a file from uploads or processed folder
 @router.delete("/delete/{username}/{folder}/{filename}")
 async def delete_file(username: str, filename: str, folder: str = "uploads"):
-    valid_folders = ["uploads", "processed"]
+    valid_folders = ["uploads", "processed", "processed_zip"]
 
     # Ensure folder is valid
     if folder not in valid_folders:
@@ -762,7 +762,7 @@ async def delete_file(username: str, filename: str, folder: str = "uploads"):
 # Download a file from the processed folder
 @router.get("/download/{username}/{filename}")
 async def download_file(username: str, filename: str):
-    file_path = os.path.join(BASE_DIR, username, "processed", filename)
+    file_path = os.path.join(BASE_DIR, username, "processed_zip", filename)
 
     if os.path.exists(file_path):
         return FileResponse(file_path)
