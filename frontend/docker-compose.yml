@@ -2,15 +2,14 @@ services:
   frontend:
     build: .
     container_name: frontend
+    # command: sleep infinity
     ports:
       - 80:80
     volumes:
-      - ./:/app
-    depends_on:
-      - backend
+      - .:/app
     networks:
       gdpr-network:
-    # command: sleep infinity
+
 
 networks:
   gdpr-network:
