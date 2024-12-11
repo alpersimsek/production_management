@@ -1,32 +1,44 @@
-from fastapi import FastAPI
-from app.database import init_db
-from app.utils import create_required_directories, create_admin_user
-from app.auth import router as auth_router
-from app.users import router as users_router
-from app.files import router as files_router
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware import Middleware
+from api.middlewares import DBSessionMiddleware, AuthMiddleware
+from app.session import init_db
+from storage import FileStorage
+import settings
+from api.routers import UserRouter, FilesRouter
 
 
-app = FastAPI()
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (i.e., any domain and any port)
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],   # Allow all headers
-)
-
-
-@app.on_event("startup")
-async def startup_event():
-    # Initialize the database and create admin user if not exists
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     init_db()
-    create_required_directories()
-    create_admin_user()
-    
-api_prefix = '/api/v1'
-app.include_router(auth_router, prefix=f"{api_prefix}/auth", tags=["auth"])
-app.include_router(users_router, prefix=f"{api_prefix}/admin", tags=["users"])
-app.include_router(files_router, prefix=f"{api_prefix}/files", tags=["files"])
+    yield
+
+def init_middlewares():
+    middleware = [
+        Middleware(DBSessionMiddleware),
+        Middleware(AuthMiddleware),
+        Middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        ),
+    ]
+    return middleware
+
+def get_app():
+    storage = FileStorage(settings.DATA_DIR)
+    middleware = init_middlewares()
+    app = FastAPI(lifespan=lifespan, middleware=middleware)
+
+    # Initialize api routers
+    api_router: APIRouter = APIRouter(prefix=settings.API_PREFIX)
+    user_router = UserRouter()
+    file_router = FilesRouter(storage)
+
+    api_router.include_router(user_router, tags=["users"])
+    api_router.include_router(file_router, tags=["files"])
+    app.include_router(api_router)
+    return app

@@ -1,16 +1,20 @@
 services:
   backend:
     build: .
-    container_name: backend
-    # command: sleep infinity
+    command: sleep infinity
     ports:
       - 8000:8000
     volumes:
-      - .:/app # dev env
+      - .:/app
+      - data:/data
+      - db_data:/db_data
     networks:
-      gdpr-network:
-
+      - gdpr-network
 
 networks:
   gdpr-network:
     external: true
+
+volumes:
+  data:
+  db_data:

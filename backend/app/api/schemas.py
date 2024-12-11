@@ -23,4 +23,5 @@ class UserOut(BaseModel):
     role: str
 
 class UpdatePassword(BaseModel):
+    username: str
     password: str
