@@ -1,5 +1,6 @@
 import dataclasses
 import re
+from patchers import ReplacePatcher
 from typing import Iterable, Callable
 
 
@@ -21,7 +22,7 @@ class BaseMatcher:
     """Base matcher."""
     def __init__(self, patcher=None):
         if not patcher:
-            patcher = RegexpMatcher()
+            patcher = ReplacePatcher()
         self.patcher = patcher
 
     def make_match(self, *args, **kwargs) -> Match:
