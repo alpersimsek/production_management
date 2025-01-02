@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.database.models import User, File
+from database.models import User, File
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
@@ -25,6 +25,7 @@ class BaseService(Generic[T]):
 
     def create(self, db_obj: T) -> T:
         self.session.add(db_obj)
+        print(self.session.new)
         return db_obj
 
     def update(self, db_obj: T, obj_data: dict) -> T:
@@ -47,6 +48,8 @@ class UserService(BaseService[User]):
         return self.get_by_id(user_id)
 
     def get_user_by_username(self, username: str) -> User | None:
+        tmp = self.session.query(User).filter(User.username == username).first()
+        print(tmp)
         return self.session.query(User).filter(User.username == username).first()
         
     def get_users(self) -> list[User]:

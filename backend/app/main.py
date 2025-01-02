@@ -3,7 +3,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
 from api.middlewares import DBSessionMiddleware, AuthMiddleware
-from app.session import init_db
+from database.session import init_db
 from storage import FileStorage
 import settings
 from api.routers import UserRouter, FilesRouter

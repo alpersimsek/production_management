@@ -3,8 +3,8 @@ from starlette.requests import Request
 from starlette.responses import Response
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.session import Session
-from app.database.models import User
+from database.session import Session
+from database.models import User
 from jose import jwt, JWTError
 import settings
 
@@ -12,14 +12,14 @@ import settings
 class DBSessionMiddleware(BaseHTTPMiddleware):
     """Middleware that handles the lifecycle of the Database session per request."""
 
-    def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next):
         # Create a new database session
         request.state.db = Session()
         
         try:
             # Process the request and get the response
-            response = call_next(request)
-
+            response = await call_next(request)
+            print(request.state.db.new)
             # Only commit if it is not a read-only operation (eg. POST, PUT, PATCH, DELETE)
             if request.method not in ("GET", "OPTIONS", "HEAD"):
                 request.state.db.commit()
@@ -36,11 +36,11 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
     
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    def dispatch(self, req: Request, call_next):
+    async def dispatch(self, req: Request, call_next):
         excluded_routes = ["/api/v1/login", "/docs"]
 
         if req.url.path in excluded_routes:
-            return call_next(req)
+            return await call_next(req)
         
         header = req.headers.get("Authorization")
         if header is None or not header.startswith("Bearer "):
@@ -62,7 +62,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Attach user to the request
         req.state.user = user
         
-        response = call_next(req)
+        response = await call_next(req)
         return response
     
     def validate_token(self, token: str):

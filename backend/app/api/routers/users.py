@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, status
-from app.api.schemas import UserCreate, UserOut, UpdatePassword, Login, Token
+from api.schemas import UserCreate, UserOut, UpdatePassword, Login, Token
 from services import UserService
 
 
@@ -10,16 +10,16 @@ class UserRouter(APIRouter):
 
         # Routes
         self.post("/login", response_model=Token)(self.login)
-        self.post("/create", response_model=Token)(self.create_user)
-        self.get("/", response_model=Token)(self.create_user)
-        self.put("/update_password/{username}", response_model=UserOut)(self.update_password)
+        self.post("/users/create", response_model=UserOut)(self.create_user)
+        self.get("/users", response_model=list[UserOut])(self.get_users)
+        self.put("/users/update_password", response_model=UserOut)(self.update_password)
 
     def login(self, data: Login, req: Request):
         user_service = UserService(req.state.db)
         user = user_service.authenticate(data.username, data.password)
         if user:
             token = user_service.create_token(
-                data={"user_id": user.id, "role": user.role}
+                data={"user_id": user.id, "role": user.role.value}
             )
             return Token(access_token=token, token_type="bearer", role=user.role)
         else:
@@ -29,7 +29,7 @@ class UserRouter(APIRouter):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    def create_user(user: UserCreate, req: Request):
+    def create_user(self, user: UserCreate, req: Request):
         user_service = UserService(req.state.db)
 
         existing_user = user_service.get_user_by_username(user.username)
@@ -39,15 +39,14 @@ class UserRouter(APIRouter):
         new_user = user_service.create_user(user.username, user.password, user.role)
         return UserOut(username=new_user.username, role=new_user.role)
     
-    def get_users(req: Request):
+    def get_users(self, req: Request):
         user_service = UserService(req.state.db)
         users = user_service.get_all()
 
         # Exclude the admin from the returned list
-        filtered_users = [user for user in users if user.username != "admin"]
-        return filtered_users
+        return [UserOut(user.username, user.role) for user in users if user.username != "admin"]
 
-    def update_password(data: UpdatePassword, req: Request):
+    def update_password(self, data: UpdatePassword, req: Request):
         user_service = UserService(req.state.db)
         user = user_service.update_password(data.username, data.password)
         if user:
@@ -55,7 +54,7 @@ class UserRouter(APIRouter):
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    def delete_user(username: str, req: Request):
+    def delete_user(self, username: str, req: Request):
         if username == "admin":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete the admin user")
         

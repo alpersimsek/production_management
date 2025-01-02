@@ -2,7 +2,8 @@ from dataclasses import dataclass
 import pathlib
 import gzip
 import tempfile
-import magic
+# import magic
+import filetype
 import zipfile
 import tarfile
 import shutil
@@ -65,7 +66,8 @@ class FileStorage(BaseStorage):
     def get_type(self, file_id):
         """Get file type."""
         path = self.get(file_id)
-        mime = magic.from_file(str(path), mime=True)
+        # mime = magic.from_file(str(path), mime=True)
+        mime = filetype.guess_mime(path)
         if mime == "text/plain":
             # Plain text
             return self.T_PLAIN
@@ -78,7 +80,8 @@ class FileStorage(BaseStorage):
 
         if mime in self.ARCHIVE_HANDLERS:
             with self.ARCHIVE_HANDLERS[mime](path) as f:
-                sub_mime = magic.from_buffer(f.read(2048), mime=True)
+                # sub_mime = magic.from_buffer(f.read(2048), mime=True)
+                sub_mime = filetype.guess_mime(f)
             if sub_mime == "text/plain":
                 # Compressed data
                 return self.ARCHIVE_TYPES[mime]
