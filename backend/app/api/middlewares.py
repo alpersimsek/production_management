@@ -19,7 +19,6 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
         try:
             # Process the request and get the response
             response = await call_next(request)
-            print(request.state.db.new)
             # Only commit if it is not a read-only operation (eg. POST, PUT, PATCH, DELETE)
             if request.method not in ("GET", "OPTIONS", "HEAD"):
                 request.state.db.commit()
@@ -37,7 +36,7 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, req: Request, call_next):
-        excluded_routes = ["/api/v1/login", "/docs"]
+        excluded_routes = ["/api/v1/users/login", "/docs", "/openapi.json"]
 
         if req.url.path in excluded_routes:
             return await call_next(req)

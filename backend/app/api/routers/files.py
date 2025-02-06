@@ -1,6 +1,8 @@
-from fastapi import APIRouter, UploadFile, HTTPException, Request, status
+from fastapi import APIRouter, UploadFile, HTTPException, Request, status, Depends
 from storage import FileStorage
 from services import FileService
+from api.schemas import FileResponse
+import settings
 
 
 router = APIRouter()
@@ -12,29 +14,35 @@ class FilesRouter(APIRouter):
         super().__init__()
 
         # Routes
-        self.post("/upload")(self.upload_file)
-        self.post("/{username}")(self.get_user_files)
-        self.delete("/delete/{username}/{filename}")(self.delete_file)
-        self.get("/download/{username}/{filename}")(self.download_file)
-        self.post("/process/{filename}")(self.process_file)
+        self.post("/")(self.get_user_files)
+        self.post("/upload", response_model=FileResponse)(self.upload_file)
+        self.post("/process/{file_id}")(self.process_file)
+        self.delete("/delete/{file_id}")(self.delete_file)
+        self.get("/download/{file_id}")(self.download_file)
 
-    def upload_file(self, file: UploadFile, req: Request):
+    def upload_file(self, req: Request, file: UploadFile):
         try:
             user = req.state.user
             session = req.state.db
             file_service = FileService(session=session, user=user)
-            return file_service.save_file(self.storage, file, file.filename)
+            
+            if file_service.compute_used_space(user) > settings.USER_FILES_SIZE_LIMIT:
+                raise HTTPException(status.HTTP_507_INSUFFICIENT_STORAGE, f"Not enough free space")
+            
+            file_obj = file_service.save_file(self.storage, file)
+            return FileResponse.model_validate(file_obj)
         except:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="")
 
     def get_user_files(self, req: Request):
+        user = req.state.user
+        session = req.state.db
+        file_service = FileService(session=session, user=user)
         try:
-            user = req.state.user
-            session = req.state.db
-            file_service = FileService(session=session, user=user)
-            # TODO
+            files = file_service.get_by_user(user)
         except:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, f"No files found for user {user.username}")
+        return files
 
     def delete_file(self, filename: str, req: Request):
         try:
@@ -55,11 +63,11 @@ class FilesRouter(APIRouter):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="")
 
     # Start file processing
-    def process_file(self, filename: str, req: Request):
+    def process_file(self, req: Request, file_id: str):
         try:
             user = req.state.user
             session = req.state.db
             file_service = FileService(session=session, user=user)
-            # TODO
+            file_service.process_file(file_id)
         except:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="")

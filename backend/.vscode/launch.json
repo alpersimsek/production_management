@@ -21,7 +21,10 @@
             "cwd": "${workspaceFolder}${pathSeparator}app",
             "console": "integratedTerminal",
             "env": {
-                "PYTHONUNBUFFERED": "1" // for real-time logging
+                "PYTHONUNBUFFERED": "1", // for real-time logging
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONDEBUG": "0",
+                "PYTHONVERBOSE": "0"
             },
             "jinja": false
         }

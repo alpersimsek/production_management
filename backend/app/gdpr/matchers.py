@@ -1,7 +1,8 @@
 import dataclasses
 import re
+import itertools
 from patchers import ReplacePatcher
-from typing import Iterable, Callable
+from typing import Iterable, Callable, Iterator, Sequence
 
 
 @dataclasses.dataclass(frozen=True)
@@ -33,13 +34,22 @@ class BaseMatcher:
     def _search(self, data: Iterable[str]):
         """Actual search method to override in the subclasses."""
         raise NotImplementedError
+    
+    def search_iter(self, data: Iterable[str]) -> Iterator[Sequence[Match]]:
+        """Search words to replace in the input stream."""
+        data = iter(data)
+        line = next(data, None)
+        if line is None:
+            return []
+        if not isinstance(line, str):
+            raise ValueError(f"`data` should be a `io.TextIOBase` instance for {self}")
+
+        yield from self._search(itertools.chain([line], data))
 
 
 class RegexpMatcher(BaseMatcher):
     """Generic regexp matcher."""
-    def __init__(self,
-                 pattern: str,
-                 **kwargs):
+    def __init__(self, pattern: str, **kwargs):
         self.pattern = re.compile(pattern, re.IGNORECASE)
         super().__init__(**kwargs)
 
@@ -47,8 +57,16 @@ class RegexpMatcher(BaseMatcher):
         """Search ``data`` for matches."""
         for line in data:
             matches = []
-            # TODO
-            # implement match functionality
+            for match in self.pattern.finditer(line):
+                if match.lastindex is None:
+                    group_indexes = [0]
+                else:
+                    group_indexes = range(1, match.lastindex + 1)
+                for group in group_indexes:
+                    start, end = match.span(group)
+                    word = line[start:end]
+                    match = self.make_match(start=start, end=end, word=word)
+                    matches.append(match)
             yield matches
 
 

@@ -1,27 +1,35 @@
 from pydantic import BaseModel
 
-# Schema for login input (username and password)
-class Login(BaseModel):
+# User Schemas
+class UserLogin(BaseModel):
     username: str
     password: str
 
-# Schema for the JWT token response
-class Token(BaseModel):
+class UserToken(BaseModel):
     access_token: str
     token_type: str
     role: str
 
-# Schema for user creation input
 class UserCreate(BaseModel):
     username: str
     password: str
     role: str
 
-# Schema for user output (e.g., listing users)
-class UserOut(BaseModel):
+class UserResponse(BaseModel):
     username: str
     role: str
+
+    class Config:
+        from_attributes = True
 
 class UpdatePassword(BaseModel):
     username: str
     password: str
+
+# File Schemas
+class FileResponse(BaseModel):
+    id: str
+    filename: str
+
+    class Config:
+        from_attributes = True

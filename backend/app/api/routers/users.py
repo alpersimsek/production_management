@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, status
-from api.schemas import UserCreate, UserOut, UpdatePassword, Login, Token
+from api.schemas import UserCreate, UserResponse, UpdatePassword, UserLogin, UserToken
 from services import UserService
 
 
@@ -9,19 +9,19 @@ class UserRouter(APIRouter):
         super().__init__()
 
         # Routes
-        self.post("/login", response_model=Token)(self.login)
-        self.post("/users/create", response_model=UserOut)(self.create_user)
-        self.get("/users", response_model=list[UserOut])(self.get_users)
-        self.put("/users/update_password", response_model=UserOut)(self.update_password)
+        self.post("/login", response_model=UserToken)(self.login)
+        self.post("/create", response_model=UserResponse)(self.create_user)
+        self.get("/", response_model=list[UserResponse])(self.get_users)
+        self.put("/update_password", response_model=UserResponse)(self.update_password)
 
-    def login(self, data: Login, req: Request):
+    def login(self, data: UserLogin, req: Request):
         user_service = UserService(req.state.db)
         user = user_service.authenticate(data.username, data.password)
         if user:
             token = user_service.create_token(
                 data={"user_id": user.id, "role": user.role.value}
             )
-            return Token(access_token=token, token_type="bearer", role=user.role)
+            return UserToken(access_token=token, token_type="bearer", role=user.role)
         else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -37,14 +37,14 @@ class UserRouter(APIRouter):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
 
         new_user = user_service.create_user(user.username, user.password, user.role)
-        return UserOut(username=new_user.username, role=new_user.role)
+        return UserResponse.model_validate(new_user)
     
     def get_users(self, req: Request):
         user_service = UserService(req.state.db)
         users = user_service.get_all()
 
         # Exclude the admin from the returned list
-        return [UserOut(user.username, user.role) for user in users if user.username != "admin"]
+        return [UserResponse(user) for user in users if user.username != "admin"]
 
     def update_password(self, data: UpdatePassword, req: Request):
         user_service = UserService(req.state.db)

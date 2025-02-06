@@ -9,7 +9,7 @@ import tarfile
 import shutil
 import os
 from fastapi import UploadFile
-from typing import List, Iterator
+from typing import List, Iterator, Optional
 
 
 @dataclass
@@ -56,12 +56,12 @@ class FileStorage(BaseStorage):
         return pathlib.Path(dst.name).name[3:]
 
     def get(self, file_id) -> pathlib.Path:
-        filename = os.path.join(self.base_dir, f"tmp{file_id}")
-        return filename
+        path = os.path.join(self.base_dir, f"tmp{file_id}")
+        return path
 
     def get_size(self, file_id):
-        filename = self.get(file_id)
-        return filename.stat().st_size
+        file = self.get(file_id)
+        return file.stat().st_size
 
     def get_type(self, file_id):
         """Get file type."""
@@ -146,7 +146,7 @@ class FileStorage(BaseStorage):
             raise ValueError("Wrong file type")
         method = getattr(self, f"_unpack_{ftype}")
         archive_info = method(file_id, base)
-        self.delete(file_id)
+        # self.delete(file_id)
         return archive_info
 
     def unpack(self, file_id, filename) -> Iterator[FileInfo]:
@@ -169,8 +169,8 @@ class FileStorage(BaseStorage):
                 self.delete(f_info.fid)
 
     def delete(self, file_id):
-        filename = self.get(file_id)
+        file_path = self.get(file_id)
         try:
-            filename.unlink()
+            file_path.unlink()
         except FileNotFoundError:
-            print("File %s already deleted", filename)
+            print("File %s already deleted", file_path)

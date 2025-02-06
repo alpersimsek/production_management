@@ -9,8 +9,7 @@ import settings
 from api.routers import UserRouter, FilesRouter
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def lifespan(app: FastAPI):
     init_db()
     yield
 
@@ -30,15 +29,16 @@ def init_middlewares():
 
 def get_app():
     storage = FileStorage(settings.DATA_DIR)
+
     middleware = init_middlewares()
     app = FastAPI(lifespan=lifespan, middleware=middleware)
 
     # Initialize api routers
-    api_router: APIRouter = APIRouter(prefix=settings.API_PREFIX)
+    api_router = APIRouter(prefix=settings.API_PREFIX)
     user_router = UserRouter()
     file_router = FilesRouter(storage)
 
-    api_router.include_router(user_router, tags=["users"])
-    api_router.include_router(file_router, tags=["files"])
+    api_router.include_router(user_router, prefix="/users", tags=["users"])
+    api_router.include_router(file_router, prefix="/files", tags=["files"])
     app.include_router(api_router)
     return app

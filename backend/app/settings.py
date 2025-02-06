@@ -2,7 +2,7 @@ import os
 import secrets
 
 
-DATA_DIR = os.getenv("DATA_DIR", "data")
+DATA_DIR = os.getenv("DATA_DIR", "/data")
 USERS_DIR = os.getenv("USERS_DIR", "")
 API_PREFIX = os.getenv("API_PREFIX", "/api/v1")
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe())
