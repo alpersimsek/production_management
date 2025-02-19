@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, status
-from api.schemas import UserCreate, UserResponse, UpdatePassword, UserLogin, UserToken, UserDelete
+from api.schemas import UserCreate, UserResponse, UpdatePassword, UserLogin, TokenResponse, UserDelete
 from services import UserService
 
 
@@ -7,13 +7,13 @@ class UserRouter(APIRouter):
 
     def __init__(self):
         super().__init__()
-
+        
         # Routes
-        self.post("/login", response_model=UserToken)(self.login)
-        self.post("/create", response_model=UserResponse)(self.create_user)
-        self.get("/", response_model=list[UserResponse])(self.get_users)
-        self.put("/update_password")(self.update_password)
-        self.delete("/delete")(self.delete_user)
+        self.post("/login", response_model=TokenResponse)(self.login)
+        self.get("/users", response_model=list[UserResponse])(self.get_users)
+        self.post("/users", response_model=UserResponse)(self.create_user)
+        self.put("/users/{user_id}")(self.update_password)
+        self.delete("/users/{user_id}")(self.delete_user)
 
     def login(self, data: UserLogin, req: Request):
         user_service = UserService(req.state.db)
@@ -22,7 +22,7 @@ class UserRouter(APIRouter):
             token = user_service.create_token(
                 data={"user_id": str(user.id), "role": user.role.value}
             )
-            return UserToken(access_token=token, token_type="bearer", role=user.role)
+            return TokenResponse(access_token=token, token_type="bearer", role=user.role)
         else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

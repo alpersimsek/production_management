@@ -14,6 +14,7 @@ class FilesRouter(APIRouter):
     def __init__(self, storage: FileStorage):
         self.storage = storage
         super().__init__()
+        self.prefix = "/files"
 
         # Routes
         self.get("/", response_model=list[FileResponse])(self.get_user_files)

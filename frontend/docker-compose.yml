@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build: .
+    container_name: frontend
+    # command: sleep infinity
+    ports:
+      - 80:80
+    volumes:
+      - .:/app
+    networks:
+      gdpr-network:
+
+
+networks:
+  gdpr-network:
+    external: true

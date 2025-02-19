@@ -47,8 +47,8 @@ def get_app():
     user_router = UserRouter()
     file_router = FilesRouter(storage)
 
-    api_router.include_router(user_router, prefix="/users", tags=["users"])
-    api_router.include_router(file_router, prefix="/files", tags=["files"])
+    api_router.include_router(user_router, tags=["users"])
+    api_router.include_router(file_router, tags=["files"])
     app.include_router(api_router)
     return app
 

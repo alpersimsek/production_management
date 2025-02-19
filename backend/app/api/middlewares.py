@@ -35,7 +35,7 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, req: Request, call_next):
-        excluded_routes = ["/api/v1/users/login", "/docs", "/openapi.json"]
+        excluded_routes = ["/api/v1/login", "/docs", "/openapi.json"]
 
         if req.url.path in excluded_routes:
             return await call_next(req)
