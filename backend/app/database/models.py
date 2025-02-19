@@ -1,15 +1,14 @@
 from sqlalchemy.orm import DeclarativeBase, Relationship, Mapped, mapped_column
 from sqlalchemy import (
-    Column,
     String,
     Integer,
     ForeignKey,
     DateTime,
     Enum,
     JSON,
+    UUID,
     func,
     PrimaryKeyConstraint,
-    Text,
 )
 import uuid
 import enum
@@ -18,7 +17,17 @@ import enum
 class ContentType(enum.Enum):
     TEXT = "text"
     PCAP = "pcap"
-    DEFAULT = TEXT
+    ARCHIVE = "archive"
+    UNKNOWN = "unknown"
+    DEFAULT = UNKNOWN
+
+
+class MimeType(enum.Enum):
+    TEXT = "text/plain"
+    PCAP = "application/vnd.tcpdump.pcap"
+    ZIP = "application/zip"
+    TAR = "application/x-tar"
+    GZIP = "application/gzip"
 
 
 class Role(enum.Enum):
@@ -33,6 +42,13 @@ class FileStatus(enum.Enum):
     ERROR = "error"
 
 
+class RuleCategory(enum.Enum):
+    IPV4_ADDR = "ipv4_addr"
+    MAC_ADDR = "mac_addr"
+    USERNAME = "username"
+    DOMAIN = "domain"
+    PHONE_NUM = "phone_num"
+
 class Base(DeclarativeBase):
     pass
 
@@ -41,8 +57,8 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[str] = mapped_column(
-        String, default=lambda: str(uuid.uuid4()), primary_key=True, unique=True
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, primary_key=True, default=uuid.uuid4
     )
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
@@ -50,34 +66,34 @@ class User(Base):
 
     # Relationships
     files: Mapped[list["File"]] = Relationship(
-        "File", back_populates="user", cascade="all, delete-orphan"
+        "File", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
 
 
 class File(Base):
     __tablename__ = "files"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     completed_size: Mapped[int] = mapped_column(Integer, default=0)
     time_remaining: Mapped[int] = mapped_column(Integer, nullable=True)
-    content_type: Mapped[str] = mapped_column(String, nullable=False, default=ContentType.DEFAULT)
-    status: Mapped[FileStatus] = mapped_column(
-        Enum(FileStatus), default=FileStatus.CREATED
-    )
-    create_date: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    preset_id: Mapped[int] = mapped_column(ForeignKey("presets.id"), nullable=True)
-    archive_id: Mapped[int] = mapped_column(Integer, nullable=True, index=True, default=None)
+    content_type: Mapped[ContentType] = mapped_column(Enum(ContentType), default=ContentType.DEFAULT)
+    status: Mapped[FileStatus] = mapped_column(Enum(FileStatus), default=FileStatus.CREATED)
+    create_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
+    preset_id: Mapped[int] = mapped_column(ForeignKey("presets.id", ondelete="SET NULL"), nullable=True)
+    archive_id: Mapped[int] = mapped_column(ForeignKey("files.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Relationships
     user: Mapped[User] = Relationship("User", back_populates="files")
     product: Mapped["Product"] = Relationship("Product")
     preset: Mapped["Preset"] = Relationship("Preset", back_populates="files")
+
+    archive: Mapped["File"] = Relationship("File", remote_side="File.id", back_populates="archive_files")
+    archive_files: Mapped[list["File"]] = Relationship("File", back_populates="archive")
 
 
 class Product(Base):
@@ -110,7 +126,8 @@ class Rule(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    config: Mapped[str] = mapped_column(JSON, nullable=False)
+    category: Mapped[RuleCategory] = mapped_column(Enum(RuleCategory), nullable=False)
+    config: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Relationship back to PresetRules
     presets: Mapped[list["PresetRule"]] = Relationship(back_populates="rule")
@@ -122,7 +139,7 @@ class PresetRule(Base):
 
     preset_id: Mapped[int] = mapped_column(ForeignKey("presets.id"), nullable=False)
     rule_id: Mapped[int] = mapped_column(ForeignKey("rules.id"), nullable=False)
-    action: Mapped[str] = mapped_column(JSON, nullable=False)
+    action: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Composite primary key on preset_id and rule_id
     __table_args__ = (PrimaryKeyConstraint("preset_id", "rule_id"),)
@@ -136,7 +153,7 @@ class MaskingMap(Base):
     __tablename__ = "masking_map"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    original_value: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    original_value: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
     masked_value: Mapped[str] = mapped_column(String, nullable=False)
-    type: Mapped[str] = mapped_column(String, nullable=False)
+    category: Mapped[RuleCategory] = mapped_column(Enum(RuleCategory), nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())

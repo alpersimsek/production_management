@@ -1,6 +1,12 @@
 # Use the official Python base image
 FROM python:3.12-slim
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libmagic1 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -25,4 +31,4 @@ RUN mkdir /data
 RUN mkdir /db_data
 
 # Run the FastAPI application using uvicorn server
-CMD ["uvicorn", "app.main:get_app()", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# CMD ["uvicorn", "app.main:get_app()", "--host", "0.0.0.0", "--port", "8000", "--reload"]

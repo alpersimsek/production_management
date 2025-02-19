@@ -1,7 +1,8 @@
 import dataclasses
 import re
 import itertools
-from patchers import ReplacePatcher
+from database.models import RuleCategory
+from gdpr.patchers import ReplacePatcher
 from typing import Iterable, Callable, Iterator, Sequence
 
 

@@ -2,25 +2,25 @@ from dataclasses import dataclass
 import pathlib
 import gzip
 import tempfile
-# import magic
-import filetype
+import magic
 import zipfile
 import tarfile
 import shutil
 import os
-from fastapi import UploadFile
+from database.models import MimeType
 from typing import List, Iterator, Optional
+from database.models import File
 
 
 @dataclass
 class FileInfo:
     fid: str
-    fname: str = None
-    fsize: int = None
+    fname: Optional[str]
+    fsize: Optional[int]
 
 
 class BaseStorage:
-    def __init__(self, base_dir):
+    def __init__(self, base_dir: str):
         self.base_dir = pathlib.Path(base_dir)
         if not self.base_dir.exists():
             self.base_dir.mkdir(parents=True)
@@ -28,26 +28,20 @@ class BaseStorage:
 
 class FileStorage(BaseStorage):
 
-    T_PLAIN = "plain"
+    T_TEXT = "text"
+    T_PCAP = "pcap"
     T_ZIP = "zip"  # .zip
     T_TAR = "tar"  # .tar|.tar.gz
     T_GZIP = "gzip"  # .gz
 
-    ARCHIVE_TYPES = {
-        "application/zip": T_ZIP, 
-        "application/x-tar": T_TAR, 
-        "application/gzip": T_GZIP
-    }
+    FILE_TYPES = [T_TEXT, T_PCAP]
+    ARCHIVE_TYPES = [T_ZIP, T_TAR, T_GZIP]
 
-    ARCHIVE_HANDLERS = {
-        "application/gzip": gzip.open,
-    }
-
-    def save_file(self, file: UploadFile) -> str:
+    def save_file(self, file) -> str:
         dst = tempfile.NamedTemporaryFile(dir=self.base_dir, delete=False)
 
         try:
-            with dst, file.file as src:
+            with dst, file as src:
                 shutil.copyfileobj(src, dst)
         except Exception:
             pathlib.Path(dst.name).unlink(missing_ok=True)
@@ -56,42 +50,42 @@ class FileStorage(BaseStorage):
         return pathlib.Path(dst.name).name[3:]
 
     def get(self, file_id) -> pathlib.Path:
-        path = os.path.join(self.base_dir, f"tmp{file_id}")
+        path = self.base_dir.joinpath(f"tmp{file_id}")
         return path
 
-    def get_size(self, file_id):
+    def get_size(self, file_id: str) -> int:
         file = self.get(file_id)
         return file.stat().st_size
 
-    def get_type(self, file_id):
+    def get_type(self, file_id: str) -> str:
         """Get file type."""
         path = self.get(file_id)
-        # mime = magic.from_file(str(path), mime=True)
-        mime = filetype.guess_mime(path)
-        if mime == "text/plain":
+        mime = magic.from_file(str(path), mime=True)
+        if mime == MimeType.TEXT.value:
             # Plain text
-            return self.T_PLAIN
+            return self.T_TEXT
+        if mime == "application/vnd.tcpdump.pcap":
+            # PCAP file
+            return self.T_PCAP
         if mime == "application/zip":
             # Zip archive
             return self.T_ZIP
         if mime == "application/x-tar":
             # Uncompressed tar
             return self.T_TAR
-
-        if mime in self.ARCHIVE_HANDLERS:
-            with self.ARCHIVE_HANDLERS[mime](path) as f:
-                # sub_mime = magic.from_buffer(f.read(2048), mime=True)
-                sub_mime = filetype.guess_mime(f)
+        if mime == "application/gzip":
+            with gzip.open(path) as f:
+                sub_mime = magic.from_buffer(f.read(2048), mime=True)
             if sub_mime == "text/plain":
                 # Compressed data
-                return self.ARCHIVE_TYPES[mime]
+                return self.T_GZIP
             if sub_mime == "application/x-tar":
                 # Compressed tar
                 return self.T_TAR
-        # Fallback for unknown type
-        return self.T_PLAIN
+        # Unsupported type
+        return mime
 
-    def _unpack_zip(self, file_id, base):
+    def _unpack_zip(self, file_id: str, base: str) -> List[FileInfo]:
         if base.lower().endswith(".zip"):
             base = base[:-4]
         path = self.get(file_id)
@@ -107,7 +101,7 @@ class FileStorage(BaseStorage):
                 archive_info.append(info)
         return archive_info
 
-    def _unpack_tar(self, file_id, base):
+    def _unpack_tar(self, file_id: str, base: str) -> List[FileInfo]:
         if base.lower().endswith(".tar"):
             base = base[:-4]
         elif base.lower().endswith(".tar.gz"):
@@ -130,7 +124,7 @@ class FileStorage(BaseStorage):
                 archive_info.append(info)
         return archive_info
 
-    def _unpack_gzip(self, file_id, base):
+    def _unpack_gzip(self, file_id: str, base: str) -> List[FileInfo]:
         path = self.get(file_id)
         with gzip.open(path) as stream:
             fid = self.save_file(stream)
@@ -167,6 +161,40 @@ class FileStorage(BaseStorage):
             print(f"deleting unprocessed files: {files}")
             for f_info in files:
                 self.delete(f_info.fid)
+
+    def repack(self, file: File):
+        if not file.archive_files:
+            raise ValueError("No extracted files found for the archive.")
+        
+        if file.filename.endswith(".zip"):
+            format = "zip"
+        elif file.filename.endswith(".tar.gz") or file.filename.endswith(".tgz"):
+            format = "tar.gz"
+        elif file.filename.endswith(".tar"):
+            format = "tar"
+        else:
+            format = None
+        src = self.get(file.id)
+        dst = src.parent.joinpath(f'{src.name}.new')
+        # archive_format = self.detect_archive_format(original_archive.filename)
+        # new_archive_name = f"{filename}.processed"
+        # new_archive_path = pathlib.Path(self.base_dir) / new_archive_name
+        if format == "zip":
+            with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as archive:
+                for file in file.archive_files:
+                    file_path = self.get(file.id)
+                    archive.write(file_path, arcname=file.filename)
+        elif format in ("tar", "tar.gz"):
+            mode = "w:gz" if format == "tar.gz" else "w"
+            with tarfile.open(dst, mode) as archive:
+                for file in file.archive_files:
+                    file_path = self.get(file.id)
+                    archive.add(file_path, arcname=file.filename)
+        else:
+            raise ValueError("Unsupported archive format")
+
+        dst.rename(src)
+        # return dst
 
     def delete(self, file_id):
         file_path = self.get(file_id)

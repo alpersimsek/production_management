@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, status
-from api.schemas import UserCreate, UserResponse, UpdatePassword, UserLogin, UserToken
+from api.schemas import UserCreate, UserResponse, UpdatePassword, UserLogin, UserToken, UserDelete
 from services import UserService
 
 
@@ -12,14 +12,15 @@ class UserRouter(APIRouter):
         self.post("/login", response_model=UserToken)(self.login)
         self.post("/create", response_model=UserResponse)(self.create_user)
         self.get("/", response_model=list[UserResponse])(self.get_users)
-        self.put("/update_password", response_model=UserResponse)(self.update_password)
+        self.put("/update_password")(self.update_password)
+        self.delete("/delete")(self.delete_user)
 
     def login(self, data: UserLogin, req: Request):
         user_service = UserService(req.state.db)
         user = user_service.authenticate(data.username, data.password)
         if user:
             token = user_service.create_token(
-                data={"user_id": user.id, "role": user.role.value}
+                data={"user_id": str(user.id), "role": user.role.value}
             )
             return UserToken(access_token=token, token_type="bearer", role=user.role)
         else:
@@ -44,7 +45,11 @@ class UserRouter(APIRouter):
         users = user_service.get_all()
 
         # Exclude the admin from the returned list
-        return [UserResponse(user) for user in users if user.username != "admin"]
+        try:
+            ulist = [UserResponse.model_validate(user) for user in users if user.username != "admin"]
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        return ulist
 
     def update_password(self, data: UpdatePassword, req: Request):
         user_service = UserService(req.state.db)
@@ -54,11 +59,11 @@ class UserRouter(APIRouter):
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    def delete_user(self, username: str, req: Request):
-        if username == "admin":
+    def delete_user(self, data: UserDelete, req: Request):
+        if data.username == "admin":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete the admin user")
         
         user_service = UserService(req.state.db)
-        user_service.delete_user(username)
+        user_service.delete_user(data.username)
 
         return {"detail": "User deleted successfully"}

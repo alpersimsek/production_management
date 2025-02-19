@@ -1,6 +1,5 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from database.session import Session

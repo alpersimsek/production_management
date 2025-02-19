@@ -1,13 +1,35 @@
 services:
   backend:
+    container_name: backend
     build: .
     command: sleep infinity
     ports:
       - 8000:8000
+    environment:
+      - DATA_DIR=/data
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${POSTGRESS_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=gdpr
     volumes:
       - .:/app
       - data:/data
-      - db_data:/db_data
+      # - db_data:/db_data
+    depends_on:
+      - db
+    networks:
+      - gdpr-network
+
+  db:
+    container_name: db
+    image: postgres:17
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRESS_PASSWORD}
+      - POSTGRES_DB=gdpr
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
     networks:
       - gdpr-network
 
@@ -17,4 +39,4 @@ networks:
 
 volumes:
   data:
-  db_data:
+  pg_data:

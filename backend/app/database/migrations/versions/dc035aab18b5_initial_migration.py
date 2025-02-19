@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: f72b1599dd53
+Revision ID: dc035aab18b5
 Revises: 
-Create Date: 2025-02-06 13:12:15.353656
+Create Date: 2025-02-18 09:44:55.312401
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f72b1599dd53'
+revision: str = 'dc035aab18b5'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,11 +24,11 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('original_value', sa.String(), nullable=False),
     sa.Column('masked_value', sa.String(), nullable=False),
-    sa.Column('type', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('original_value')
+    sa.Column('category', sa.Enum('IPV4_ADDR', 'MAC_ADDR', 'USERNAME', 'DOMAIN', 'PHONE_NUM', name='rulecategory'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_masking_map_original_value'), 'masking_map', ['original_value'], unique=True)
     op.create_table('products',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -38,16 +38,16 @@ def upgrade() -> None:
     op.create_table('rules',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('category', sa.Enum('IPV4_ADDR', 'MAC_ADDR', 'USERNAME', 'DOMAIN', 'PHONE_NUM', name='rulecategory'), nullable=False),
     sa.Column('config', sa.JSON(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
-    sa.Column('id', sa.String(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('username', sa.String(length=50), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('role', sa.Enum('ADMIN', 'USER', name='role'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('id'),
     sa.UniqueConstraint('username')
     )
     op.create_table('presets',
@@ -59,21 +59,22 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('files',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.String(), nullable=False),
     sa.Column('filename', sa.String(), nullable=False),
     sa.Column('file_size', sa.Integer(), nullable=False),
     sa.Column('completed_size', sa.Integer(), nullable=False),
     sa.Column('time_remaining', sa.Integer(), nullable=True),
-    sa.Column('content_type', sa.String(), nullable=False),
+    sa.Column('content_type', sa.Enum('TEXT', 'PCAP', 'ARCHIVE', 'UNKNOWN', name='contenttype'), nullable=False),
     sa.Column('status', sa.Enum('CREATED', 'IN_PROGRESS', 'DONE', 'ERROR', name='filestatus'), nullable=False),
-    sa.Column('create_date', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=False),
-    sa.Column('product_id', sa.Integer(), nullable=False),
+    sa.Column('create_date', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('product_id', sa.Integer(), nullable=True),
     sa.Column('preset_id', sa.Integer(), nullable=True),
-    sa.Column('archive_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['preset_id'], ['presets.id'], ),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.Column('archive_id', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['archive_id'], ['files.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['preset_id'], ['presets.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_files_archive_id'), 'files', ['archive_id'], unique=False)
@@ -97,5 +98,6 @@ def downgrade() -> None:
     op.drop_table('users')
     op.drop_table('rules')
     op.drop_table('products')
+    op.drop_index(op.f('ix_masking_map_original_value'), table_name='masking_map')
     op.drop_table('masking_map')
     # ### end Alembic commands ###

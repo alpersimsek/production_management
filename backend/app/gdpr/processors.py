@@ -1,8 +1,8 @@
 import abc
 import itertools
 from gdpr.matchers import BaseMatcher, RegexpMatcher, IPAddrMatcher, MacAddrMatcher, Match
-from gdpr.patchers import ReplacePatcher
-from database.models import ContentType
+# from gdpr.patchers import ReplacePatcher
+# from database.models import ContentType
 from typing import Union, Sequence, Mapping, Any, Optional, Iterator
 
 
@@ -76,7 +76,7 @@ class BaseProcessor(abc.ABC):
 
 class TextProcessor(BaseProcessor):
     """Text processor class."""
-    def feed(self, data, chunk_size=1000):
+    def feed(self, data, chunk_size=1000) -> Iterator[bytes]:
         data = iter(data)
         while True:
             chunk = list(itertools.islice(data, chunk_size))
@@ -86,67 +86,3 @@ class TextProcessor(BaseProcessor):
             for line, matches in zip(chunk, chunk_matches):
                 line = self.process(line, matches)
                 yield line
-
-
-class ProcessingConfig:
-    """Processign config class.
-
-    Args:
-        rules_config: List configurations (dicts) for each rule to be created.
-        replacer_state: Common state for replacers.
-    """
-
-    MATCHER_MAP = {
-        "regex": RegexpMatcher,
-        "ip_addr": IPAddrMatcher,
-        "mac_addr": MacAddrMatcher
-    }
-
-    PATCHERS_MAP = {
-        'replacer': ReplacePatcher,
-    }
-
-    # Content type -> processor class maping
-    PROC_CLS_MAP = {
-        ContentType.TEXT.value: TextProcessor,
-    }
-
-    def __init__(self,
-                 rules_config: Sequence[Mapping],
-                 replacer_state: Optional[Mapping[str, str]] = None):
-        self.rules_config = rules_config
-        self._replacer_state = replacer_state or {}
-        self._processor = None
-
-    def make_patcher(self, cfg: Mapping[str, Any]):
-        """Make a patcher instance from config."""
-        patcher_type = cfg.pop('type')
-        patcher_cls = self.PATCHERS_MAP[patcher_type]
-        patcher = patcher_cls(**cfg)
-        if isinstance(patcher, ReplacePatcher):
-            # Set a shared state instance to replacer
-            patcher.set_state(self._replacer_state)
-        return patcher
-
-    def make_rule(self, cfg: Mapping[str, Any]):
-        """Create a rule instance with ``cfg``."""
-        rule_type = cfg.pop('type')
-        patcher_cfg = cfg.pop('patcher_cfg', None)
-        rule_cls = self.MATCHER_MAP[rule_type]
-        if patcher_cfg:
-            patcher = self.make_patcher(patcher_cfg)
-            cfg['patcher'] = patcher
-        rule = rule_cls(**cfg)
-        return rule
-
-    def make_processor(
-        self,
-        content_type=ContentType.DEFAULT.value
-    ) -> BaseProcessor:
-        """Create a ``BaseProcessor`` instance."""
-        if self._processor is None:
-            rules = [self.make_rule(cfg) for cfg in self.rules_config]
-            proc_cls = self.PROC_CLS_MAP[content_type]
-            processor = proc_cls(rules)
-            self._processor = processor
-        return self._processor
