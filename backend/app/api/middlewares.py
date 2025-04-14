@@ -1,9 +1,10 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from sqlalchemy.orm import Session
+from services import UserService
 from database.session import Session
-from database.models import User
+from database.models import User, Role
 from jose import jwt, JWTError
 import settings
 
@@ -14,7 +15,7 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Create a new database session
         request.state.db = Session()
-        
+
         try:
             # Process the request and get the response
             response = await call_next(request)
@@ -31,45 +32,61 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
             request.state.db.close()
 
         return response
-    
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, req: Request, call_next):
-        excluded_routes = ["/api/v1/login", "/docs", "/openapi.json"]
+        # Allow preflight OPTIONS requests to pass through
+        if req.method == "OPTIONS":
+            return await call_next(req)
+
+        excluded_routes = [f"{settings.API_PREFIX}/login", "/docs", "/openapi.json"]
 
         if req.url.path in excluded_routes:
             return await call_next(req)
-        
+
+        if (
+            req.url.path.startswith(f"{settings.API_PREFIX}/files/download")
+            and "token" in req.query_params
+        ):
+            return await call_next(req)
+
         header = req.headers.get("Authorization")
         if header is None or not header.startswith("Bearer "):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not Authenticated")
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Not Authenticated"
+            )
+
         token = header.split(" ")[1]
 
-        payload = self.validate_token(token)
+        user_service = UserService(req.state.db)
+        payload = user_service.validate_token(token)
 
-        user_id: str = payload.get("user_id")            
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+
+        if payload.get("sub") != "user_auth":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
 
         # Fetch user from the database
-        db = req.state.db
-        user = db.query(User).filter(User.id == user_id).first()
+        user_id: str = payload.get("user_id")
+        user = user_service.get_by_id(user_id)
 
         if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
+            )
 
         # Attach user to the request
         req.state.user = user
-        
+
         response = await call_next(req)
         return response
-    
-    def validate_token(self, token: str):
-        try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            return payload
-        except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token")
-        
+
 
 class RBACMiddleware(BaseHTTPMiddleware):
     """
@@ -82,13 +99,15 @@ class RBACMiddleware(BaseHTTPMiddleware):
 
     def dispatch(self, request: Request, call_next):
         # Fetch user roles from request (you might have the user roles in request state after authentication)
-        user_roles = request.state.user_roles if hasattr(request.state, 'user_roles') else []
+        user_roles = (
+            request.state.user_roles if hasattr(request.state, "user_roles") else []
+        )
 
         # Check if user has at least one of the allowed roles
         if not any(role in self.allowed_roles for role in user_roles):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to access this resource."
+                detail="You do not have permission to access this resource.",
             )
 
         # Proceed to the next middleware or route

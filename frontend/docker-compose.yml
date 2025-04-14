@@ -2,7 +2,7 @@ services:
   frontend:
     build: .
     container_name: frontend
-    # command: sleep infinity
+    command: sleep infinity
     ports:
       - 80:80
     volumes:

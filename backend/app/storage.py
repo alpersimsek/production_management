@@ -15,8 +15,9 @@ from database.models import File
 @dataclass
 class FileInfo:
     fid: str
-    fname: Optional[str]
-    fsize: Optional[int]
+    fname: Optional[str] = None
+    fsize: Optional[int] = None
+    ftype: Optional[str] = None
 
 
 class BaseStorage:
@@ -33,6 +34,7 @@ class FileStorage(BaseStorage):
     T_ZIP = "zip"  # .zip
     T_TAR = "tar"  # .tar|.tar.gz
     T_GZIP = "gzip"  # .gz
+    T_UNKNOWN = "unknown"
 
     FILE_TYPES = [T_TEXT, T_PCAP]
     ARCHIVE_TYPES = [T_ZIP, T_TAR, T_GZIP]
@@ -109,7 +111,7 @@ class FileStorage(BaseStorage):
 
         path = self.get(file_id)
         archive_info = []
-        
+
         with tarfile.open(path) as arc:
             while True:
                 member = arc.next()
@@ -151,11 +153,10 @@ class FileStorage(BaseStorage):
                 f_info = files.pop(0)
                 f_type = self.get_type(f_info.fid)
                 if f_type not in self.ARCHIVE_TYPES:
+                    f_info.ftype = f_type
                     yield f_info
                 else:
-                    new_files = self._unpack_file(
-                        f_info.fid, f_type, base=f_info.fname
-                    )
+                    new_files = self._unpack_file(f_info.fid, f_type, base=f_info.fname)
                     files.extend(new_files)
         except GeneratorExit:
             print(f"deleting unprocessed files: {files}")
@@ -165,36 +166,50 @@ class FileStorage(BaseStorage):
     def repack(self, file: File):
         if not file.archive_files:
             raise ValueError("No extracted files found for the archive.")
-        
+
+        # Determine output format based on original filename
         if file.filename.endswith(".zip"):
             format = "zip"
+            base = file.filename[:-4]
         elif file.filename.endswith(".tar.gz") or file.filename.endswith(".tgz"):
             format = "tar.gz"
-        elif file.filename.endswith(".tar"):
-            format = "tar"
+            base = file.filename[:-7]
+        elif file.filename.endswith(".tgz"):
+            format = "tgz"
+            base = file.filename[:-4]
+        elif file.filename.endswith(".gz"):
+            format = "gz"
+            base = file.filename[:-3]
         else:
             format = None
-        src = self.get(file.id)
-        dst = src.parent.joinpath(f'{src.name}.new')
-        # archive_format = self.detect_archive_format(original_archive.filename)
-        # new_archive_name = f"{filename}.processed"
-        # new_archive_path = pathlib.Path(self.base_dir) / new_archive_name
-        if format == "zip":
-            with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as archive:
-                for file in file.archive_files:
-                    file_path = self.get(file.id)
-                    archive.write(file_path, arcname=file.filename)
-        elif format in ("tar", "tar.gz"):
-            mode = "w:gz" if format == "tar.gz" else "w"
-            with tarfile.open(dst, mode) as archive:
-                for file in file.archive_files:
-                    file_path = self.get(file.id)
-                    archive.add(file_path, arcname=file.filename)
-        else:
-            raise ValueError("Unsupported archive format")
 
+        # format = "zip"
+
+        src = self.get(file.id)
+        dst = src.parent.joinpath(f"{src.name}.new")
+
+        # Simple approach: use the exact paths as stored in the database
+        # if format == "zip":
+        with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as archive:
+            for child in file.archive_files:
+                file_path = self.get(child.id)
+                # Use the path exactly as stored in the database
+                archive.write(file_path, arcname=child.filename)
+        # elif format in ("tar", "tar.gz"):
+        #     mode = "w:gz" if format == "tar.gz" else "w"
+        #     with tarfile.open(dst, mode) as archive:
+        #         for child in file.archive_files:
+        #             file_path = self.get(child.id)
+        #             archive.add(file_path, arcname=child.filename)
+        # else:
+        #     raise ValueError("Unsupported archive format")
+
+        # Replace the original file with the new one
         dst.rename(src)
-        # return dst
+        file.filename = ".".join([base, "zip"])
+        # Update the file size in the database to match the new file
+        if file.file_size != src.stat().st_size:
+            file.file_size = src.stat().st_size
 
     def delete(self, file_id):
         file_path = self.get(file_id)

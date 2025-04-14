@@ -49,6 +49,7 @@ class RuleCategory(enum.Enum):
     DOMAIN = "domain"
     PHONE_NUM = "phone_num"
 
+
 class Base(DeclarativeBase):
     pass
 
@@ -57,9 +58,7 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID, primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.USER)
@@ -76,23 +75,40 @@ class File(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    extracted_size: Mapped[int] = mapped_column(Integer, nullable=True)
     completed_size: Mapped[int] = mapped_column(Integer, default=0)
     time_remaining: Mapped[int] = mapped_column(Integer, nullable=True)
-    content_type: Mapped[ContentType] = mapped_column(Enum(ContentType), default=ContentType.DEFAULT)
-    status: Mapped[FileStatus] = mapped_column(Enum(FileStatus), default=FileStatus.CREATED)
-    create_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    content_type: Mapped[ContentType] = mapped_column(
+        Enum(ContentType), default=ContentType.DEFAULT
+    )
+    status: Mapped[FileStatus] = mapped_column(
+        Enum(FileStatus), default=FileStatus.CREATED
+    )
+    create_date: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
-    preset_id: Mapped[int] = mapped_column(ForeignKey("presets.id", ondelete="SET NULL"), nullable=True)
-    archive_id: Mapped[int] = mapped_column(ForeignKey("files.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey("products.id", ondelete="SET NULL"), nullable=True
+    )
+    preset_id: Mapped[int] = mapped_column(
+        ForeignKey("presets.id", ondelete="SET NULL"), nullable=True
+    )
+    archive_id: Mapped[int] = mapped_column(
+        ForeignKey("files.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # Relationships
     user: Mapped[User] = Relationship("User", back_populates="files")
     product: Mapped["Product"] = Relationship("Product")
     preset: Mapped["Preset"] = Relationship("Preset", back_populates="files")
 
-    archive: Mapped["File"] = Relationship("File", remote_side="File.id", back_populates="archive_files")
+    archive: Mapped["File"] = Relationship(
+        "File", remote_side="File.id", back_populates="archive_files"
+    )
     archive_files: Mapped[list["File"]] = Relationship("File", back_populates="archive")
 
 
@@ -115,7 +131,9 @@ class Preset(Base):
     header: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relationships
-    rules: Mapped[list["PresetRule"]] = Relationship("PresetRule", back_populates="preset")
+    rules: Mapped[list["PresetRule"]] = Relationship(
+        "PresetRule", back_populates="preset"
+    )
     files: Mapped[list["File"]] = Relationship("File", back_populates="preset")
     product: Mapped["Product"] = Relationship("Product", back_populates="presets")
 
@@ -153,7 +171,11 @@ class MaskingMap(Base):
     __tablename__ = "masking_map"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    original_value: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
+    original_value: Mapped[str] = mapped_column(
+        String, nullable=False, unique=True, index=True
+    )
     masked_value: Mapped[str] = mapped_column(String, nullable=False)
     category: Mapped[RuleCategory] = mapped_column(Enum(RuleCategory), nullable=False)
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
