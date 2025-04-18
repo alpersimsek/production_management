@@ -139,7 +139,7 @@ class MaskingMapRouter(APIRouter):
                         item.category.value,
                         item.original_value,
                         item.masked_value,
-                        item.created_at.isoformat(),
+                        str(item.created_at),
                     ]
                 )
 

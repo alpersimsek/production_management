@@ -27,6 +27,7 @@ from storage import FileStorage, FileInfo
 from typing import Optional, Type, TypeVar, Generic, Dict, List, Sequence, Mapping, Any
 from fastapi import UploadFile
 from logger import logger
+from charset_normalizer import from_path
 from sqlalchemy import or_
 
 
@@ -400,21 +401,18 @@ class FileService(BaseService[File]):
         content_type = file_obj.content_type
         processor = config.make_processor(content_type=content_type.value)
         try:
-            # Detect encoding
-            # We read src file in a binary mode until detector determine encoding
-            # enc_detector = cchardet.UniversalDetector()
-            # with src.open('rb') as f_src:
-            #     for line in f_src:
-            #         enc_detector.feed(line)
-            #         if enc_detector.done:
-            #             break
-            # enc_detector.close()
-            # encoding = enc_detector.result['encoding']
-            # if encoding is None:
-            #     raise RuntimeError("Can't detect encoding for file")
-
             src = self.storage.get(file_id)
             dst = src.parent.joinpath(f"{src.name}.new")
+
+            # Detect encoding
+            encoding_res = from_path(src).best()
+            if encoding_res:
+                encoding = encoding_res.encoding
+                confidence = 1 - encoding_res.chaos  # lower chaos = higher confidence
+                language = encoding_res.language
+            # encoding = enc_detector.result['encoding']
+            if encoding_res is None:
+                raise RuntimeError("Can't detect encoding for file")
 
             done_size = 0
             unreported = 0
@@ -433,8 +431,8 @@ class FileService(BaseService[File]):
 
             process_time = 0
             report_count = 1
-            with dst.open("w", newline="", encoding=None) as f_dst:
-                with src.open("r", newline="", encoding=None) as f_src:
+            with dst.open("w", newline="", encoding=encoding) as f_dst:
+                with src.open("r", newline="", encoding=encoding) as f_src:
                     operation_time = time.time()
                     for chunk in processor.feed(f_src):
                         f_dst.write(chunk)
@@ -550,9 +548,7 @@ class PresetService(BaseService[Preset]):
     def get_rules_config(self, preset: Preset):
         """Generate processing config for preset."""
         preset_rules = preset.rules
-
         config = None
-        # allow_parallel = all(x.allow_parallel for x in preset_rules)
         return config
 
 
@@ -560,12 +556,12 @@ class RuleService(BaseService[Rule]):
     def __init__(self, session: Session):
         super().__init__(Rule, session)
 
-    def get_config(self):
+    def get_config(self, rule_id: int):
         """Generate rule config to processing."""
-        cfg = self.session.query(Rule).filter()
-        cfg = self.model.rule.get_config()
-        cfg["patcher_cfg"] = self.action
-        return cfg
+        cfg = self.session.query(Rule).filter(Rule.id == rule_id).first()
+        if not cfg:
+            raise Exception(f"Rule with id {rule_id} not found")
+        return cfg.config
 
 
 class PresetRuleService(BaseService[PresetRule]):
@@ -574,8 +570,8 @@ class PresetRuleService(BaseService[PresetRule]):
 
     def get_config(self):
         """Generate rule/action config for preset rule."""
-        cfg = self.model.rule.get_config()
-        cfg["patcher_cfg"] = self.action
+        cfg = self.model.rule.get_config(self.model.rule_id)
+        cfg["patcher_cfg"] = self.model.action
         return cfg
 
 

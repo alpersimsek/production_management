@@ -31,9 +31,13 @@ def upgrade() -> None:
     op.bulk_insert(
         Product.__table__,
         [
-            {"id": 1, "name": "GSX 9000"},
-            {"id": 2, "name": "C3 Gateway Controller"},
-            {"id": 3, "name": "G9 Media Gateway"},
+            {"id": 1, "name": "Generic"},
+            {"id": 2, "name": "GSX 9000"},
+            {"id": 3, "name": "C3 Call Controller"},
+            {"id": 4, "name": "G9 Media Gateway"},
+            {"id": 5, "name": "SBC 7000"},
+            {"id": 6, "name": "C20 Call Controller"},
+            {"id": 7, "name": "Application Server"},
         ],
     )
     logger.info("Product insertion completed")
@@ -57,20 +61,26 @@ def upgrade() -> None:
         [
             {
                 "id": 1,
-                "name": "SYS Log",
+                "name": "Default",
                 "product_id": 1,
-                "header": "SYS",
+                "header": "",
             },
             {
                 "id": 2,
-                "name": "DBG Log",
-                "product_id": 1,
-                "header": "DBG",
+                "name": "SYS Log",
+                "product_id": 2,
+                "header": "SYS",
             },
             {
                 "id": 3,
+                "name": "DBG Log",
+                "product_id": 2,
+                "header": "DBG",
+            },
+            {
+                "id": 4,
                 "name": "TRC Log",
-                "product_id": 1,
+                "product_id": 2,
                 "header": "TRC",
             },
         ],
@@ -109,8 +119,18 @@ def upgrade() -> None:
     op.bulk_insert(
         PresetRule.__table__,
         [
+            # Default preset
             {"id": 1, "preset_id": 1, "rule_id": 1, "action": {"type": "replace"}},
             {"id": 2, "preset_id": 1, "rule_id": 2, "action": {"type": "replace"}},
+            # SYS Log preset
+            {"id": 3, "preset_id": 2, "rule_id": 1, "action": {"type": "replace"}},
+            {"id": 4, "preset_id": 2, "rule_id": 2, "action": {"type": "replace"}},
+            # DBG Log preset
+            {"id": 5, "preset_id": 3, "rule_id": 1, "action": {"type": "replace"}},
+            {"id": 6, "preset_id": 3, "rule_id": 2, "action": {"type": "replace"}},
+            # TRC Log preset
+            {"id": 7, "preset_id": 4, "rule_id": 1, "action": {"type": "replace"}},
+            {"id": 8, "preset_id": 4, "rule_id": 2, "action": {"type": "replace"}},
         ],
     )
     logger.info("PresetRule insertion completed")

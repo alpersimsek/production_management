@@ -21,7 +21,7 @@ class FileInfo:
 
 
 class BaseStorage:
-    def __init__(self, base_dir: str):
+    def __init__(self, base_dir: str | pathlib.Path):
         self.base_dir = pathlib.Path(base_dir)
         if not self.base_dir.exists():
             self.base_dir.mkdir(parents=True)
