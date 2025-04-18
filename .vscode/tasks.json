@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start PostgreSQL Service",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.yml up -d db",
+      "problemMatcher": []
+      // "isBackground": true
+    },
+    {
+      "label": "Start PostgreSQL Service",
+      "type": "shell",
+      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.yml down db",
+      "problemMatcher": []
+      // "isBackground": true
+    }
+  ]
+}

@@ -51,7 +51,7 @@ class FileStorage(BaseStorage):
 
         return pathlib.Path(dst.name).name[3:]
 
-    def get(self, file_id) -> pathlib.Path:
+    def get(self, file_id: str) -> pathlib.Path:
         path = self.base_dir.joinpath(f"tmp{file_id}")
         return path
 

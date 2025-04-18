@@ -53,7 +53,7 @@ class ProcessingConfig:
 
     def __init__(
         self,
-        rules_config: Sequence[Mapping],
+        rules_config: list[dict[str, Any]],
         maskingMapService,
         # replacer_state: Optional[Mapping[str, str]] = None
     ):
@@ -62,7 +62,7 @@ class ProcessingConfig:
         self.maskingMapService = maskingMapService
         self._processor = None
 
-    def make_patcher(self, cfg: Mapping[str, Any]):
+    def make_patcher(self, cfg: dict[str, Any]):
         """Make a patcher instance from config."""
         patcher_type = cfg.pop("type")
         patcher_cls = self.PATCHERS_MAP[patcher_type]
@@ -72,7 +72,7 @@ class ProcessingConfig:
         #     patcher.set_state(self._replacer_state)
         return patcher
 
-    def make_matcher(self, cfg: Mapping[str, Any]):
+    def make_matcher(self, cfg: dict[str, Any]):
         """Create a rule instance with ``cfg``."""
         matcher_type = cfg.pop("type")
         matcher_cat = cfg.pop("category")
@@ -157,7 +157,7 @@ class UserService(BaseService[User]):
         self.create(user)
         return user
 
-    def update_password(self, userId: str, password: str) -> None:
+    def update_password(self, userId: str, password: str) -> User | None:
         user = self.get_by_id(userId)
         if not user:
             return None
@@ -166,10 +166,12 @@ class UserService(BaseService[User]):
 
     def delete_user(self, userId: str) -> None:
         user = self.get_by_id(userId)
+        if not user:
+            return
         if user.username == "admin":
             raise ValueError("Cannot delete the admin user")
         if user:
-            self.delete(user.id)
+            self.delete(str(user.id))
 
     def hash_password(self, password: str) -> str:
         return self.pwd_context.hash(password)
@@ -208,7 +210,7 @@ class FileService(BaseService[File]):
             used_space = 0
         return used_space
 
-    def get_preset(self, file_id: int, file_type: str) -> Preset | None:
+    def get_preset(self, file_id: str, file_type: str) -> Preset | None:
         if file_type == ContentType.TEXT.value:
             with self.storage.get(file_id).open("r") as file:
                 # Read first line
@@ -235,7 +237,7 @@ class FileService(BaseService[File]):
         finfo = FileInfo(file_id, file.filename, file_size, file_type)
         return self.add_file(finfo)
 
-    def add_file(self, finfo: FileInfo, archive_id: str = None) -> File:
+    def add_file(self, finfo: FileInfo, archive_id: str | None = None) -> File:
         if finfo.ftype in self.storage.FILE_TYPES:
             content_type = ContentType(finfo.ftype)
             preset = self.get_preset(finfo.fid, finfo.ftype)
@@ -282,6 +284,9 @@ class FileService(BaseService[File]):
 
     def process_file(self, file_id: str):
         file = self.get_by_id(file_id)
+
+        if not file:
+            raise Exception("File not found")
 
         if file.status is not FileStatus.CREATED:
             raise Exception("File processing is already started")
@@ -337,7 +342,7 @@ class FileService(BaseService[File]):
                 processed_file = self.get_by_id(file_id)
 
                 # Check if this file is part of an archive
-                if processed_file.archive_id:
+                if processed_file and processed_file.archive_id:
                     # Get the parent archive
                     parent = processed_file.archive
 
@@ -389,6 +394,8 @@ class FileService(BaseService[File]):
 
     def _process_file(self, config: ProcessingConfig, file_id: str) -> None:
         file_obj = self.get_by_id(file_id)
+        if not file_obj:
+            raise FileNotFoundError(f"File with id {file_id} not found.")
         file_obj.status = FileStatus.IN_PROGRESS
         content_type = file_obj.content_type
         processor = config.make_processor(content_type=content_type.value)
@@ -603,8 +610,8 @@ class MaskingMapService(BaseService[MaskingMap]):
 
     def search_masks(
         self,
-        query: str = None,
-        categories: list[str] = None,
+        query: str | None = None,
+        categories: list[str] | None = None,
         limit: int = 100,
         offset: int = 0,
         sort: str = "created_at:desc",

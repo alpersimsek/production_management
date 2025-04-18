@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Backend: FastAPI",
+      "name": "Backend: Uvicorn",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
@@ -18,26 +18,19 @@
         "--use-colors",
         "--factory"
       ],
+      "preLaunchTask": "Start PostgreSQL Service",
+      "postDebugTask": "Stop PostgreSQL Service",
       "justMyCode": true,
-      "cwd": "${workspaceFolder}/backend/app",
+      "cwd": "${workspaceFolder}${pathSeparator}backend${pathSeparator}app",
       "console": "integratedTerminal",
       "redirectOutput": true,
       "env": {
-        "PYTHONUNBUFFERED": "1",
+        "PYTHONUNBUFFERED": "1", // for real-time logging
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONDEBUG": "0",
         "PYTHONVERBOSE": "0"
-      }
-    },
-    {
-      "name": "Frontend: Vue.js",
-      "type": "chrome",
-      "request": "launch",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/frontend-vue",
-      "sourceMapPathOverrides": {
-        "webpack:///src/*": "${webRoot}/src/*"
-      }
+      },
+      "jinja": false
     },
     {
       "name": "Frontend: npm run dev",
@@ -47,15 +40,25 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Frontend: Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend-vue",
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/src/*"
+      }
     }
   ],
   "compounds": [
     {
       "name": "Full Stack: Backend + Frontend",
       "configurations": [
-        "Backend: FastAPI",
+        "Backend: Uvicorn",
         "Frontend: npm run dev",
-        "Frontend: Vue.js"
+        "Frontend: Chrome"
       ],
       "presentation": {
         "hidden": false,
