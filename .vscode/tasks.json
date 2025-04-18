@@ -9,7 +9,7 @@
       // "isBackground": true
     },
     {
-      "label": "Start PostgreSQL Service",
+      "label": "Stop PostgreSQL Service",
       "type": "shell",
       "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.yml down db",
       "problemMatcher": []

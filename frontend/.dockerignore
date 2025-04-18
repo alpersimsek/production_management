@@ -2,7 +2,6 @@ node_modules
 npm-debug.log
 build
 .git
-.env
 *.md
 .gitignore
 .DS_Store

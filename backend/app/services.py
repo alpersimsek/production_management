@@ -24,7 +24,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 import settings
 from storage import FileStorage, FileInfo
-from typing import Type, TypeVar, Generic, Dict, List, Sequence, Mapping, Any
+from typing import Optional, Type, TypeVar, Generic, Dict, List, Sequence, Mapping, Any
 from fastapi import UploadFile
 from logger import logger
 from sqlalchemy import or_
@@ -612,9 +612,9 @@ class MaskingMapService(BaseService[MaskingMap]):
         self,
         query: str | None = None,
         categories: list[str] | None = None,
-        limit: int = 100,
-        offset: int = 0,
-        sort: str = "created_at:desc",
+        limit: Optional[int] = 100,
+        offset: Optional[int] = 0,
+        sort: Optional[str] = "created_at:desc",
     ) -> list[MaskingMap]:
         """Search for masking maps based on query and filters."""
         # Start with a base query

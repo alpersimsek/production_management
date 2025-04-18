@@ -1,16 +1,18 @@
 services:
   frontend:
-    build: .
     container_name: frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: sleep infinity
     ports:
-      - 80:80
+      - 3000:3000
     volumes:
       - .:/app
     networks:
-      gdpr-network:
-
+      - gdpr-network
 
 networks:
   gdpr-network:
+    name: gdpr-network
     external: true
