@@ -36,7 +36,7 @@
       "name": "Frontend: npm run dev",
       "type": "node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/frontend-vue",
+      "cwd": "${workspaceFolder}/frontend",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "console": "integratedTerminal"
@@ -46,7 +46,7 @@
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/frontend-vue",
+      "webRoot": "${workspaceFolder}/frontend",
       "sourceMapPathOverrides": {
         "webpack:///src/*": "${webRoot}/src/*"
       }
