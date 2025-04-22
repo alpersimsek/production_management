@@ -1,35 +1,31 @@
 <template>
-  <nav class="bg-white shadow">
+  <nav class="bg-white shadow-lg sticky top-0 z-50">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 justify-between">
+      <div class="flex h-16 justify-between items-center">
         <!-- Logo and brand -->
-        <div class="flex">
-          <div class="flex flex-shrink-0 items-center">
-            <router-link to="/" class="flex items-center">
-              <!-- App logo -->
-              <div class="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
-                <span class="text-white font-bold">G</span>
-              </div>
-              <span class="ml-2 text-lg font-semibold text-gray-900">GDPR Tool</span>
-            </router-link>
-          </div>
+        <div class="flex items-center">
+          <router-link to="/" class="flex items-center space-x-3">
+            <!-- Custom Logo -->
+            <img :src="logo" alt="GDPR Processor Logo"
+              class="h-16 w-auto transition-transform duration-200 hover:scale-105" @error="useFallbackLogo = true"
+              v-if="!useFallbackLogo" />
+            <!-- Fallback Logo -->
+            <div v-else class="h-14 w-10 rounded-full bg-indigo-600 flex items-center justify-center">
+              <span class="text-white font-bold">G</span>
+            </div>
+            <span class="text-lg font-bold text-gray-900 tracking-tight">GDPR Processor</span>
+          </router-link>
         </div>
 
         <!-- Main navigation - Desktop -->
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
-          <div class="flex space-x-4">
-            <router-link
-              v-for="item in navigationItems"
-              :key="item.name"
-              :to="item.href"
-              :class="[
-                isActive(item.href)
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                'px-3 py-2 rounded-md text-sm font-medium'
-              ]"
-              v-show="shouldShowItem(item)"
-            >
+          <div class="flex space-x-1">
+            <router-link v-for="item in navigationItems" :key="item.name" :to="item.href" :class="[
+              isActive(item.href)
+                ? 'bg-indigo-100 text-indigo-700'
+                : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700',
+              'px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200',
+            ]" v-show="shouldShowItem(item)">
               {{ item.name }}
             </router-link>
           </div>
@@ -37,47 +33,35 @@
 
         <!-- User dropdown menu -->
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
-          <div class="relative ml-3">
-            <div>
-              <button
-                @click="toggleUserMenu"
-                type="button"
-                class="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                id="user-menu-button"
-                aria-expanded="false"
-                aria-haspopup="true"
-              >
-                <span class="sr-only">Open user menu</span>
-                <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800">
-                  {{ userInitials }}
-                </div>
-              </button>
-            </div>
+          <div class="relative">
+            <button @click="toggleUserMenu" type="button"
+              class="flex items-center rounded-full bg-indigo-100 text-indigo-800 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              id="user-menu-button" :aria-expanded="showUserMenu" aria-haspopup="true">
+              <span class="sr-only">Open user menu</span>
+              <div class="h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold">
+                {{ userInitials }}
+              </div>
+            </button>
 
             <!-- Dropdown menu -->
-            <div
-              v-if="showUserMenu"
-              class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-              role="menu"
-              aria-orientation="vertical"
-              aria-labelledby="user-menu-button"
-            >
-              <div class="px-4 py-2 text-sm text-gray-500 border-b">
-                Signed in as <span class="font-semibold">{{ username }}</span>
+            <div v-if="showUserMenu"
+              class="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-xl bg-white py-2 shadow-xl ring-1 ring-black ring-opacity-5 transform transition-all duration-300"
+              :class="showUserMenu ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" role="menu"
+              aria-orientation="vertical" aria-labelledby="user-menu-button">
+              <div class="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                Signed in as <span class="font-semibold text-gray-700">{{ username }}</span>
               </div>
+              <!-- Uncomment if profile page is needed -->
               <!-- <router-link
                 to="/profile"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
                 role="menuitem"
               >
                 Your Profile
               </router-link> -->
-              <button
-                type="button"
-                @click="handleLogout"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
+              <button type="button" @click="handleLogout"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                role="menuitem">
                 Sign out
               </button>
             </div>
@@ -86,49 +70,34 @@
 
         <!-- Mobile menu button -->
         <div class="-mr-2 flex items-center sm:hidden">
-          <button
-            @click="toggleMobileMenu"
-            type="button"
-            class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-            aria-controls="mobile-menu"
-            :aria-expanded="showMobileMenu"
-          >
+          <button @click="toggleMobileMenu" type="button"
+            class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-controls="mobile-menu" :aria-expanded="showMobileMenu">
             <span class="sr-only">Open main menu</span>
-            <!-- Icon when menu is closed -->
             <Bars3Icon v-if="!showMobileMenu" class="h-6 w-6" aria-hidden="true" />
-            <!-- Icon when menu is open -->
             <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Mobile menu, show/hide based on menu state -->
-    <div
-      v-if="showMobileMenu"
-      class="sm:hidden"
-      id="mobile-menu"
-    >
+    <!-- Mobile menu -->
+    <div v-if="showMobileMenu" class="sm:hidden bg-white shadow-md" id="mobile-menu">
       <div class="space-y-1 pt-2 pb-3">
-        <router-link
-          v-for="item in navigationItems"
-          :key="item.name"
-          :to="item.href"
-          :class="[
-            isActive(item.href)
-              ? 'bg-indigo-50 text-indigo-700'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-            'block px-3 py-2 rounded-md text-base font-medium'
-          ]"
-          v-show="shouldShowItem(item)"
-        >
+        <router-link v-for="item in navigationItems" :key="item.name" :to="item.href" :class="[
+          isActive(item.href)
+            ? 'bg-indigo-100 text-indigo-700'
+            : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700',
+          'block px-4 py-3 rounded-md text-base font-medium transition-colors duration-200',
+        ]" @click="toggleMobileMenu" v-show="shouldShowItem(item)">
           {{ item.name }}
         </router-link>
       </div>
       <div class="border-t border-gray-200 pt-4 pb-3">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
-            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800">
+            <div
+              class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-semibold">
               {{ userInitials }}
             </div>
           </div>
@@ -138,17 +107,15 @@
           </div>
         </div>
         <div class="mt-3 space-y-1">
-          <router-link
+          <!-- <router-link
             to="/profile"
-            class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-indigo-50 hover:text-indigo-700"
+            @click="toggleMobileMenu"
           >
             Your Profile
-          </router-link>
-          <button
-            type="button"
-            @click="handleLogout"
-            class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-          >
+          </router-link> -->
+          <button type="button" @click="handleLogout"
+            class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-indigo-50 hover:text-indigo-700">
             Sign out
           </button>
         </div>
@@ -161,10 +128,8 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import {
-  Bars3Icon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+import logo from '../assets/ribbon-logo.svg' // Import the SVG logo
 
 const router = useRouter()
 const route = useRoute()
@@ -173,6 +138,7 @@ const authStore = useAuthStore()
 // Navigation state
 const showMobileMenu = ref(false)
 const showUserMenu = ref(false)
+const useFallbackLogo = ref(false) // For fallback logo
 
 // Navigation items
 const navigationItems = [
@@ -193,10 +159,7 @@ const userInitials = computed(() => {
 
 // Check if a path is the active route
 const isActive = (path) => {
-  // For exact matches
   if (route.path === path) return true
-
-  // For nested routes
   return route.path.startsWith(path) && path !== '/'
 }
 
@@ -210,7 +173,6 @@ const shouldShowItem = (item) => {
 // Toggle mobile menu
 const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
-  // Close user menu when opening mobile menu
   if (showMobileMenu.value) {
     showUserMenu.value = false
   }
@@ -227,3 +189,22 @@ const handleLogout = () => {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+/* Custom animations for dropdown and mobile menu */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#mobile-menu {
+  animation: slideDown 0.3s ease-out;
+}
+</style>

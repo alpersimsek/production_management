@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
-import PageHeader from '../components/PageHeader.vue'
 import ListView from '../components/ListView.vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import AppButton from '../components/AppButton.vue'
@@ -9,10 +8,12 @@ import InputField from '../components/InputField.vue'
 import SelectField from '../components/SelectField.vue'
 import ApiService from '../services/api'
 import {
+  PlusIcon,
   UserIcon,
   UserPlusIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
 
 // State
@@ -113,141 +114,159 @@ onMounted(() => {
 
 <template>
   <MainLayout>
-    <div class="px-4 sm:px-6 lg:px-8">
-      <PageHeader title="User Management" description="Manage user accounts and permissions">
-        <template #actions>
-          <AppButton
-            type="button"
-            variant="primary"
-            @click="handleAddUser"
-            class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-            :preserveOriginalStyle="true"
-          >
-            <UserPlusIcon class="h-5 w-5 mr-2" />
+    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
+      <!-- Header (Matching PresetManagement.vue) -->
+      <div class="sm:flex sm:items-center mb-8">
+        <div class="sm:flex-auto">
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-7 w-7 text-indigo-500 transition-transform duration-300 hover:scale-110" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">User Management</h1>
+          </div>
+          <p class="mt-2 text-sm text-gray-600 font-medium">
+            Effortlessly manage user accounts and permissions
+          </p>
+        </div>
+        <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-4">
+          <AppButton type="button" variant="primary" @click="handleAddUser"
+            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            :preserveOriginalStyle="false" aria-label="Add new user">
+            <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
             Add User
           </AppButton>
-        </template>
-      </PageHeader>
-
-      <!-- Loading state -->
-      <div v-if="isLoading && !users.length" class="py-6 text-center text-gray-500">
-        Loading users...
+        </div>
       </div>
 
-      <!-- Error state -->
-      <div v-if="error" class="p-4 bg-red-50 text-red-700 rounded-md mt-4">
-        {{ error }}
-        <AppButton
-          variant="text"
-          class="ml-2 text-red-700 underline"
-          @click="loadUsers"
-        >
+      <!-- Loading State -->
+      <div v-if="isLoading && !users.length" class="py-8 flex justify-center items-center" aria-live="polite">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-600"></div>
+        <p class="ml-4 text-sm font-medium text-gray-600">Loading users...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-if="error"
+        class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm font-medium text-red-800">{{ error }}</span>
+        </div>
+        <AppButton variant="text"
+          class="text-red-700 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          @click="loadUsers" :preserveOriginalStyle="false" aria-label="Retry loading users">
           Retry
         </AppButton>
       </div>
 
-      <!-- User list -->
-      <ListView
-        v-if="!isLoading || users.length"
-        title="Users"
-        :items="formattedUsers"
-        :empty-message="'No users found'"
-        :empty-icon="UserIcon"
-        :get-item-title="item => item.username"
-        :get-item-subtitle="() => ''"
-        :get-item-metadata="item => item.formattedRole"
-        :get-item-icon="() => UserIcon"
-        :get-item-class="item => item.role === 'admin' ? 'border-indigo-200' : ''"
-      >
-        <template #itemActions="{ item }">
-          <!-- Edit button -->
-          <AppButton
-            @click="handleEditUser(item)"
-            variant="text"
-            class="text-gray-400 hover:text-indigo-600 transition-colors"
-            :preserveOriginalStyle="true"
-            title="Edit user"
-          >
-            <PencilIcon class="h-5 w-5" />
-          </AppButton>
+      <!-- User List -->
+      <div v-if="!isLoading || users.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <ListView title="Users" :items="formattedUsers" :empty-message="'No users found'" :empty-icon="UserIcon"
+          :get-item-title="item => item.username" :get-item-subtitle="() => ''"
+          :get-item-metadata="item => item.formattedRole"
+          :get-item-icon="item => item.role === 'admin' ? ShieldCheckIcon : UserIcon"
+          :get-item-class="item => item.role === 'admin' ? 'border-l-4 border-indigo-500' : ''" class="animate-fade-in">
+          <template #itemActions="{ item }">
+            <!-- Edit Button -->
+            <AppButton @click="handleEditUser(item)" variant="text"
+              class="text-indigo-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              :preserveOriginalStyle="false" title="Edit user" aria-label="Edit user">
+              <PencilIcon class="h-5 w-5" aria-hidden="true" />
+            </AppButton>
 
-          <!-- Delete button (don't allow deleting own account) -->
-          <AppButton
-            v-if="item.id !== 1"
-            @click="handleDeleteUser(item.id)"
-            variant="text"
-            class="text-gray-400 hover:text-red-600 transition-colors"
-            :preserveOriginalStyle="true"
-            title="Delete user"
-          >
-            <TrashIcon class="h-5 w-5" />
-          </AppButton>
-        </template>
-      </ListView>
+            <!-- Delete Button (Prevent deleting own account) -->
+            <AppButton v-if="item.id !== 1" @click="handleDeleteUser(item.id)" variant="text"
+              class="text-red-500 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              :preserveOriginalStyle="false" title="Delete user" aria-label="Delete user">
+              <TrashIcon class="h-5 w-5" aria-hidden="true" />
+            </AppButton>
+          </template>
+        </ListView>
+      </div>
 
-      <!-- User form dialog -->
+      <!-- User Form Dialog -->
       <Dialog v-if="showAddUserForm" @close="showAddUserForm = false" :open="showAddUserForm">
-        <div class="fixed inset-0 bg-black/30" aria-hidden="true" @mousedown.stop />
+        <div class="fixed inset-0 bg-black/40 transition-opacity duration-300" aria-hidden="true" />
         <div class="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-            <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+          <DialogPanel class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl transform transition-all duration-300">
+            <DialogTitle as="h3" class="text-lg font-bold text-gray-900">
               {{ editUser ? 'Edit User' : 'Add New User' }}
             </DialogTitle>
 
-            <div v-if="error" class="mt-2 p-2 bg-red-50 text-red-700 rounded-md text-sm">
+            <div v-if="error" class="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 animate-fade-in">
               {{ error }}
             </div>
 
-            <div class="mt-4 space-y-4">
-              <InputField
-                id="username"
-                v-model="newUser.username"
-                label="Username"
-                type="text"
-                required
-              />
-
-              <InputField
-                id="password"
-                v-model="newUser.password"
-                label="Password"
-                type="password"
-                required
-              />
-
-              <SelectField
-                id="role"
-                v-model="newUser.role"
-                label="Role"
-              >
+            <div class="mt-4 space-y-5">
+              <InputField id="username" v-model="newUser.username" label="Username" type="text" required
+                custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg" />
+              <InputField id="password" v-model="newUser.password" label="Password" type="password" required
+                custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg" />
+              <SelectField id="role" v-model="newUser.role" label="Role"
+                custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg">
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
               </SelectField>
             </div>
 
             <div class="mt-6 flex justify-end space-x-3">
-              <AppButton
-                variant="secondary"
-                @click="showAddUserForm = false"
-                class="border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 px-4 py-2 rounded-md"
-                :preserveOriginalStyle="true"
-                :disabled="isLoading"
-              >
+              <AppButton variant="secondary" @click="showAddUserForm = false"
+                class="border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+                :preserveOriginalStyle="false" :disabled="isLoading" aria-label="Cancel">
                 Cancel
               </AppButton>
-              <AppButton
-                variant="primary"
-                @click="saveUser"
-                class="border border-transparent bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 px-4 py-2 rounded-md"
-                :preserveOriginalStyle="true"
-                :loading="isLoading"
-              >
+              <AppButton variant="primary" @click="saveUser"
+                class="bg-indigo-600 px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+                :preserveOriginalStyle="false" :loading="isLoading" :aria-label="editUser ? 'Update user' : 'Add user'">
                 {{ editUser ? 'Update' : 'Add' }}
               </AppButton>
             </div>
           </DialogPanel>
         </div>
       </Dialog>
+
+      <!-- Footer Branding -->
+      <footer class="mt-12 text-center text-sm text-gray-500 px-4 sm:px-16">
+        © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
+        <a href="/privacy" class="text-indigo-600 hover:text-indigo-700 ml-2 transition-colors duration-200">Privacy
+          Policy</a>
+      </footer>
     </div>
   </MainLayout>
 </template>
+
+<style scoped>
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Dialog transition */
+.dialog-enter-active,
+.dialog-leave-active {
+  transition: all 0.3s ease;
+}
+
+.dialog-enter-from,
+.dialog-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+</style>

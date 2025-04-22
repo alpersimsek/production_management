@@ -1,14 +1,13 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
-import PageHeader from '../components/PageHeader.vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import AppButton from '../components/AppButton.vue'
 import InputField from '../components/InputField.vue'
 import SelectField from '../components/SelectField.vue'
 import ApiService from '../services/api'
 import {
-  MagnifyingGlassIcon,
+  CheckCircleIcon,
   DocumentDuplicateIcon,
   ArrowDownTrayIcon,
   ChevronUpDownIcon,
@@ -265,214 +264,202 @@ onMounted(() => {
 
 <template>
   <MainLayout>
-    <div class="px-4 sm:px-6 lg:px-8">
-      <PageHeader title="GDPR Data Search" description="Search GDPR masking data">
-        <template #actions>
-          <div class="flex space-x-3">
-            <AppButton
-              v-if="searchResults.length > 0"
-              type="button"
-              variant="secondary"
-              @click="exportSearchResults"
-              class="flex flex-row items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
-              :preserveOriginalStyle="true"
-              title="Export search results to CSV"
-            >
-              <template #icon-left>
-                <ArrowDownTrayIcon class="h-5 w-5 mr-2 flex-shrink-0" aria-hidden="true" />
-              </template>
-              Export
-            </AppButton>
-
-            <AppButton
-              type="button"
-              variant="primary"
-              @click="performSearch"
-              :loading="searchLoading"
-              class="flex flex-row items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto disabled:bg-indigo-300"
-              :preserveOriginalStyle="true"
-            >
-              <template #icon-left>
-                <MagnifyingGlassIcon v-if="!searchLoading" class="h-5 w-5 mr-2 flex-shrink-0" aria-hidden="true" />
-              </template>
-              {{ searchLoading ? 'Searching...' : 'Search' }}
-            </AppButton>
+    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
+      <!-- Header (Matching PresetManagement.vue and UserManagement.vue) -->
+      <div class="sm:flex sm:items-center mb-8">
+        <div class="sm:flex-auto">
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-7 w-7 text-indigo-500 transition-transform duration-300 hover:scale-110" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">GDPR Data Search</h1>
           </div>
-        </template>
-      </PageHeader>
+          <p class="mt-2 text-sm text-gray-600 font-medium">
+            Search and manage GDPR-compliant data masking records
+          </p>
+        </div>
+        <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-4">
+          <AppButton v-if="searchResults.length > 0" type="button" variant="secondary" @click="exportSearchResults"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            :preserveOriginalStyle="false" title="Export search results to CSV"
+            aria-label="Export search results to CSV">
+            <ArrowDownTrayIcon class="h-5 w-5 mr-2 text-gray-500" aria-hidden="true" />
+            Export
+          </AppButton>
+          <AppButton type="button" variant="primary" @click="performSearch" :loading="searchLoading"
+            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:bg-indigo-400"
+            :preserveOriginalStyle="false" title="Perform search" aria-label="Perform search">
+            <CheckCircleIcon v-if="!searchLoading" class="h-5 w-5 mr-2" aria-hidden="true" />
+            {{ searchLoading ? 'Updating...' : 'Update' }}
+          </AppButton>
+        </div>
+      </div>
 
-      <!-- Search form -->
-      <ExpandableCard
-        title="Search Parameters"
-        :expandable="false"
-      >
-        <template #content>
-          <div class="space-y-4">
-            <div>
-              <InputField
-                id="search-query"
-                v-model="searchQuery"
-                label="Search Query"
-                type="text"
-                placeholder="Enter search terms or patterns"
-                :disabled="searchLoading"
-                ref="searchInputRef"
-              />
-            </div>
+      <!-- Search Form -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate-fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <InputField id="search-query" v-model="searchQuery" label="Search Query" type="text"
+            placeholder="Enter search terms or patterns" :disabled="searchLoading" ref="searchInputRef"
+            custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg" />
+          <SelectField id="categories" v-model="selectedCategory" label="Data Category"
+            :disabled="searchLoading || categoriesLoading"
+            custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg">
+            <option v-for="category in categories" :key="category.value" :value="category.value">
+              {{ category.label }}
+            </option>
+          </SelectField>
+          <SelectField id="sort" v-model="currentSort" label="Sort By" :disabled="searchLoading"
+            custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg">
+            <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </SelectField>
+        </div>
+      </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <SelectField
-                  id="categories"
-                  v-model="selectedCategory"
-                  label="Data Category"
-                  :disabled="searchLoading || categoriesLoading"
-                >
-                  <option v-for="category in categories" :key="category.value" :value="category.value">
-                    {{ category.label }}
-                  </option>
-                </SelectField>
-              </div>
-
-              <div>
-                <SelectField
-                  id="sort"
-                  v-model="currentSort"
-                  label="Sort By"
-                  :disabled="searchLoading"
-                >
-                  <option v-for="option in sortOptions" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </SelectField>
-              </div>
-            </div>
-          </div>
-        </template>
-      </ExpandableCard>
-
-      <!-- Error state -->
-      <div v-if="searchError" class="mt-4 p-4 bg-red-50 text-red-700 rounded-md">
-        {{ searchError }}
-        <AppButton
-          variant="text"
-          class="ml-2 text-red-700 underline"
-          @click="loadData"
-        >
+      <!-- Error State -->
+      <div v-if="searchError"
+        class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm font-medium text-red-800">{{ searchError }}</span>
+        </div>
+        <AppButton variant="text"
+          class="text-red-700 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          @click="loadData" :preserveOriginalStyle="false" aria-label="Retry loading data">
           Retry
         </AppButton>
       </div>
 
-      <!-- Search results table -->
+      <!-- Search Results -->
       <div class="mt-8">
-        <div v-if="searchLoading && !searchResults.length" class="py-6 text-center text-gray-500">
-          Loading data...
+        <!-- Loading State -->
+        <div v-if="searchLoading && !searchResults.length" class="py-8 flex justify-center items-center"
+          aria-live="polite">
+          <div class="animate-spin rounded-full h-12 W-12 border-t-4 border-indigo-600"></div>
+          <p class="ml-4 text-sm font-medium text-gray-600">Loading data...</p>
         </div>
 
-        <div v-if="!searchResults.length && !searchLoading" class="py-6 text-center text-gray-500">
+        <!-- Empty State -->
+        <div v-if="!searchResults.length && !searchLoading" class="py-8 text-center text-gray-600 font-medium"
+          aria-live="polite">
           No masking data found. Try adjusting your search or filters.
         </div>
 
-        <div v-if="searchResults.length > 0" class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-          <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 cursor-pointer"
-                  @click="sortTable('category')"
-                >
-                  <div class="flex items-center gap-1">
-                    Category
-                    <component :is="getSortIcon('category')" class="h-4 w-4" />
-                  </div>
-                </th>
-                <th
-                  scope="col"
-                  class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
-                  @click="sortTable('original_value')"
-                >
-                  <div class="flex items-center gap-1">
-                    Original Value
-                    <component :is="getSortIcon('original_value')" class="h-4 w-4" />
-                  </div>
-                </th>
-                <th
-                  scope="col"
-                  class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
-                  @click="sortTable('masked_value')"
-                >
-                  <div class="flex items-center gap-1">
-                    Masked Value
-                    <component :is="getSortIcon('masked_value')" class="h-4 w-4" />
-                  </div>
-                </th>
-                <th
-                  scope="col"
-                  class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
-                  @click="sortTable('created_at')"
-                >
-                  <div class="flex items-center gap-1">
-                    Created Date
-                    <component :is="getSortIcon('created_at')" class="h-4 w-4" />
-                  </div>
-                </th>
-                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6" v-if="searchResults.some(item => item.processed)">
-                  <span class="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-              <tr v-for="item in searchResults" :key="item.id" class="hover:bg-gray-50">
-                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                  {{ item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Unknown' }}
-                </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  {{ item.original_value || 'N/A' }}
-                </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  {{ item.masked_value || 'Not masked' }}
-                </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  {{ formatDate(item.created_at) }}
-                </td>
-                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6" v-if="searchResults.some(item => item.processed)">
-                  <div class="flex justify-end gap-2">
-                    <!-- Export/Copy (for processed files) -->
-                    <AppButton
-                      v-if="item.processed"
-                      @click="exportData(item)"
-                      variant="text"
-                      class="text-gray-400 hover:text-indigo-600 transition-colors"
-                      :preserveOriginalStyle="true"
-                      title="Export processed file"
-                    >
-                      <template #icon-left>
-                        <DocumentDuplicateIcon class="h-5 w-5 mr-2 flex-shrink-0" aria-hidden="true" />
-                      </template>
-                      Export
-                    </AppButton>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Results Table -->
+        <div v-if="searchResults.length > 0"
+          class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col"
+                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 cursor-pointer"
+                    @click="sortTable('category')">
+                    <div class="flex items-center gap-1">
+                      Category
+                      <component :is="getSortIcon('category')" class="h-4 w-4 text-gray-500"></component>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                    @click="sortTable('original_value')">
+                    <div class="flex items-center gap-1">
+                      Original Value
+                      <component :is="getSortIcon('original_value')" class="h-4 w-4 text-gray-500"></component>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                    @click="sortTable('masked_value')">
+                    <div class="flex items-center gap-1">
+                      Masked Value
+                      <component :is="getSortIcon('masked_value')" class="h-4 w-4 text-gray-500"></component>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                    @click="sortTable('created_at')">
+                    <div class="flex items-center gap-1">
+                      Created Date
+                      <component :is="getSortIcon('created_at')" class="h-4 w-4 text-gray-500"></component>
+                    </div>
+                  </th>
+                  <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                    v-if="searchResults.some(item => item.processed)">
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr v-for="item in searchResults" :key="item.id"
+                  class="hover:bg-gray-50 transition-colors duration-200">
+                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                    {{ item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Unknown' }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                    {{ item.original_value || 'N/A' }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                    {{ item.masked_value || 'Not masked' }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                    {{ formatDate(item.created_at) }}
+                  </td>
+                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
+                    v-if="searchResults.some(item => item.processed)">
+                    <div class="flex justify-end gap-2">
+                      <AppButton v-if="item.processed" @click="exportData(item)" variant="text"
+                        class="text-indigo-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        :preserveOriginalStyle="false" title="Export processed file" aria-label="Export processed file">
+                        <DocumentDuplicateIcon class="h-5 w-5" aria-hidden="true" />
+                      </AppButton>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <!-- Load more button -->
-        <div v-if="hasMoreResults && searchResults.length > 0" class="mt-4 text-center">
-          <AppButton
-            variant="secondary"
-            @click="loadMore"
-            :loading="searchLoading"
-            :disabled="searchLoading"
-            class="px-4 py-2 text-sm"
-            :preserveOriginalStyle="true"
-          >
+        <!-- Load More Button -->
+        <div v-if="hasMoreResults && searchResults.length > 0" class="mt-6 text-center">
+          <AppButton variant="secondary" @click="loadMore" :loading="searchLoading" :disabled="searchLoading"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            :preserveOriginalStyle="false" aria-label="Load more results">
             Load More Results
           </AppButton>
         </div>
       </div>
+
+      <!-- Footer Branding -->
+      <footer class="mt-12 text-center text-sm text-gray-500 px-4 sm:px-16">
+        © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
+        <a href="/privacy" class="text-indigo-600 hover:text-indigo-700 ml-2 transition-colors duration-200">Privacy
+          Policy</a>
+      </footer>
     </div>
   </MainLayout>
 </template>
+
+<style scoped>
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+</style>
