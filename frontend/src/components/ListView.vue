@@ -12,14 +12,8 @@
       <!-- List items -->
       <slot v-for="(item, index) in items" :key="itemKey ? item[itemKey] : index" :item="item" :index="index">
         <!-- Default rendering if no slot content is provided -->
-        <ListItem
-          :title="getItemTitle(item)"
-          :subtitle="getItemSubtitle(item)"
-          :metadata="getItemMetadata(item)"
-          :icon="getItemIcon(item)"
-          :icon-class="getItemIconClass(item)"
-          :custom-class="getItemClass(item)"
-        >
+        <ListItem :title="getItemTitle(item)" :subtitle="getItemSubtitle(item)" :metadata="getItemMetadata(item)"
+          :icon="getItemIcon(item)" :icon-class="getItemIconClass(item)" :custom-class="getItemClass(item)">
           <template v-if="$slots.itemActions" #actions>
             <slot name="itemActions" :item="item" :index="index"></slot>
           </template>
@@ -50,7 +44,7 @@ defineProps({
     default: 'No items'
   },
   emptyIcon: {
-    type: Object,
+    type: [Object, null],
     default: null
   },
   getItemTitle: {

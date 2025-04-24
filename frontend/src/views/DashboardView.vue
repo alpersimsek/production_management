@@ -174,8 +174,7 @@ const handleFileUpload = async (files) => {
             </template>
             <template #content>
               <div class="px-4 sm:px-6 pb-5">
-                <FileUploader :upload-progress="filesStore.uploadProgress" :error="uploadError" :show-icon="true"
-                  @file-upload="handleFileUpload" class="w-full max-w-md mb-4" />
+
                 <div v-if="filesStore.uploads.length" class="space-y-3">
                   <div v-for="file in filesStore.uploads" :key="file.id"
                     class="grid grid-cols-[2fr,1fr] items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">

@@ -3,10 +3,10 @@ import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'
 import { useFormatters } from '../composables/useFormatters'
 import MainLayout from '../components/MainLayout.vue'
-import PageHeader from '../components/PageHeader.vue'
 import ListView from '../components/ListView.vue'
 import FileUploader from '../components/FileUploader.vue'
 import ProcessingStatus from '../components/ProcessingStatus.vue'
+import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog.vue'
 import {
   DocumentIcon,
   DocumentCheckIcon,
@@ -18,6 +18,9 @@ import {
 const filesStore = useFilesStore()
 const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
 const uploadError = ref('')
+const showDeleteModal = ref(false)
+const deleteFileId = ref(null)
+const isLoading = ref(false)
 
 // Computed properties for formatted data
 const formattedUploads = computed(() => {
@@ -57,7 +60,12 @@ const getProcessingStatus = (file) => {
 
 // Setup functions
 onMounted(async () => {
-  await filesStore.fetchFiles()
+  isLoading.value = true
+  try {
+    await filesStore.fetchFiles()
+  } finally {
+    isLoading.value = false
+  }
 })
 
 // Event handlers
@@ -75,30 +83,41 @@ const handleFileUpload = async (files) => {
 
 const handleProcess = async (fileId) => {
   try {
+    uploadError.value = ''
     await filesStore.processFile(fileId)
     await filesStore.fetchFiles()
   } catch (error) {
     console.error('Failed to process file:', error)
+    uploadError.value = `Failed to process file: ${error.message || 'Unknown error'}`
   }
 }
 
-const handleDelete = async (fileId) => {
+const handleDelete = (fileId) => {
+  deleteFileId.value = fileId
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
   try {
-    await filesStore.deleteFile(fileId)
+    uploadError.value = ''
+    await filesStore.deleteFile(deleteFileId.value)
     await filesStore.fetchFiles()
   } catch (error) {
     console.error('Failed to delete file:', error)
+    uploadError.value = `Failed to delete file: ${error.message || 'Unknown error'}`
+  } finally {
+    showDeleteModal.value = false
+    deleteFileId.value = null
   }
 }
 
 const handleDownload = async (fileId) => {
   try {
+    uploadError.value = ''
     await filesStore.downloadFile(fileId)
   } catch (error) {
     console.error('Failed to download file:', error)
-    if (typeof window.alert === 'function') {
-      window.alert(`Download failed: ${error.message || 'The file may no longer exist or you may not have permission to access it.'}`)
-    }
+    uploadError.value = `Download failed: ${error.message || 'The file may no longer exist or you may not have permission to access it.'}`
   }
 }
 </script>
@@ -106,7 +125,6 @@ const handleDownload = async (fileId) => {
 <template>
   <MainLayout>
     <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
-
       <!-- Header -->
       <div class="sm:flex sm:items-center mb-8">
         <div class="sm:flex-auto">
@@ -119,30 +137,62 @@ const handleDownload = async (fileId) => {
         </div>
       </div>
 
-      <!-- File Lists -->
+      <!-- Loading State -->
       <div v-if="isLoading" class="py-8 flex justify-center items-center" aria-live="polite">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-600"></div>
         <p class="ml-4 text-sm font-medium text-gray-600">Loading files...</p>
       </div>
-      <div v-else class="space-y-8">
+
+      <!-- Error State -->
+      <div v-if="uploadError && !isLoading"
+        class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in flex items-center justify-between" role="alert">
+        <div class="flex items-center">
+          <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm font-medium text-red-800">{{ uploadError }}</span>
+        </div>
+        <div class="ml-auto pl-3">
+          <div class="-mx-1.5 -my-1.5">
+            <button type="button" @click="uploadError = ''"
+              class="inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+              aria-label="Dismiss error">
+              <TrashIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Lists -->
+      <div v-if="!isLoading" class="space-y-8">
         <!-- File Uploader and Uploads Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 sm:mb-8">
           <!-- File Uploader -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
-            <FileUploader :upload-progress="filesStore.uploadProgress" :error="uploadError" :show-icon="true"
-              @file-upload="handleFileUpload" class="w-full max-w-md" />
-            <p v-if="uploadError" class="mt-2 text-sm text-red-500 text-center bg-red-50 p-2 rounded-md animate-fade-in"
-              role="alert">
-              {{ uploadError }}
-            </p>
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in flex items-center justify-center hover:shadow-md hover:scale-105 transition-all duration-200">
+            <div class="w-full max-w-md">
+              <FileUploader :upload-progress="filesStore.uploadProgress" :error="uploadError" :show-icon="true"
+                @file-upload="handleFileUpload" class="w-full" />
+              <p v-if="uploadError"
+                class="mt-2 text-sm text-red-500 text-center bg-red-50 p-2 rounded-md animate-fade-in" role="alert">
+                {{ uploadError }}
+              </p>
+            </div>
           </div>
           <!-- Uploads List -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Uploads</h2>
-            <ListView title="" :items="formattedUploads" :empty-message="'No files uploaded yet'"
-              :empty-icon="DocumentIcon" :get-item-title="item => item.filename"
-              :get-item-subtitle="item => item.formattedSize" :get-item-metadata="item => item.formattedDate"
-              :get-item-icon="() => DocumentIcon">
+            <ListView title="" :items="formattedUploads" empty-message="No files uploaded yet"
+              :get-item-title="item => item.filename" :get-item-subtitle="item => item.formattedSize"
+              :get-item-metadata="item => item.formattedDate" :get-item-icon="() => DocumentIcon">
+              <template #empty>
+                <div class="text-center py-4">
+                  <DocumentIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
+                  <p class="mt-2 text-sm text-gray-500 italic">No files uploaded yet</p>
+                </div>
+              </template>
               <template #itemActions="{ item }">
                 <div class="flex items-center gap-2">
                   <template v-if="!isProcessing(item.id)">
@@ -159,7 +209,7 @@ const handleDownload = async (fileId) => {
                   <button @click="handleDelete(item.id)"
                     class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
                     title="Delete file" aria-label="Delete file">
-                    <TrashIcon class="h-5 w-5 text-gray-400 hover:text-red-600" aria-hidden="true" />
+                    <TrashIcon class="h-5 w-5 text-gray-600 hover:text-red-600" aria-hidden="true" />
                   </button>
                 </div>
               </template>
@@ -169,10 +219,15 @@ const handleDownload = async (fileId) => {
 
         <!-- Processed Files -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
-          <ListView title="Processed Files" :items="formattedProcessed" :empty-message="'No processed files yet'"
-            :empty-icon="DocumentCheckIcon" :get-item-title="item => item.filename"
-            :get-item-subtitle="item => item.formattedSize" :get-item-metadata="item => item.formattedDate"
-            :get-item-icon="() => DocumentCheckIcon">
+          <ListView title="Processed Files" :items="formattedProcessed" empty-message="No processed files yet"
+            :get-item-title="item => item.filename" :get-item-subtitle="item => item.formattedSize"
+            :get-item-metadata="item => item.formattedDate" :get-item-icon="() => DocumentCheckIcon">
+            <template #empty>
+              <div class="text-center py-4">
+                <DocumentCheckIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
+                <p class="mt-2 text-sm text-gray-500 italic">No processed files yet</p>
+              </div>
+            </template>
             <template #itemActions="{ item }">
               <div class="flex items-center gap-2">
                 <button @click="handleDownload(item.id)"
@@ -183,7 +238,7 @@ const handleDownload = async (fileId) => {
                 <button @click="handleDelete(item.id)"
                   class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
                   title="Delete file" aria-label="Delete file">
-                  <TrashIcon class="h-5 w-5 text-gray-400 hover:text-red-600" aria-hidden="true" />
+                  <TrashIcon class="h-5 w-5 text-gray-600 hover:text-red-600" aria-hidden="true" />
                 </button>
               </div>
             </template>
@@ -220,17 +275,5 @@ const handleDownload = async (fileId) => {
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
-}
-
-/* Dialog transition */
-.dialog-enter-active,
-.dialog-leave-active {
-  transition: all 0.3s ease;
-}
-
-.dialog-enter-from,
-.dialog-leave-to {
-  opacity: 0;
-  transform: translateY(-20px);
 }
 </style>

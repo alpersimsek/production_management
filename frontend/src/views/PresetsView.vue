@@ -6,6 +6,7 @@ import PresetsList from '../components/PresetsList.vue'
 import PresetForm from '../components/PresetForm.vue'
 import PresetRuleForm from '../components/PresetRuleForm.vue'
 import RuleManagement from '../components/RuleManagement.vue'
+import CustomRuleForm from '../components/CustomRuleForm.vue'
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog.vue'
 import { XMarkIcon, PlusIcon, CogIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
@@ -22,8 +23,10 @@ const showPresetModal = ref(false)
 const showRuleModal = ref(false)
 const showDeleteModal = ref(false)
 const showRuleListModal = ref(false)
+const showCustomRuleForm = ref(false)
 const editingPreset = ref(null)
 const editingRule = ref(null)
+const selectedRule = ref(null)
 const deleteTarget = ref(null)
 const deleteType = ref('') // 'preset', 'rule', or 'customRule'
 
@@ -86,6 +89,7 @@ const loadRules = async () => {
   try {
     const response = await ApiService.getRules()
     rules.value = response || []
+    console.log('Rules', rules.value)
     return response
   } catch (err) {
     console.error('Failed to load rules:', err)
@@ -111,7 +115,6 @@ const loadPresetRules = async (presetId) => {
 // CRUD operations for presets
 const openPresetModal = (preset = null, productId = null) => {
   editingPreset.value = preset
-  // Store the product ID if it's provided (for creating new presets)
   if (productId && !preset) {
     console.log('Opening preset modal for product:', productId)
   }
@@ -190,9 +193,24 @@ const openRuleListModal = () => {
 const handleRuleListSaved = async () => {
   try {
     await loadRules()
+    showCustomRuleForm.value = false
+    selectedRule.value = null
   } catch (err) {
     error.value = `Failed to refresh rules list: ${err.message || 'Unknown error'}`
   }
+}
+
+// Custom rule form handling
+const openCustomRuleForm = (rule = null) => {
+  console.log('PresetsPage: Opening CustomRuleForm, rule:', rule)
+  selectedRule.value = rule
+  showCustomRuleForm.value = true
+}
+
+const closeCustomRuleForm = () => {
+  console.log('PresetsPage: Closing CustomRuleForm')
+  showCustomRuleForm.value = false
+  selectedRule.value = null
 }
 
 // Handlers for the PresetsList component
@@ -320,11 +338,13 @@ const handleDeletePresetRule = (data) => {
       </transition>
 
       <!-- Rule Management Modal -->
-      <transition name="modal">
-        <RuleManagement v-if="showRuleListModal" :open="showRuleListModal" :rules="rules"
-          @close="showRuleListModal = false" @saved="handleRuleListSaved"
-          @delete="confirmDelete('customRule', $event)" />
-      </transition>
+      <RuleManagement v-if="showRuleListModal" :open="showRuleListModal" :rules="rules"
+        @close="showRuleListModal = false" @saved="handleRuleListSaved" @open-rule-form="openCustomRuleForm"
+        @delete="confirmDelete('customRule', $event)" />
+
+      <!-- Custom Rule Form Modal -->
+      <CustomRuleForm v-if="showCustomRuleForm" :open="showCustomRuleForm" :rule="selectedRule"
+        @close="closeCustomRuleForm" @saved="handleRuleListSaved" @error="error = $event" />
     </div>
   </MainLayout>
 </template>
@@ -346,7 +366,6 @@ const handleDeletePresetRule = (data) => {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Modal transition */
 .modal-enter-active,
 .modal-leave-active {
   transition: all 0.3s ease;
