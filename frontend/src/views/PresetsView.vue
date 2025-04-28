@@ -187,6 +187,7 @@ const handleDelete = async () => {
 
 // Rule management
 const openRuleListModal = () => {
+  loadRules()
   showRuleListModal.value = true
 }
 
