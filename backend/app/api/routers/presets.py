@@ -216,7 +216,7 @@ class PresetsRouter(APIRouter):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
             )
-
+        print('CREATE RULE')
         preset_rule_service = PresetRuleService(req.state.db)
         try:
             # Check if preset exists
@@ -275,6 +275,9 @@ class PresetsRouter(APIRouter):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
             )
+            
+        print(rule_id)
+        print(rule_data)
 
         preset_rule_service = PresetRuleService(req.state.db)
         try:

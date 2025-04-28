@@ -1,76 +1,43 @@
 <template>
   <Dialog :open="open" @close="$emit('close')" class="relative z-20">
-    <div class="fixed inset-0 bg-black/30" style="z-index: 20;" aria-hidden="true" @mousedown.stop />
-
-    <div class="fixed inset-0 flex items-center justify-center p-4" style="z-index: 20;">
-      <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-        <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-          {{ isEdit ? 'Edit Rule for Preset' : 'Add Rule to Preset' }}
-        </DialogTitle>
-
-        <div class="mt-4">
-          <div class="space-y-4">
-            <!-- Rule Selection -->
-            <div>
-              <label for="rule" class="block text-sm font-medium text-gray-700">Rule</label>
-              <select
-                id="rule"
-                v-model="formData.rule_id"
-                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                :required="true"
-              >
-                <option value="" disabled>Select a rule</option>
-                <option v-for="rule in availableRules" :key="rule.id" :value="rule.id">
-                  {{ rule.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Action Type -->
-            <div>
-              <label for="action-type" class="block text-sm font-medium text-gray-700">Action Type</label>
-              <select
-                id="action-type"
-                v-model="formData.action.type"
-                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                <option value="replace">Replace</option>
-                <option value="redact">Redact</option>
-                <option value="hash">Hash</option>
-              </select>
-            </div>
-
-            <!-- Replacement Value (only shown for replace action) -->
-            <div v-if="formData.action.type === 'replace'">
-              <label for="replacement" class="block text-sm font-medium text-gray-700">Replacement Value</label>
-              <input
-                id="replacement"
-                type="text"
-                v-model="formData.action.value"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="[REDACTED]"
-              />
-            </div>
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300" aria-hidden="true" />
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <DialogPanel
+        class="w-full max-w-md transform overflow-hidden rounded-xl bg-white p-6 shadow-2xl transition-all duration-300">
+        <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Rule for Preset' : 'Add Rule          to Preset' }}</DialogTitle>
+        <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center animate-fade-in">
+          <CheckCircleIcon class="h-5 w-5 text-green-400" />
+          <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
+        </div>
+        <div v-if="errorMessage" class="mt-4 rounded-md bg-red-50 p-3 flex items-center animate-fade-in">
+          <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
+          <p class="ml-2 text-sm text-red-800">{{ errorMessage }}</p>
+          <button type="button" @click="errorMessage = ''" class="ml-auto text-red-500 hover:text-red-700"
+            aria-label="Dismiss error">
+            <XMarkIcon class="h-5 w-5" />
+          </button>
+        </div>
+        <div class="mt-6 space-y-4">
+          <div>
+            <label for="rule" class="block text-sm font-medium text-gray-700">Rule</label>
+            <select id="rule" v-model="formData.rule_id"
+              class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              :class="{ 'border-red-300': errors.rule_id }" required @focus="clearError('rule_id')">
+              <option value="" disabled>Select a rule</option>
+              <option v-for="rule in availableRules" :key="rule.id" :value="rule.id">{{ rule.name }}</option>
+            </select>
+            <p v-if="errors.rule_id" class="mt-1 text-sm text-red-600">{{ errors.rule_id }}</p>
           </div>
         </div>
-
-        <div class="mt-6 flex justify-end space-x-3">
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="save"
-            :disabled="!isValid || saving"
-            class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300"
-          >
-            <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <div class="mt-8 flex justify-end space-x-3">
+          <button type="button" @click="$emit('close')"
+            class="inline-flex rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+            :disabled="saving">Cancel</button>
+          <button type="button" @click="save" :disabled="!isValid || saving"
+            class="inline-flex rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-indigo-400">
+            <svg v-if="saving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
             </svg>
             {{ isEdit ? 'Update' : 'Add' }} Rule
           </button>
@@ -83,129 +50,119 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
+import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 
 const props = defineProps({
-  open: {
-    type: Boolean,
-    required: true
-  },
-  presetId: {
-    type: [Number, String],
-    required: true
-  },
-  rules: {
-    type: Array,
-    required: true
-  },
-  presetRules: {
-    type: Array,
-    default: () => []
-  },
-  editRule: {
-    type: Object,
-    default: null
-  }
+  open: { type: Boolean, required: true },
+  presetId: { type: [Number, String], required: true },
+  rules: { type: Array, required: true },
+  presetRules: { type: Array, default: () => [] },
+  editRule: { type: Object, default: null }
 })
 
 const emit = defineEmits(['close', 'saved', 'error'])
 
-// Form data
-const formData = ref({
-  rule_id: '',
-  action: {
-    type: 'replace',
-    value: '[REDACTED]'
-  }
-})
-
-// Loading state
+const formData = ref({ rule_id: '' })
+const errors = ref({})
 const saving = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
 
-// Compute available rules (exclude already added ones)
 const availableRules = computed(() => {
-  // If editing, we need to include the current rule
-  if (props.editRule) {
-    return props.rules
-  }
-
-  // For new rules, exclude those already added to the preset
+  if (props.editRule) return props.rules
   const existingRuleIds = props.presetRules.map(r => r.rule_id)
   return props.rules.filter(rule => !existingRuleIds.includes(rule.id))
 })
 
-// Check if form is in edit mode
 const isEdit = computed(() => !!props.editRule)
 
-// Form validation
-const isValid = computed(() => {
-  return formData.value.rule_id &&
-         formData.value.action.type &&
-         (formData.value.action.type !== 'replace' || !!formData.value.action.value)
-})
+const isValid = computed(() => !!formData.value.rule_id)
 
-// Initialize form when dialog opens or editRule changes
+const clearError = (field) => {
+  if (errors.value[field]) {
+    errors.value = { ...errors.value, [field]: '' }
+  }
+}
+
 watch(
   [() => props.open, () => props.editRule],
   ([open, editRule]) => {
     if (open) {
-      if (editRule) {
-        // Edit mode - populate form with rule data
-        formData.value = {
-          rule_id: editRule.rule_id,
-          action: {
-            type: editRule.action.type || 'replace',
-            value: editRule.action.value || '[REDACTED]'
-          }
-        }
-      } else {
-        // Create mode - reset form
-        formData.value = {
-          rule_id: '',
-          action: {
-            type: 'replace',
-            value: '[REDACTED]'
-          }
-        }
-      }
+      successMessage.value = ''
+      errorMessage.value = ''
+      errors.value = {}
+      formData.value = editRule ? { rule_id: editRule.rule_id } : { rule_id: '' }
     }
   },
   { immediate: true }
 )
 
-// Save the rule
 const save = async () => {
-  if (!isValid.value) return
+  errors.value = {}
+  if (!formData.value.rule_id) {
+    errors.value.rule_id = 'Please select a rule'
+    return
+  }
 
   saving.value = true
-
   try {
+    // Include default action to satisfy backend schema
     const ruleData = {
       rule_id: formData.value.rule_id,
-      action: {
-        type: formData.value.action.type,
-        ...(formData.value.action.type === 'replace' && { value: formData.value.action.value })
-      }
+      action: { type: 'replace', value: '[REDACTED]' }
     }
-
+    let response
     if (isEdit.value) {
-      // Update existing rule
-      await ApiService.updatePresetRule(props.presetId, props.editRule.rule_id, ruleData)
+      response = await ApiService.updatePresetRule(props.presetId, props.editRule.rule_id, ruleData)
+      successMessage.value = 'Rule updated successfully'
     } else {
-      // Create new rule
-      const presetRuleData = {
-        preset_id: props.presetId,
-        ...ruleData
-      }
-      await ApiService.createPresetRule(presetRuleData)
+      const presetRuleData = { preset_id: props.presetId, ...ruleData }
+      response = await ApiService.createPresetRule(presetRuleData)
+      successMessage.value = 'Rule added successfully'
     }
-
-    emit('saved')
+    setTimeout(() => {
+      emit('saved', response)
+      emit('close')
+    }, 1000)
   } catch (error) {
-    console.error('Error saving preset rule:', error)
-    emit('error', error)
+    // Handle complex error responses
+    let message = 'Failed to save rule'
+    if (error.status === 422 && error.data?.detail) {
+      if (Array.isArray(error.data.detail)) {
+        message = error.data.detail.map(err => err.msg).join('; ') || message
+      } else {
+        message = error.data.detail || message
+      }
+    } else {
+      message = error.message || message
+    }
+    errorMessage.value = message
+    emit('error', message)
   } finally {
     saving.value = false
   }
 }
 </script>
+
+<style scoped>
+.transition-all {
+  transition: all 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+</style>

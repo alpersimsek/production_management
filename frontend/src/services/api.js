@@ -459,6 +459,7 @@ class ApiService {
 
   static async createPresetRule(ruleData) {
     try {
+      console.log(ruleData)
       const response = await axios.post(endpoints.presetRules.create, ruleData)
       return response.data
     } catch (error) {
