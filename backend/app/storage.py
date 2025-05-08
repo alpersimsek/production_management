@@ -63,6 +63,8 @@ class FileStorage(BaseStorage):
         """Get file type."""
         path = self.get(file_id)
         mime = magic.from_file(str(path), mime=True)
+        if mime == MimeType.JSON.value:
+            return self.T_TEXT
         if mime == MimeType.TEXT.value:
             # Plain text
             return self.T_TEXT

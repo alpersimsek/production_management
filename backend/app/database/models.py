@@ -18,6 +18,7 @@ class ContentType(enum.Enum):
     TEXT = "text"
     PCAP = "pcap"
     ARCHIVE = "archive"
+    JSON = "json"
     UNKNOWN = "unknown"
     DEFAULT = UNKNOWN
 
@@ -28,6 +29,7 @@ class MimeType(enum.Enum):
     ZIP = "application/zip"
     TAR = "application/x-tar"
     GZIP = "application/gzip"
+    JSON = "application/x-ndjson"
 
 
 class Role(enum.Enum):
