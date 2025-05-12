@@ -68,6 +68,9 @@ class FileStorage(BaseStorage):
         if mime == MimeType.TEXT.value:
             # Plain text
             return self.T_TEXT
+        if mime == MimeType.TEXTX.value:
+            # Plain text
+            return self.T_TEXT
         if mime == "application/vnd.tcpdump.pcap":
             # PCAP file
             return self.T_PCAP

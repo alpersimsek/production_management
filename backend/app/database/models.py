@@ -30,6 +30,7 @@ class MimeType(enum.Enum):
     TAR = "application/x-tar"
     GZIP = "application/gzip"
     JSON = "application/x-ndjson"
+    TEXTX = "text/x-file"
 
 
 class Role(enum.Enum):
