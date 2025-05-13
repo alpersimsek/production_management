@@ -13,7 +13,7 @@ from database.models import (
     ContentType,
     RuleCategory,
 )
-from gdpr.processors import BaseProcessor, TextProcessor
+from gdpr.processors import BaseProcessor, TextProcessor, PcapProcessor
 from gdpr.matchers import RegexpMatcher, IPAddrMatcher, MacAddrMatcher
 from gdpr.patchers import ReplacePatcher
 import collections
@@ -29,10 +29,15 @@ from fastapi import UploadFile
 from logger import logger
 from charset_normalizer import from_path
 from sqlalchemy import or_
-
+import tenacity
+import magic
+import os
 
 T = TypeVar("T")
 
+class PcapProcessingError(Exception):
+    """Custom exception for PCAP processing errors."""
+    pass
 
 class ProcessingConfig:
     """Processign config class."""
@@ -50,6 +55,7 @@ class ProcessingConfig:
     # Content type -> processor class maping
     PROC_CLS_MAP = {
         ContentType.TEXT.value: TextProcessor,
+        ContentType.PCAP.value: PcapProcessor,
     }
 
     def __init__(
@@ -287,11 +293,37 @@ class FileService(BaseService[File]):
         file = self.get_by_id(file_id)
 
         if not file:
+            logger.error(
+                {
+                    "event": "process_failed",
+                    "file_id": file_id,
+                    "error": "File not found",
+                },
+                extra={"context": {"file_id": file_id}},
+            )
             raise Exception("File not found")
 
         if file.status is not FileStatus.CREATED:
+            logger.error(
+                {
+                    "event": "process_failed",
+                    "file_id": file_id,
+                    "error": "File processing is already started",
+                },
+                extra={"context": {"file_id": file_id}},
+            )
             raise Exception("File processing is already started")
 
+        logger.info(
+            {
+                "event": "process_started",
+                "file_id": file_id,
+                "filename": file.filename,
+                "content_type": file.content_type.value,
+            },
+            extra={"context": {"file_id": file_id}},
+        )
+        
         # Track if this is an archive
         is_archive = file.content_type is ContentType.ARCHIVE
 
@@ -303,6 +335,15 @@ class FileService(BaseService[File]):
             file.completed_size = 0
             file.time_remaining = 0
             self.session.commit()
+            logger.debug(
+                {
+                    "event": "archive_unpacked",
+                    "file_id": file_id,
+                    "extracted_size": file.extracted_size,
+                    "file_count": len(files),
+                },
+                extra={"context": {"file_id": file_id}},
+            )
         else:
             files = [file]
 
@@ -322,6 +363,14 @@ class FileService(BaseService[File]):
 
             for child in file.archive_files:
                 self.delete_file(child.id)
+            logger.info(
+                {
+                    "event": "archive_repacked",
+                    "file_id": file_id,
+                    "filename": file.filename,
+                },
+                extra={"context": {"file_id": file_id}},
+            )
         return file
 
     def preprocess_file(self, files: Dict[str, str], rules_configs: Dict[str, List]):
@@ -392,86 +441,179 @@ class FileService(BaseService[File]):
                 (File.status != FileStatus.DONE) & File.id.in_(file_ids)
             ).update({"status": FileStatus.ERROR})
             raise
-
+    
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
+        retry=tenacity.retry_if_exception_type((IOError, OSError)),
+        before_sleep=lambda retry_state: logger.debug(
+            {
+                "event": "file_processing_retry",
+                "attempt": retry_state.attempt_number,
+                "error": str(retry_state.outcome.exception()),
+            },
+            extra={"context": {"attempt": retry_state.attempt_number}},
+        )
+    )
     def _process_file(self, config: ProcessingConfig, file_id: str) -> None:
         file_obj = self.get_by_id(file_id)
         if not file_obj:
+            logger.error(
+                {
+                    "event": "process_failed",
+                    "file_id": file_id,
+                    "error": "File not found",
+                },
+                extra={"context": {"file_id": file_id}},
+            )
             raise FileNotFoundError(f"File with id {file_id} not found.")
         file_obj.status = FileStatus.IN_PROGRESS
         content_type = file_obj.content_type
+        src = self.storage.get(file_id)
+        # Log file type using python-magic
+        mime = magic.from_file(str(src), mime=True)
+        file_type_description = magic.from_file(str(src))
+        is_capture_file = mime == "application/vnd.tcpdump.pcap"
+        logger.info(
+            {
+                "event": "file_processing_started",
+                "file_id": file_id,
+                "filename": file_obj.filename,
+                "content_type": content_type.value,
+                "mime_type": mime,
+                "file_type_description": file_type_description,
+                "is_capture_file": is_capture_file,
+            },
+            extra={"context": {"file_id": file_id}},
+        )
         processor = config.make_processor(content_type=content_type.value)
+        dst_filename = file_obj.filename if file_obj.filename.endswith('.pcap') else f"masked_{file_id}.pcap"
+        dst = src.parent.joinpath(dst_filename)
         try:
-            src = self.storage.get(file_id)
-            dst = src.parent.joinpath(f"{src.name}.new")
-
-            # Detect encoding
-            encoding_res = from_path(src).best()
-            if encoding_res:
+            if content_type == ContentType.TEXT:
+                encoding_res = from_path(src).best()
+                if not encoding_res:
+                    logger.error(
+                        {
+                            "event": "process_failed",
+                            "file_id": file_id,
+                            "error": "Can't detect encoding for file",
+                        },
+                        extra={"context": {"file_id": file_id}},
+                    )
+                    raise PcapProcessingError("Can't detect encoding for file")
                 encoding = encoding_res.encoding
-                confidence = 1 - encoding_res.chaos  # lower chaos = higher confidence
-                language = encoding_res.language
-            # encoding = enc_detector.result['encoding']
-            if encoding_res is None:
-                raise RuntimeError("Can't detect encoding for file")
-
-            done_size = 0
-            unreported = 0
-            total_size = self.storage.get_size(file_id)
-            max_report_num = int(total_size / settings.REPORT_STEP)
-
-            # Process file
-            # Dynamic report step based on file size
-            # total_size = file_obj.file_size
-            # if total_size > 1_000_000_000:  # > 1GB
-            #     report_step = 10_000_000  # Report every 10MB
-            # elif total_size > 100_000_000:  # > 100MB
-            #     report_step = 5_000_000  # Report every 5MB
-            # else:
-            #     report_step = 1_000_000  # Report every 1MB
-
-            process_time = 0
-            report_count = 1
-            with dst.open("w", newline="", encoding=encoding) as f_dst:
-                with src.open("r", newline="", encoding=encoding) as f_src:
-                    operation_time = time.time()
-                    for chunk in processor.feed(f_src):
-                        f_dst.write(chunk)
-                        chunk_bytest_len = len(chunk.encode())
-                        done_size += chunk_bytest_len
-                        unreported += chunk_bytest_len
-                        if unreported >= settings.REPORT_STEP:
-                            process_time += time.time() - operation_time
-                            average_process_time = process_time / report_count
-                            operation_time = time.time()
-                            chunk_num = max_report_num - report_count
-                            time_remain = int(chunk_num * average_process_time)
-
-                            file_obj.completed_size = done_size
-                            file_obj.time_remaining = time_remain
-                            self.session.commit()
-                            logger.debug(
-                                f"Progress update for {file_id}: completed_size={done_size}, time_remaining={time_remain}"
-                            )
-                            report_count += 1
-                            unreported = 0
-            logger.info("Renaming %s -> %s", dst, src)
+                done_size = 0
+                unreported = 0
+                total_size = self.storage.get_size(file_id)
+                max_report_num = int(total_size / settings.REPORT_STEP)
+                process_time = 0
+                report_count = 1
+                with dst.open("w", newline="", encoding=encoding) as f_dst:
+                    with src.open("r", newline="", encoding=encoding) as f_src:
+                        operation_time = time.time()
+                        for chunk in processor.feed(f_src):
+                            f_dst.write(chunk)
+                            chunk_bytes_len = len(chunk.encode())
+                            done_size += chunk_bytes_len
+                            unreported += chunk_bytes_len
+                            if unreported >= settings.REPORT_STEP:
+                                process_time += time.time() - operation_time
+                                average_process_time = process_time / report_count
+                                operation_time = time.time()
+                                chunk_num = max_report_num - report_count
+                                time_remain = int(chunk_num * average_process_time)
+                                file_obj.completed_size = done_size
+                                file_obj.time_remaining = time_remain
+                                self.session.commit()
+                                logger.debug(
+                                    {
+                                        "event": "progress_update",
+                                        "file_id": file_id,
+                                        "completed_size": done_size,
+                                        "time_remaining": time_remain,
+                                    },
+                                    extra={"context": {"file_id": file_id}},
+                                )
+                                report_count += 1
+                                unreported = 0
+            elif content_type == ContentType.PCAP:
+                done_size = 0
+                total_size = self.storage.get_size(file_id)
+                operation_time = time.time()
+                for item in processor.feed(src):
+                    if len(item) != 3:
+                        logger.error(
+                            {
+                                "event": "invalid_packet_tuple",
+                                "file_id": file_id,
+                                "tuple": str(item),
+                                "expected": "(ts, output_path, linktype)",
+                            },
+                            extra={"context": {"file_id": file_id}},
+                        )
+                        raise PcapProcessingError(f"Invalid packet tuple: {item}")
+                    _ts, output_path, _linktype = item
+                    done_size = os.path.getsize(output_path)
+                    os.rename(output_path, dst)
+                    logger.info(
+                        {
+                            "event": "pcap_processed",
+                            "file_id": file_id,
+                            "total_size": done_size,
+                            "output_file": str(dst),
+                        },
+                        extra={"context": {"file_id": file_id}},
+                    )
+                    break  # Only one output file is expected
+                file_obj.completed_size = done_size
+                file_obj.time_remaining = 0
+                self.session.commit()
+            else:
+                logger.error(
+                    {
+                        "event": "process_failed",
+                        "file_id": file_id,
+                        "error": f"Unsupported content type: {content_type}",
+                    },
+                    extra={"context": {"file_id": file_id}},
+                )
+                raise PcapProcessingError(f"Unsupported content type: {content_type}")
+            logger.info(
+                {
+                    "event": "file_renamed",
+                    "file_id": file_id,
+                    "src_path": str(dst),
+                    "dst_path": str(src),
+                },
+                extra={"context": {"file_id": file_id}},
+            )
+            file_obj.filename = dst_filename
             dst.rename(src)
-
             file_obj.status = FileStatus.DONE
             file_obj.completed_size = done_size
             file_obj.time_remaining = 0
             file_obj.file_size = self.storage.get_size(file_id)
-        except Exception:
-            logger.exception(f"Error processing file {file_id}")
+            self.session.commit()
+        except Exception as ex:
+            logger.exception(
+                {
+                    "event": "process_error",
+                    "file_id": file_id,
+                    "error": str(ex),
+                },
+                extra={"context": {"file_id": file_id}},
+            )
             path = pathlib.Path(file_obj.filename)
             path_parts = list(path.parts)
             path_parts[-1] = "failed_" + path_parts[-1]
             filename = "/".join(path_parts)
-
             file_obj.status = FileStatus.ERROR
             file_obj.filename = filename
             if dst.exists():
                 dst.unlink()
+            self.session.commit()
+            raise PcapProcessingError(f"Error processing file {file_id}: {str(ex)}")
 
     def get_rule_config(self, presetRule: PresetRule):
         # config = []
