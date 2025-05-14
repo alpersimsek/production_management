@@ -276,9 +276,6 @@ class PresetsRouter(APIRouter):
                 status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
             )
             
-        print(rule_id)
-        print(rule_data)
-
         preset_rule_service = PresetRuleService(req.state.db)
         try:
             # Find the preset rule

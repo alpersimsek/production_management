@@ -87,9 +87,9 @@ class TextProcessor(BaseProcessor):
                 yield line
 
 class PcapProcessor(BaseProcessor):
-    """PCAP processor class using scapy to process payloads as text."""
+    """PCAP processor class using scapy to mask IP, MAC, and payload data."""
     def feed(self, data: Union[str, pathlib.Path], chunk_size=1000) -> Iterator[Tuple[float, str, int]]:
-        from services import PcapProcessingError  # Deferred import to avoid circular dependency
+        from services import PcapProcessingError  # Deferred import
         packet_count = 0
         skipped_packets = 0
         output_path = str(data) + ".tmp"
@@ -105,19 +105,29 @@ class PcapProcessor(BaseProcessor):
                     },
                     extra={"context": {"file": str(data)}}
                 )
-                # Create an empty PCAP file as output
                 wrpcap(output_path, [])
                 yield (0, output_path, DLT_EN10MB)
                 return
 
-            # Use DLT_EN10MB (Ethernet) as default linktype
-            linktype = DLT_EN10MB
+            linktype = DLT_EN10MB  # Default to Ethernet
+            # Log detailed matcher configurations
+            matcher_configs = [
+                {
+                    "type": matcher.__class__.__name__,
+                    "pattern": getattr(matcher, 'pattern', None).pattern if hasattr(matcher, 'pattern') else None,
+                    "patcher": {
+                        "type": matcher.patcher.__class__.__name__,
+                        "category": matcher.patcher.category.value if hasattr(matcher.patcher, 'category') else None
+                    } if hasattr(matcher, 'patcher') else None
+                } for matcher in self.matchers
+            ]
             logger.info(
                 {
                     "event": "pcap_reader_initialized",
                     "file": str(data),
                     "linktype": linktype,
                     "packet_count": len(packets),
+                    "matcher_configs": matcher_configs,
                 },
                 extra={"context": {"file": str(data)}}
             )
@@ -141,7 +151,169 @@ class PcapProcessor(BaseProcessor):
                         extra={"context": {"packet_count": packet_count}}
                     )
 
-                    # Extract payload as text
+                    # Mask Ethernet layer MAC addresses
+                    if pkt.haslayer(Ether):
+                        ether = pkt[Ether]
+                        src_mac = ether.src
+                        dst_mac = ether.dst
+                        mac_matches = []
+                        mac_matcher_configs = []
+                        for matcher in self.matchers:
+                            if isinstance(matcher, RegexpMatcher):
+                                matcher_config = {
+                                    "type": matcher.__class__.__name__,
+                                    "pattern": matcher.pattern.pattern,
+                                    "patcher_category": matcher.patcher.category.value if hasattr(matcher.patcher, 'category') else None
+                                }
+                                mac_matcher_configs.append(matcher_config)
+                                logger.debug(
+                                    {
+                                        "event": "mac_matcher_check",
+                                        "packet_count": packet_count,
+                                        "src_mac": src_mac,
+                                        "dst_mac": dst_mac,
+                                        "matcher_config": matcher_config,
+                                    },
+                                    extra={"context": {"packet_count": packet_count}}
+                                )
+                                if matcher.pattern.match(src_mac):
+                                    mac_matches.append(Match(
+                                        start=0, end=len(src_mac), word=src_mac,
+                                        patcher=matcher.patcher
+                                    ))
+                                if matcher.pattern.match(dst_mac):
+                                    mac_matches.append(Match(
+                                        start=0, end=len(dst_mac), word=dst_mac,
+                                        patcher=matcher.patcher
+                                    ))
+                        if not mac_matches:
+                            logger.debug(
+                                {
+                                    "event": "no_mac_matches",
+                                    "packet_count": packet_count,
+                                    "src_mac": src_mac,
+                                    "dst_mac": dst_mac,
+                                    "matcher_configs": mac_matcher_configs,
+                                },
+                                extra={"context": {"packet_count": packet_count}}
+                            )
+                        for match in mac_matches:
+                            masked_mac = match.process()
+                            if match.word == src_mac:
+                                ether.src = masked_mac
+                                logger.info(
+                                    {
+                                        "event": "mac_masked",
+                                        "packet_count": packet_count,
+                                        "field": "src",
+                                        "original": src_mac,
+                                        "masked": masked_mac,
+                                    },
+                                    extra={"context": {"packet_count": packet_count}}
+                                )
+                            elif match.word == dst_mac:
+                                ether.dst = masked_mac
+                                logger.info(
+                                    {
+                                        "event": "mac_masked",
+                                        "packet_count": packet_count,
+                                        "field": "dst",
+                                        "original": dst_mac,
+                                        "masked": masked_mac,
+                                    },
+                                    extra={"context": {"packet_count": packet_count}}
+                                )
+                    else:
+                        logger.debug(
+                            {
+                                "event": "no_ether_layer",
+                                "packet_count": packet_count,
+                            },
+                            extra={"context": {"packet_count": packet_count}}
+                        )
+
+                    # Mask IP layer addresses
+                    if pkt.haslayer(IP):
+                        ip = pkt[IP]
+                        src_ip = ip.src
+                        dst_ip = ip.dst
+                        ip_matches = []
+                        ip_matcher_configs = []
+                        for matcher in self.matchers:
+                            if isinstance(matcher, RegexpMatcher):
+                                matcher_config = {
+                                    "type": matcher.__class__.__name__,
+                                    "pattern": matcher.pattern.pattern,
+                                    "patcher_category": matcher.patcher.category.value if hasattr(matcher.patcher, 'category') else None
+                                }
+                                ip_matcher_configs.append(matcher_config)
+                                logger.debug(
+                                    {
+                                        "event": "ip_matcher_check",
+                                        "packet_count": packet_count,
+                                        "src_ip": src_ip,
+                                        "dst_ip": dst_ip,
+                                        "matcher_config": matcher_config,
+                                    },
+                                    extra={"context": {"packet_count": packet_count}}
+                                )
+                                if matcher.pattern.match(src_ip):
+                                    ip_matches.append(Match(
+                                        start=0, end=len(src_ip), word=src_ip,
+                                        patcher=matcher.patcher
+                                    ))
+                                if matcher.pattern.match(dst_ip):
+                                    ip_matches.append(Match(
+                                        start=0, end=len(dst_ip), word=dst_ip,
+                                        patcher=matcher.patcher
+                                    ))
+                        if not ip_matches:
+                            logger.debug(
+                                {
+                                    "event": "no_ip_matches",
+                                    "packet_count": packet_count,
+                                    "src_ip": src_ip,
+                                    "dst_ip": dst_ip,
+                                    "matcher_configs": ip_matcher_configs,
+                                },
+                                extra={"context": {"packet_count": packet_count}}
+                            )
+                        for match in ip_matches:
+                            masked_ip = match.process()
+                            if match.word == src_ip:
+                                ip.src = masked_ip
+                                logger.info(
+                                    {
+                                        "event": "ip_masked",
+                                        "packet_count": packet_count,
+                                        "field": "src",
+                                        "original": src_ip,
+                                        "masked": masked_ip,
+                                    },
+                                    extra={"context": {"packet_count": packet_count}}
+                                )
+                            elif match.word == dst_ip:
+                                ip.dst = masked_ip
+                                logger.info(
+                                    {
+                                        "event": "ip_masked",
+                                        "packet_count": packet_count,
+                                        "field": "dst",
+                                        "original": dst_ip,
+                                        "masked": masked_ip,
+                                    },
+                                    extra={"context": {"packet_count": packet_count}}
+                                )
+                    else:
+                        logger.debug(
+                            {
+                                "event": "no_ip_layer",
+                                "packet_count": packet_count,
+                            },
+                            extra={"context": {"packet_count": packet_count}}
+                        )
+
+                    # Extract and mask payload as text
                     payload = None
                     if pkt.haslayer(Raw):
                         try:
@@ -151,7 +323,7 @@ class PcapProcessor(BaseProcessor):
                                     "event": "payload_extracted",
                                     "packet_count": packet_count,
                                     "payload_length": len(payload),
-                                    "payload_preview": payload[:50],  # First 50 chars for debugging
+                                    "payload_preview": payload[:50],
                                 },
                                 extra={"context": {"packet_count": packet_count}}
                             )
@@ -167,11 +339,9 @@ class PcapProcessor(BaseProcessor):
                             payload = None
 
                     if payload:
-                        # Analyze and process payload as text
                         chunk_matches = self.analyze([payload])
-                        if chunk_matches[0]:  # Matches for the single line
+                        if chunk_matches[0]:
                             masked_payload = self.process(payload, chunk_matches[0])
-                            # Update packet payload
                             pkt[Raw].load = masked_payload.encode('utf-8')
                             logger.debug(
                                 {
@@ -183,14 +353,13 @@ class PcapProcessor(BaseProcessor):
                                 extra={"context": {"packet_count": packet_count}}
                             )
 
-                    # Recalculate checksums if IP layer exists
+                    # Recalculate checksums if modified
                     if pkt.haslayer(IP):
-                        pkt[IP].chksum = None  # Force recalculation
+                        pkt[IP].chksum = None
                         if pkt.haslayer(TCP):
                             pkt[TCP].chksum = None
                         elif pkt.haslayer(UDP):
                             pkt[UDP].chksum = None
-                        # Rebuild packet to update checksums
                         pkt = pkt.__class__(bytes(pkt))
 
                     modified_packets.append(pkt)
@@ -212,10 +381,9 @@ class PcapProcessor(BaseProcessor):
                         },
                         extra={"context": {"packet_count": packet_count}}
                     )
-                    modified_packets.append(pkt)  # Keep original packet
+                    modified_packets.append(pkt)
                     continue
 
-            # Save modified packets to a temporary output file
             wrpcap(output_path, modified_packets, linktype=linktype)
             logger.info(
                 {
@@ -226,10 +394,8 @@ class PcapProcessor(BaseProcessor):
                 },
                 extra={"context": {"file": str(data)}}
             )
-            # Yield the path to the modified PCAP file
             yield (0, output_path, linktype)
         except Exception as ex:
-            # Clean up temporary file on error
             if os.path.exists(output_path):
                 os.unlink(output_path)
             logger.error(
@@ -242,7 +408,6 @@ class PcapProcessor(BaseProcessor):
             )
             raise PcapProcessingError(f"Failed to process PCAP file: {str(ex)}")
         finally:
-            # Ensure temporary file is cleaned up if not yielded
             if os.path.exists(output_path):
                 try:
                     os.unlink(output_path)
