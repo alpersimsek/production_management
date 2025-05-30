@@ -1,0 +1,17 @@
+services:
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: sleep infinity
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/app
+    networks:
+      - gdpr-network
+
+networks:
+  gdpr-network:
+    external: true

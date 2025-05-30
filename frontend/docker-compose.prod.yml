@@ -3,16 +3,12 @@ services:
     container_name: frontend
     build:
       context: .
-      dockerfile: Dockerfile
-    command: sleep infinity
+      dockerfile: Dockerfile.prod
     ports:
-      - 3000:3000
-    volumes:
-      - .:/app
+      - 80:80
     networks:
       - gdpr-network
 
 networks:
   gdpr-network:
-    name: gdpr-network
     external: true

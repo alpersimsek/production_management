@@ -1,0 +1,40 @@
+services:
+  backend:
+    container_name: backend
+    build: .
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn main:get_app --host 0.0.0.0 --port 8000 --log-level debug'
+    ports:
+      - 8000:8000
+    environment:
+      - DATA_DIR=/data
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${POSTGRESS_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=gdpr
+    volumes:
+      - data:/data
+    depends_on:
+      - db
+    networks:
+      - gdpr-network
+
+  db:
+    container_name: db
+    image: postgres:17
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRESS_PASSWORD}
+      - POSTGRES_DB=gdpr
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - gdpr-network
+
+networks:
+  gdpr-network:
+    external: true
+
+volumes:
+  data:
+  pg_data:

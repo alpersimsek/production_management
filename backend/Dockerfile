@@ -25,6 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code to the working directory
 COPY . .
 
+WORKDIR /app/app
+
 # RUN mkdir /data
 
 # Create the gdpr user and group
