@@ -15,6 +15,7 @@ const endpoints = {
     upload: '/files/upload',
     process: (fileId) => `/files/process/${fileId}`,
     delete: (fileId) => `/files/delete/${fileId}`,
+    deleteAll: '/files/all_delete', // New endpoint
     download: (fileId) => `/files/download/${fileId}`,
   },
   maskingMaps: {
@@ -150,7 +151,7 @@ class ApiService {
       }
 
       // Check file size - assuming a 100MB limit
-      const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+      const MAX_FILE_SIZE = 10000 * 1024 * 1024 // 10 GB
       if (file.size > MAX_FILE_SIZE) {
         throw new ApiError(413, `File size exceeds the maximum allowed (${Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB)`)
       }
@@ -224,6 +225,15 @@ class ApiService {
   static async deleteFile(fileId) {
     try {
       const response = await axios.delete(endpoints.files.delete(fileId))
+      return response.data
+    } catch (error) {
+      handleApiError(error)
+    }
+  }
+
+  static async deleteAllFiles() {
+    try {
+      const response = await axios.delete(endpoints.files.deleteAll)
       return response.data
     } catch (error) {
       handleApiError(error)

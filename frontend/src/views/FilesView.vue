@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'
+import { useAuthStore } from '../stores/auth' // Import auth store
 import { useFormatters } from '../composables/useFormatters'
 import MainLayout from '../components/MainLayout.vue'
 import ListView from '../components/ListView.vue'
@@ -16,11 +17,16 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const filesStore = useFilesStore()
+const authStore = useAuthStore() // Use auth store
 const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
 const uploadError = ref('')
 const showDeleteModal = ref(false)
 const deleteFileId = ref(null)
 const isLoading = ref(false)
+const showDeleteAllModal = ref(false) // New state for delete all confirmation
+
+// Computed property to check if user is admin
+const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 // Computed properties for formatted data
 const formattedUploads = computed(() => {
@@ -111,6 +117,23 @@ const confirmDelete = async () => {
   }
 }
 
+const handleDeleteAll = () => {
+  showDeleteAllModal.value = true
+}
+
+const confirmDeleteAll = async () => {
+  try {
+    uploadError.value = ''
+    await filesStore.deleteAllFiles()
+    await filesStore.fetchFiles()
+  } catch (error) {
+    console.error('Failed to delete all files:', error)
+    uploadError.value = `Failed to delete all files: ${error.message || 'Unknown error'}`
+  } finally {
+    showDeleteAllModal.value = false
+  }
+}
+
 const handleDownload = async (fileId) => {
   try {
     uploadError.value = ''
@@ -134,6 +157,18 @@ const handleDownload = async (fileId) => {
           <p class="mt-2 text-sm text-gray-600 font-medium">
             Upload, process, and manage your files with ease
           </p>
+        </div>
+        <!-- Add Delete All Button for Admins -->
+        <div v-if="isAdmin" class="mt-4 sm:mt-0 sm:ml-4">
+          <button
+            @click="handleDeleteAll"
+            class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
+            title="Delete all files"
+            aria-label="Delete all files"
+          >
+            <TrashIcon class="h-5 w-5 mr-2" aria-hidden="true" />
+            Delete All Files
+          </button>
         </div>
       </div>
 
@@ -249,6 +284,10 @@ const handleDownload = async (fileId) => {
       <!-- Delete Confirmation Dialog -->
       <ConfirmDeleteDialog v-if="showDeleteModal" :open="showDeleteModal" item-type="file"
         @close="showDeleteModal = false" @confirm="confirmDelete" />
+
+      <!-- Delete All Confirmation Dialog -->
+      <ConfirmDeleteDialog v-if="showDeleteAllModal" :open="showDeleteAllModal" item-type="all files"
+        @close="showDeleteAllModal = false" @confirm="confirmDeleteAll" />
 
       <!-- Footer Branding -->
       <footer class="mt-12 text-center text-sm text-gray-500 px-4 sm:px-16">

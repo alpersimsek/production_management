@@ -219,22 +219,93 @@ class FileService(BaseService[File]):
 
     def get_preset(self, file_id: str, file_type: str) -> Preset | None:
         if file_type == ContentType.TEXT.value:
-            with self.storage.get(file_id).open("r") as file:
-                # Read first line
-                header = file.readline().strip()
-            preset = (
-                self.session.query(Preset)
-                .filter(
-                    func.strpos(func.lower(literal(header)), func.lower(Preset.header))
-                    > 0
+            try:
+                with self.storage.get(file_id).open("r") as file:
+                    # Read first line
+                    header = file.readline().strip()
+                logger.debug(
+                    {
+                        "event": "file_header_read",
+                        "file_id": file_id,
+                        "file_type": file_type,
+                        "header": header,
+                    },
+                    extra={"context": {"file_id": file_id}},
                 )
-                .first()
-            )
-            return preset
+                preset = (
+                    self.session.query(Preset)
+                    .filter(
+                        func.strpos(func.lower(literal(header)), func.lower(Preset.header))
+                        > 0
+                    )
+                    .first()
+                )
+                if preset:
+                    logger.info(
+                        {
+                            "event": "preset_matched",
+                            "file_id": file_id,
+                            "file_type": file_type,
+                            "file_header": header,
+                            "preset_id": str(preset.id),
+                            "preset_name": preset.name,
+                            "preset_header": preset.header,
+                        },
+                        extra={"context": {"file_id": file_id}},
+                    )
+                else:
+                    logger.debug(
+                        {
+                            "event": "no_preset_matched",
+                            "file_id": file_id,
+                            "file_type": file_type,
+                            "file_header": header,
+                        },
+                        extra={"context": {"file_id": file_id}},
+                    )
+                logger.debug(
+                    {
+                        "event": "preset_assigned",
+                        "file_id": file_id,
+                        "file_type": file_type,
+                        "preset_id": str(preset.id) if preset else None,
+                    },
+                    extra={"context": {"file_id": file_id}},
+                )
+                return preset
+            except Exception as ex:
+                logger.error(
+                    {
+                        "event": "preset_assignment_failed",
+                        "file_id": file_id,
+                        "file_type": file_type,
+                        "error": str(ex),
+                    },
+                    extra={"context": {"file_id": file_id}},
+                )
+                return None
+            
         elif file_type == ContentType.PCAP.value:
             preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
+            logger.debug(
+                {
+                    "event": "preset_assigned",
+                    "file_id": file_id,
+                    "file_type": file_type,
+                    "preset_id": str(preset.id) if preset else None,
+                },
+                extra={"context": {"file_id": file_id}},
+            )
             return preset
         else:
+            logger.debug(
+                {
+                    "event": "preset_assignment_skipped",
+                    "file_id": file_id,
+                    "file_type": file_type,
+                },
+                extra={"context": {"file_id": file_id}},
+            )
             return None
 
     def save_file(self, file: UploadFile) -> File:
@@ -279,11 +350,23 @@ class FileService(BaseService[File]):
             if self.compute_used_space() > settings.USER_STORAGE_LIMIT:
                 for file in files:
                     self.delete_file(file.id)
+                logger.error(
+                    {
+                        "event": "process_failed",
+                        "error": "Not enough free space in user storage",
+                    },
+                )
                 raise Exception(f"Not enough free space in user storage")
 
             if len(self.user.files) > settings.MAX_USER_FILES:
                 for file in files:
                     self.delete_file(file.id)
+                logger.error(
+                    {
+                        "event": "process_failed",
+                        "error": "Files per user limit ({settings.MAX_USER_FILES}) is exceeded",
+                    },
+                )
                 raise Exception(
                     f"Files per user limit ({settings.MAX_USER_FILES}) is exceeded"
                 )
@@ -441,20 +524,7 @@ class FileService(BaseService[File]):
                 (File.status != FileStatus.DONE) & File.id.in_(file_ids)
             ).update({"status": FileStatus.ERROR})
             raise
-    
-    @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3),
-        wait=tenacity.wait_exponential(multiplier=1, min=1, max=10),
-        retry=tenacity.retry_if_exception_type((IOError, OSError)),
-        before_sleep=lambda retry_state: logger.debug(
-            {
-                "event": "file_processing_retry",
-                "attempt": retry_state.attempt_number,
-                "error": str(retry_state.outcome.exception()),
-            },
-            extra={"context": {"attempt": retry_state.attempt_number}},
-        )
-    )
+
     def _process_file(self, config: ProcessingConfig, file_id: str) -> None:
         file_obj = self.get_by_id(file_id)
         if not file_obj:

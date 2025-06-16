@@ -10,6 +10,7 @@ import os
 from database.models import MimeType
 from typing import List, Iterator, Optional
 from database.models import File
+from logger import logger
 
 
 @dataclass
@@ -164,9 +165,22 @@ class FileStorage(BaseStorage):
                     new_files = self._unpack_file(f_info.fid, f_type, base=f_info.fname)
                     files.extend(new_files)
         except GeneratorExit:
-            print(f"deleting unprocessed files: {files}")
+            logger.debug(
+                {
+                    "event": "deleting",
+                    "error": "({files})",
+                },
+            )
             for f_info in files:
                 self.delete(f_info.fid)
+                logger.debug(
+                    {
+                        "event": "deleting",
+                        "error": f_info.fname ,
+                    },
+                )
+            
+
 
     def repack(self, file: File):
         if not file.archive_files:

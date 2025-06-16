@@ -163,6 +163,18 @@ export const useFilesStore = defineStore('files', {
       }
     },
 
+    async deleteAllFiles() {
+      try {
+        await ApiService.deleteAllFiles()
+        this.uploads = []
+        this.processed = []
+        this.processingFiles.clear()
+        this.uploadProgress.clear()
+      } catch (error) {
+        throw error
+      }
+    },
+
     async downloadFile(fileId) {
       try {
         return await ApiService.downloadFile(fileId)

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, UploadFile, HTTPException, Request, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 import urllib.parse
 from storage import FileStorage
 from services import FileService
 from api.schemas import FileResponse
 import settings
 from typing import Dict
-
+from database.models import Role
 
 router = APIRouter()
 
@@ -24,6 +24,7 @@ class FilesRouter(APIRouter):
         self.post("/process/{file_id}")(self.process_file)
         self.delete("/delete/{file_id}")(self.delete_file)
         self.get("/download/{file_id}")(self.download_file)
+        self.delete("/all_delete")(self.delete_all_files)  # New endpoint
         self.get("/get_download_url/{file_id}")(self.get_download_url)
 
     def upload_file(self, req: Request, file: UploadFile):
@@ -68,6 +69,30 @@ class FilesRouter(APIRouter):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )
 
+    def delete_all_files(self, req: Request):
+        """Delete all files for all users. Admin access required."""
+        try:
+            if not req.state.user or req.state.user.role != Role.ADMIN:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+                )
+
+            session = req.state.db
+            file_service = FileService(session, req.state.user, self.storage)
+            files = file_service.get_all()
+            if not files:
+                return JSONResponse({"message": "No files to delete"})
+
+            for file in files:
+                file_service.delete_file(file.id)
+            
+            return JSONResponse({"message": "All files deleted successfully"})
+        except HTTPException as ex:
+            raise ex
+        except Exception as ex:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex))
+    
     def download_file(self, file_id: str, req: Request, token: str):
         """Download file with a token"""
         try:
