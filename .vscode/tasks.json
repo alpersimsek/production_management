@@ -4,14 +4,14 @@
     {
       "label": "Start PostgreSQL Service",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.yml up -d db",
+      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml up -d db",
       "problemMatcher": []
       // "isBackground": true
     },
     {
       "label": "Stop PostgreSQL Service",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.yml down db",
+      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml down db",
       "problemMatcher": []
       // "isBackground": true
     }
