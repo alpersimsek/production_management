@@ -560,7 +560,7 @@ class FileService(BaseService[File]):
         
         base, ext = os.path.splitext(file_obj.filename)
         ext = ext.lower()
-        if ext in ['.txt', '.csv', '.pcap']:
+        if ext in ['.txt', '.csv', '.pcap', '.json', '.log']:
             # Use known extension, add _masked suffix
             dst_filename = f"{base}_masked{ext}" if not base.endswith('_masked') else file_obj.filename
         else:  # No or unknown extension
