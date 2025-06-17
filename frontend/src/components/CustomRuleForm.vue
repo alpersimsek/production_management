@@ -1,3 +1,144 @@
+<script setup>
+import { ref, computed, watch, nextTick } from 'vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
+import AppButton from './AppButton.vue'
+import InputField from './InputField.vue'
+import SelectField from './SelectField.vue'
+import { XMarkIcon, ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import ApiService from '../services/api'
+
+const props = defineProps({ open: { type: Boolean, required: true }, rule: { type: Object, default: null } })
+const emit = defineEmits(['close', 'saved', 'error'])
+
+const form = ref({
+  name: '',
+  category: '',
+  pattern: '',
+})
+const errors = ref({})
+const error = ref('')
+const saving = ref(false)
+const successMessage = ref('')
+const editing = computed(() => !!props.rule?.id)
+const nameInput = ref(null)
+const stayOpen = ref(false)
+
+// Rule categories from RuleCategory enum
+const categories = ['ipv4_addr', 'mac_addr', 'username', 'domain', 'phone_num']
+
+// Initialize form
+watch(() => props.rule, (newRule) => {
+  try {
+    if (newRule?.id) {
+      form.value = {
+        name: newRule.name || '',
+        category: newRule.category || '',
+        pattern: newRule.config?.pattern || '',
+      }
+    } else {
+      form.value = { name: '', category: '', pattern: '' }
+    }
+    errors.value = {}
+    error.value = ''
+    successMessage.value = ''
+  } catch (err) {
+    error.value = `Failed to initialize form: ${err.message || 'Unknown error'}`
+  }
+}, { immediate: true })
+
+// Focus name input when modal opens
+watch(() => props.open, async (newOpen) => {
+  if (newOpen) {
+    await nextTick()
+    try {
+      if (nameInput.value && typeof nameInput.value.focus === 'function') {
+        nameInput.value.focus()
+      } else {
+        // Fallback: focus the first focusable element (e.g., Cancel button)
+        const dialog = document.querySelector('.relative.z-30 [role="dialog"]')
+        if (dialog) {
+          const focusable = dialog.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+          if (focusable && typeof focusable.focus === 'function') {
+            focusable.focus()
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed to set focus: ${err.message}`)
+    }
+  }
+}, { immediate: true })
+
+const clearFieldError = (field) => {
+  errors.value = { ...errors.value, [field]: '' }
+}
+
+const handleClose = () => {
+  if (!saving.value) {
+    form.value = { name: '', category: '', pattern: '' }
+    errors.value = {}
+    error.value = ''
+    successMessage.value = ''
+    stayOpen.value = false
+    emit('close')
+  }
+}
+
+const saveRule = async () => {
+  try {
+    saving.value = true
+    errors.value = {}
+    error.value = ''
+    // Validation
+    if (!form.value.name) errors.value.name = 'Name is required'
+    if (!form.value.category) errors.value.category = 'Category is required'
+    if (!form.value.pattern) {
+      errors.value.pattern = 'Pattern is required'
+    } else {
+      try {
+        new RegExp(form.value.pattern)
+      } catch {
+        errors.value.pattern = 'Invalid regex pattern'
+      }
+    }
+    if (Object.keys(errors.value).length) return
+
+    const ruleData = {
+      name: form.value.name,
+      category: form.value.category,
+      config: {
+        type: 'regex',
+        pattern: form.value.pattern,
+        patcher_cfg: { type: 'replace' },
+      }
+    }
+    const response = editing.value
+      ? await ApiService.updateRule(props.rule.id, ruleData)
+      : await ApiService.createRule(ruleData)
+    successMessage.value = editing.value ? 'Rule updated successfully' : 'Rule created successfully'
+    if (stayOpen.value && !editing.value) {
+      form.value = { name: '', category: '', pattern: '' }
+      errors.value = {}
+      successMessage.value = 'Rule created successfully. Add another rule below.'
+      await nextTick()
+      if (nameInput.value && typeof nameInput.value.focus === 'function') {
+        nameInput.value.focus()
+      }
+    } else {
+      setTimeout(() => {
+        emit('saved', response)
+        emit('close')
+      }, 2000)
+    }
+  } catch (err) {
+    error.value = `Failed to ${editing.value ? 'update' : 'create'} rule: ${err.message || err.data?.detail || 'Unknown error'}`
+    emit('error', error.value)
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
 <template>
   <TransitionRoot as="template" :show="open">
     <Dialog class="relative z-30" :open="open" @close="handleClose">
@@ -16,17 +157,18 @@
               class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
               <button type="button"
                 class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                @click="handleClose" aria-label="Close">
+                @click="handleClose" aria-label="Close modal">
                 <XMarkIcon class="h-6 w-6" />
               </button>
-              <DialogTitle as="h3" class="text-lg font-bold text-gray-900">{{ editing ? 'Edit Rule' : 'Create New Rule'
-              }}</DialogTitle>
+              <DialogTitle as="h3" class="text-lg font-bold text-gray-900">
+                {{ editing ? 'Edit Rule' : 'Create New Rule' }}
+              </DialogTitle>
               <div v-if="error" class="mt-4 rounded-md bg-red-50 p-3 flex items-center">
                 <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
                 <p class="ml-2 text-sm text-red-800">{{ error }}</p>
                 <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700"
                   aria-label="Dismiss error">
-                  <XMarkIcon class="h-5 w-5" />
+                  <XMarkIcon class="h-6 w-6" />
                 </button>
               </div>
               <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center">
@@ -34,64 +176,39 @@
                 <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
               </div>
               <form @submit.prevent="saveRule" class="mt-6 space-y-6">
-                <div>
-                  <label for="rule-name" class="block text-sm font-medium text-gray-700">Name</label>
-                  <input ref="nameInput" type="text" id="rule-name" v-model="form.name"
-                    class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    :class="{ 'border-red-300': errors.name }" placeholder="Rule name" required
-                    aria-describedby="rule-name-error" @focus="clearFieldError('name')" />
-                  <p v-if="errors.name" id="rule-name-error" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
-                </div>
-                <div>
-                  <label for="rule-category" class="block text-sm font-medium text-gray-700">Category</label>
-                  <select id="rule-category" v-model="form.category"
-                    class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    :class="{ 'border-red-300': errors.category }" required aria-describedby="rule-category-error"
-                    @focus="clearFieldError('category')">
-                    <option value="ipv4_addr">IPv4 Address</option>
-                    <option value="mac_addr">MAC Address</option>
-                    <option value="username">Username</option>
-                    <option value="domain">Domain</option>
-                    <option value="phone_num">Phone Number</option>
-                  </select>
-                  <p v-if="errors.category" id="rule-category-error" class="mt-1 text-sm text-red-600">{{
-                    errors.category }}</p>
-                </div>
-                <div>
-                  <label for="rule-type" class="block text-sm font-medium text-gray-700">Type</label>
-                  <select id="rule-type" v-model="form.type"
-                    class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    :class="{ 'border-red-300': errors.type }" required aria-describedby="rule-type-error"
-                    @focus="clearFieldError('type')">
-                    <option value="regex">Regular Expression</option>
-                    <option value="builtin">Built-in Rule</option>
-                    <option value="placeholder">Placeholder</option>
-                  </select>
-                  <p v-if="errors.type" id="rule-type-error" class="mt-1 text-sm text-red-600">{{ errors.type }}</p>
-                </div>
-                <div v-if="form.type === 'regex'">
-                  <label for="rule-pattern" class="block text-sm font-medium text-gray-700">Pattern</label>
-                  <input type="text" id="rule-pattern" v-model="form.pattern"
-                    class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    :class="{ 'border-red-300': errors.pattern }" placeholder="Enter regex pattern" required
-                    aria-describedby="rule-pattern-error" @focus="clearFieldError('pattern')" />
-                  <p v-if="errors.pattern" id="rule-pattern-error" class="mt-1 text-sm text-red-600">{{ errors.pattern
-                    }}</p>
+                <InputField :input-ref="nameInput" id="rule-name" v-model="form.name" label="Name" type="text"
+                  required placeholder="e.g., IP Address Masking" :error="errors.name"
+                  aria-describedby="rule-name-error" @focus="clearFieldError('name')" />
+                <SelectField id="rule-category" v-model="form.category" label="Category" required
+                  :error="errors.category" aria-describedby="rule-category-error"
+                  @focus="clearFieldError('category')">
+                  <option value="" disabled>Select a category</option>
+                  <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                </SelectField>
+                <InputField id="rule-pattern" v-model="form.pattern"
+                  label="Pattern" type="text" placeholder="e.g., \b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"
+                  :error="errors.pattern" aria-describedby="rule-pattern-error"
+                  @focus="clearFieldError('pattern')" />
+                <div v-if="!editing" class="flex items-center">
+                  <input id="stay-open" type="checkbox" v-model="stayOpen"
+                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <label for="stay-open" class="ml-2 text-sm text-gray-700">Add another rule after saving</label>
                 </div>
                 <div class="mt-8 flex flex-row-reverse gap-3">
-                  <button type="submit"
-                    class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-indigo-400"
-                    :disabled="saving">
-                    <svg v-if="saving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z">
-                      </path>
-                    </svg>
-                    {{ editing ? 'Update' : 'Create' }}
-                  </button>
-                  <button type="button"
-                    class="inline-flex rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50 disabled:bg-gray-100"
-                    @click="handleClose" :disabled="saving">Cancel</button>
+                  <AppButton type="submit" variant="primary" :loading="saving" :disabled="saving"
+                    :aria-label="editing ? 'Update rule' : 'Create rule'">
+                    <span v-if="saving" class="flex items-center">
+                      <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
+                      </svg>
+                      Saving...
+                    </span>
+                    <span v-else>{{ editing ? 'Update' : 'Create' }}</span>
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" @click="handleClose" :disabled="saving"
+                    aria-label="Cancel">Cancel</AppButton>
                 </div>
               </form>
             </DialogPanel>
@@ -101,106 +218,6 @@
     </Dialog>
   </TransitionRoot>
 </template>
-
-<script setup>
-import { ref, computed, watch, nextTick } from 'vue'
-import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
-import { XMarkIcon, ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
-import ApiService from '../services/api'
-
-const props = defineProps({ open: { type: Boolean, required: true }, rule: { type: Object, default: null } })
-const emit = defineEmits(['close', 'saved', 'error'])
-
-const form = ref({ name: '', category: 'ipv4_addr', type: 'regex', pattern: '' })
-const errors = ref({})
-const error = ref('')
-const saving = ref(false)
-const successMessage = ref('')
-const editing = computed(() => !!props.rule?.id)
-const nameInput = ref(null)
-
-watch(() => props.rule, (newRule) => {
-  if (newRule?.id) {
-    form.value = { name: newRule.name || '', category: newRule.category || 'ipv4_addr', type: newRule.config?.type || 'regex', pattern: newRule.config?.pattern || '' }
-  } else {
-    form.value = { name: '', category: 'ipv4_addr', type: 'regex', pattern: '' }
-  }
-  errors.value = {}
-  error.value = ''
-  successMessage.value = ''
-}, { immediate: true })
-
-watch(() => props.open, async (newOpen) => {
-  if (newOpen) {
-    await nextTick()
-    if (nameInput.value) nameInput.value.focus()
-  }
-}, { immediate: true })
-
-const clearFieldError = (field) => {
-  if (errors.value[field]) errors.value = { ...errors.value, [field]: '' }
-}
-
-const handleClose = () => {
-  if (!saving.value) {
-    form.value = { name: '', category: 'ipv4_addr', type: 'regex', pattern: '' }
-    errors.value = {}
-    error.value = ''
-    successMessage.value = ''
-    emit('close')
-  }
-}
-
-const saveRule = async () => {
-  try {
-    saving.value = true
-    errors.value = {}
-    error.value = ''
-    if (!form.value.name) {
-      errors.value.name = 'Name is required'
-      return
-    }
-    if (!form.value.category) {
-      errors.value.category = 'Category is required'
-      return
-    }
-    if (!form.value.type) {
-      errors.value.type = 'Type is required'
-      return
-    }
-    if (form.value.type === 'regex') {
-      if (!form.value.pattern) {
-        errors.value.pattern = 'Pattern is required for regex rules'
-        return
-      }
-      try {
-        new RegExp(form.value.pattern)
-      } catch {
-        errors.value.pattern = 'Invalid regex pattern'
-        return
-      }
-    }
-    const ruleData = {
-      name: form.value.name,
-      category: form.value.category,
-      config: form.value.type === 'regex' ? { type: form.value.type, pattern: form.value.pattern } : { type: form.value.type }
-    }
-    const response = editing.value
-      ? await ApiService.updateRule(props.rule.id, ruleData)
-      : await ApiService.createRule(ruleData)
-    successMessage.value = editing.value ? 'Rule updated successfully' : 'Rule created successfully'
-    setTimeout(() => {
-      emit('saved', response)
-      emit('close')
-    }, 1000)
-  } catch (err) {
-    error.value = `Failed to ${editing.value ? 'update' : 'create'} rule: ${err.message || 'Unknown error'}`
-    emit('error', error.value)
-  } finally {
-    saving.value = false
-  }
-}
-</script>
 
 <style scoped>
 .transition-all {

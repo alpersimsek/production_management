@@ -1,3 +1,66 @@
+<script setup>
+import { ref, watch } from 'vue'
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
+const props = defineProps({
+  presets: { type: Array, required: true },
+  products: { type: Array, required: true },
+  rules: { type: Array, required: true },
+  loading: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['addPreset', 'editPreset', 'deletePreset', 'addRuleToPreset', 'editPresetRule', 'deletePresetRule', 'loadPresetRules'])
+
+const productGroups = ref({})
+const expandedProducts = ref({})
+
+const getRuleName = (ruleId) => {
+  const rule = props.rules.find(r => r.id === ruleId)
+  if (!rule) console.warn(`Rule with ID ${ruleId} not found in rules array`)
+  return rule ? rule.name : 'Unknown'
+}
+
+const updateProductGroups = () => {
+  const grouped = {}
+  if (props.products.length === 0) return
+  props.products.forEach(product => {
+    grouped[product.id] = { product, presets: [] }
+  })
+  props.presets.forEach(preset => {
+    if (grouped[preset.product_id]) {
+      grouped[preset.product_id].presets.push(preset)
+    } else {
+      if (!grouped['unknown']) grouped['unknown'] = { product: { id: 'unknown', name: 'Unknown Product' }, presets: [] }
+      grouped['unknown'].presets.push(preset)
+    }
+  })
+  const productsWithPresets = Object.values(grouped).filter(group => group.presets.length > 0)
+  if (productsWithPresets.length === 1 && Object.keys(expandedProducts.value).length === 0) {
+    expandedProducts.value[productsWithPresets[0].product.id] = true
+  }
+  productGroups.value = grouped
+}
+
+const addPreset = (productId) => {
+  emit('addPreset', productId)
+}
+
+const toggleProductExpand = (productId) => {
+  expandedProducts.value[productId] = !expandedProducts.value[productId]
+}
+
+const isProductExpanded = (productId) => !!expandedProducts.value[productId]
+
+const togglePresetExpand = async (preset) => {
+  preset.expanded = !preset.expanded
+  if (preset.expanded && (!preset.rules || preset.rules.length === 0)) {
+    emit('loadPresetRules', preset.id)
+  }
+}
+
+watch([() => props.presets, () => props.products], updateProductGroups, { immediate: true })
+</script>
+
 <template>
   <div>
     <!-- Loading state -->
@@ -132,69 +195,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, watch } from 'vue'
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
-
-const props = defineProps({
-  presets: { type: Array, required: true },
-  products: { type: Array, required: true },
-  rules: { type: Array, required: true },
-  loading: { type: Boolean, default: false }
-})
-
-const emit = defineEmits(['addPreset', 'editPreset', 'deletePreset', 'addRuleToPreset', 'editPresetRule', 'deletePresetRule', 'loadPresetRules'])
-
-const productGroups = ref({})
-const expandedProducts = ref({})
-
-const getRuleName = (ruleId) => {
-  const rule = props.rules.find(r => r.id === ruleId)
-  if (!rule) console.warn(`Rule with ID ${ruleId} not found in rules array`)
-  return rule ? rule.name : 'Unknown'
-}
-
-const updateProductGroups = () => {
-  const grouped = {}
-  if (props.products.length === 0) return
-  props.products.forEach(product => {
-    grouped[product.id] = { product, presets: [] }
-  })
-  props.presets.forEach(preset => {
-    if (grouped[preset.product_id]) {
-      grouped[preset.product_id].presets.push(preset)
-    } else {
-      if (!grouped['unknown']) grouped['unknown'] = { product: { id: 'unknown', name: 'Unknown Product' }, presets: [] }
-      grouped['unknown'].presets.push(preset)
-    }
-  })
-  const productsWithPresets = Object.values(grouped).filter(group => group.presets.length > 0)
-  if (productsWithPresets.length === 1 && Object.keys(expandedProducts.value).length === 0) {
-    expandedProducts.value[productsWithPresets[0].product.id] = true
-  }
-  productGroups.value = grouped
-}
-
-const addPreset = (productId) => {
-  emit('addPreset', productId)
-}
-
-const toggleProductExpand = (productId) => {
-  expandedProducts.value[productId] = !expandedProducts.value[productId]
-}
-
-const isProductExpanded = (productId) => !!expandedProducts.value[productId]
-
-const togglePresetExpand = async (preset) => {
-  preset.expanded = !preset.expanded
-  if (preset.expanded && (!preset.rules || preset.rules.length === 0)) {
-    emit('loadPresetRules', preset.id)
-  }
-}
-
-watch([() => props.presets, () => props.products], updateProductGroups, { immediate: true })
-</script>
 
 <style scoped>
 .transition-all {

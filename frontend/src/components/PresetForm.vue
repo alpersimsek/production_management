@@ -10,8 +10,9 @@
             @click="$emit('close')" aria-label="Close">
             <XMarkIcon class="h-6 w-6" />
           </button>
-          <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">{{ editing ? 'Edit Preset' : 'Add New Preset'
-            }}</DialogTitle>
+          <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">
+            {{ editing ? 'Edit Preset' : 'Add New Preset' }}
+          </DialogTitle>
           <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center">
             <CheckCircleIcon class="h-5 w-5 text-green-400" />
             <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
@@ -46,8 +47,8 @@
               @click="savePreset" :disabled="saving">
               <svg v-if="saving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z">
-                </path>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
               </svg>
               {{ editing ? 'Update' : 'Create' }}
             </button>
@@ -65,9 +66,9 @@ import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 
 const props = defineProps({
-  open: { type: Boolean, required: true },
-  preset: { type: Object, default: null },
-  products: { type: Array, required: true },
+  open: { type: Boolean, default: false },
+  editPreset: { type: Object, default: null },
+  products: { type: Array, default: () => [] },
   defaultProductId: { type: [String, Number], default: null }
 })
 
@@ -76,7 +77,7 @@ const emit = defineEmits(['close', 'saved', 'error'])
 const form = ref({ name: '', header: '', productId: null })
 const saving = ref(false)
 const successMessage = ref('')
-const editing = computed(() => !!props.preset)
+const editing = computed(() => !!props.editPreset && typeof props.editPreset === 'object')
 
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
@@ -86,9 +87,19 @@ watch(() => props.open, (isOpen) => {
 })
 
 const initializeForm = () => {
-  form.value = props.preset
-    ? { name: props.preset.name, header: props.preset.header, productId: props.preset.product_id }
-    : { name: '', header: '', productId: props.defaultProductId || (props.products.length > 0 ? props.products[0].id : null) }
+  if (props.editPreset && typeof props.editPreset === 'object') {
+    form.value = {
+      name: props.editPreset.name || '',
+      header: props.editPreset.header || '',
+      productId: props.editPreset.product_id || null
+    }
+  } else {
+    form.value = {
+      name: '',
+      header: '',
+      productId: props.defaultProductId || (props.products && props.products.length > 0 ? props.products[0].id : null)
+    }
+  }
 }
 
 const savePreset = async () => {
@@ -99,16 +110,16 @@ const savePreset = async () => {
       return
     }
     const presetData = { name: form.value.name, header: form.value.header, product_id: form.value.productId }
-    const response = props.preset
-      ? await ApiService.updatePreset(props.preset.id, presetData)
+    const response = editing.value
+      ? await ApiService.updatePreset(props.editPreset.id, presetData)
       : await ApiService.createPreset(presetData)
-    successMessage.value = props.preset ? 'Preset updated successfully' : 'Preset created successfully'
+    successMessage.value = editing.value ? 'Preset updated successfully' : 'Preset created successfully'
     setTimeout(() => {
       emit('saved', response)
       emit('close')
     }, 1000)
   } catch (err) {
-    emit('error', `Failed to ${props.preset ? 'update' : 'create'} preset: ${err.message || 'Unknown error'}`)
+    emit('error', `Failed to ${editing.value ? 'update' : 'create'} preset: ${err.message || err.data?.detail || 'Unknown error'}`)
   } finally {
     saving.value = false
   }
