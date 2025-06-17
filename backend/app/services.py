@@ -557,7 +557,17 @@ class FileService(BaseService[File]):
             extra={"context": {"file_id": file_id}},
         )
         processor = config.make_processor(content_type=content_type.value)
-        dst_filename = file_obj.filename if file_obj.filename.endswith('.pcap') else f"masked_{file_id}.pcap"
+        
+        base, ext = os.path.splitext(file_obj.filename)
+        ext = ext.lower()
+        if ext in ['.txt', '.csv', '.pcap']:
+            # Use known extension, add _masked suffix
+            dst_filename = f"{base}_masked{ext}" if not base.endswith('_masked') else file_obj.filename
+        else:  # No or unknown extension
+            # Use content-based detection
+            file_type = self.storage.get_type(file_id)
+            dst_filename = f"{base}_masked.pcap" if file_type == self.storage.T_PCAP else f"{base}_masked.txt"
+                
         dst = src.parent.joinpath(dst_filename)
         try:
             if content_type == ContentType.TEXT:
