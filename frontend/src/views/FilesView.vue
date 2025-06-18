@@ -29,6 +29,9 @@ const showDeleteAllModal = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = 5
 
+// Pagination state for Uploads
+const currentUploadPage = ref(1)
+
 // Computed property to check if user is admin
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
@@ -49,6 +52,35 @@ const formattedProcessed = computed(() => {
   }))
 })
 
+// Paginated uploads
+const paginatedUploads = computed(() => {
+  const start = (currentUploadPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return formattedUploads.value.slice(start, end)
+})
+
+// Total pages for uploads pagination
+const totalUploadPages = computed(() => Math.ceil(formattedUploads.value.length / itemsPerPage))
+
+// Pagination navigation methods for uploads
+const goToUploadPage = (page) => {
+  if (page >= 1 && page <= totalUploadPages.value) {
+    currentUploadPage.value = page
+  }
+}
+
+const prevUploadPage = () => {
+  if (currentUploadPage.value > 1) {
+    currentUploadPage.value--
+  }
+}
+
+const nextUploadPage = () => {
+  if (currentUploadPage.value < totalUploadPages.value) {
+    currentUploadPage.value++
+  }
+}
+
 // Paginated processed files
 const paginatedProcessed = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
@@ -56,10 +88,10 @@ const paginatedProcessed = computed(() => {
   return formattedProcessed.value.slice(start, end)
 })
 
-// Total pages for pagination
+// Total pages for processed files pagination
 const totalPages = computed(() => Math.ceil(formattedProcessed.value.length / itemsPerPage))
 
-// Pagination navigation methods
+// Pagination navigation methods for processed files
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
@@ -252,7 +284,7 @@ const handleDownload = async (fileId) => {
           <!-- Uploads List -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Uploads</h2>
-            <ListView title="" :items="formattedUploads" empty-message="No files uploaded yet"
+            <ListView title="" :items="paginatedUploads" empty-message="No files uploaded yet"
               :get-item-title="item => item.filename" :get-item-subtitle="item => item.formattedSize"
               :get-item-metadata="item => item.formattedDate" :get-item-icon="() => DocumentIcon">
               <template #empty>
@@ -282,6 +314,40 @@ const handleDownload = async (fileId) => {
                 </div>
               </template>
             </ListView>
+            <!-- Pagination Controls for Uploads -->
+            <div v-if="totalUploadPages > 1" class="mt-4 flex justify-center items-center gap-2" role="navigation" aria-label="Uploads pagination">
+              <button
+                @click="prevUploadPage"
+                :disabled="currentUploadPage === 1"
+                class="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Previous page"
+              >
+                Previous
+              </button>
+              <button
+                v-for="page in totalUploadPages"
+                :key="page"
+                @click="goToUploadPage(page)"
+                :class="[
+                  'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold',
+                  currentUploadPage === page
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50'
+                ]"
+                :aria-current="currentUploadPage === page ? 'page' : undefined"
+                :aria-label="`Go to page ${page}`"
+              >
+                {{ page }}
+              </button>
+              <button
+                @click="nextUploadPage"
+                :disabled="currentUploadPage === totalUploadPages"
+                class="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Next page"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
 
@@ -311,7 +377,7 @@ const handleDownload = async (fileId) => {
               </div>
             </template>
           </ListView>
-          <!-- Pagination Controls -->
+          <!-- Pagination Controls for Processed Files -->
           <div v-if="totalPages > 1" class="mt-4 flex justify-center items-center gap-2" role="navigation" aria-label="Processed files pagination">
             <button
               @click="prevPage"
