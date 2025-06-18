@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+import re
 from sqlalchemy import func, literal
 from database.models import (
     User,
@@ -32,6 +33,7 @@ from sqlalchemy import or_
 import tenacity
 import magic
 import os
+from sqlalchemy import and_
 
 T = TypeVar("T")
 
@@ -195,10 +197,59 @@ class UserService(BaseService[User]):
         return user
 
 
+class HeaderMatcher:
+    """Utility class for matching file headers against preset headers."""
+    
+    def __init__(self, case_sensitive: bool = False):
+        self.case_sensitive = case_sensitive
+        self.pattern_cache = {}  # Cache: {header: (match_type, compiled_pattern)}
+
+    def compile_pattern(self, header: str, match_type: str) -> Optional[re.Pattern]:
+        """Compile a regex pattern based on match type."""
+        cache_key = (header, match_type)
+        if cache_key in self.pattern_cache:
+            return self.pattern_cache[cache_key]
+        
+        try:
+            if not header:
+                return None
+            if match_type == "exact":
+                pattern = f"^{re.escape(header)}$"
+            elif match_type == "starts_with":
+                pattern = f"^{re.escape(header)}"
+            elif match_type == "contains":
+                pattern = f"{re.escape(header)}"
+            elif match_type == "regex":
+                pattern = header  # Assume header is a valid regex
+            else:
+                raise ValueError(f"Unsupported match type: {match_type}")
+            flags = 0 if self.case_sensitive else re.IGNORECASE
+            compiled_pattern = re.compile(pattern, flags)
+            self.pattern_cache[cache_key] = compiled_pattern
+            return compiled_pattern
+        except re.error as e:
+            logger.error({
+                "event": "pattern_compile_failed",
+                "header": header,
+                "match_type": match_type,
+                "error": str(e)
+            })
+            return None
+
+    def match_header(self, file_header: str, preset_header: str, match_type: str) -> bool:
+        """Check if file header matches preset header based on match type."""
+        pattern = self.compile_pattern(preset_header, match_type)
+        if not pattern:
+            return False
+        return bool(pattern.search(file_header))
+
+
 class FileService(BaseService[File]):
     def __init__(self, session: Session, user: User, storage: FileStorage):
         self.user = user
         self.storage = storage
+        self.header_matcher = HeaderMatcher(case_sensitive=False)
+        self.preset_cache = {}
         super().__init__(File, session)
 
     def get_by_user(self) -> list[File]:
@@ -220,8 +271,18 @@ class FileService(BaseService[File]):
     def get_preset(self, file_id: str, file_type: str) -> Preset | None:
         if file_type == ContentType.TEXT.value:
             try:
-                with self.storage.get(file_id).open("r") as file:
-                    # Read first line
+                src = self.storage.get(file_id)
+                encoding_res = from_path(src).best()
+                if not encoding_res:
+                    logger.error({
+                        "event": "encoding_detection_failed",
+                        "file_id": file_id,
+                        "error": "Cannot detect file encoding",
+                    },)
+                    return None
+                encoding = encoding_res.encoding
+                
+                with src.open("r", encoding=encoding) as file:
                     header = file.readline().strip()
                 logger.debug(
                     {
@@ -230,19 +291,29 @@ class FileService(BaseService[File]):
                         "file_type": file_type,
                         "header": header,
                     },
-                    extra={"context": {"file_id": file_id}},
                 )
-                preset = (
-                    self.session.query(Preset)
-                    .filter(
-                        func.strpos(func.lower(literal(header)), func.lower(Preset.header))
-                        > 0
-                    )
-                    .first()
-                )
-                if preset:
-                    logger.info(
-                        {
+                if file_type not in self.preset_cache:
+                    # Query presets with non-null headers
+                    presets = self.session.query(Preset).filter(
+                        and_(Preset.header != None, Preset.header != '')
+                    ).all()
+                    self.preset_cache[file_type] = presets
+                else:
+                    presets = self.preset_cache[file_type]
+
+                if not presets:
+                    logger.debug({
+                        "event": "no_presets_available",
+                        "file_id": file_id,
+                        "file_type": file_type,
+                    }, extra={"context": {"file_id": file_id}})
+                    return None
+
+                # Match header against presets
+                for preset in presets:
+                    match_type = getattr(preset, 'match_type', 'contains')  # Default to contains
+                    if self.header_matcher.match_header(header, preset.header, match_type):
+                        logger.info({
                             "event": "preset_matched",
                             "file_id": file_id,
                             "file_type": file_type,
@@ -250,63 +321,26 @@ class FileService(BaseService[File]):
                             "preset_id": str(preset.id),
                             "preset_name": preset.name,
                             "preset_header": preset.header,
-                        },
-                        extra={"context": {"file_id": file_id}},
-                    )
-                else:
-                    logger.debug(
-                        {
-                            "event": "no_preset_matched",
-                            "file_id": file_id,
-                            "file_type": file_type,
-                            "file_header": header,
-                        },
-                        extra={"context": {"file_id": file_id}},
-                    )
-                logger.debug(
-                    {
-                        "event": "preset_assigned",
-                        "file_id": file_id,
-                        "file_type": file_type,
-                        "preset_id": str(preset.id) if preset else None,
-                    },
-                    extra={"context": {"file_id": file_id}},
-                )
-                return preset
-            except Exception as ex:
-                logger.error(
-                    {
-                        "event": "preset_assignment_failed",
-                        "file_id": file_id,
-                        "file_type": file_type,
-                        "error": str(ex),
-                    },
-                    extra={"context": {"file_id": file_id}},
-                )
+                            "match_type": match_type,
+                        }, extra={"context": {"file_id": file_id}})
+                        return preset
+
+                logger.debug({
+                    "event": "no_preset_matched",
+                    "file_id": file_id,
+                    "file_type": file_type,
+                    "file_header": header,
+                }, extra={"context": {"file_id": file_id}})
                 return None
-            
-        elif file_type == ContentType.PCAP.value:
-            preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
-            logger.debug(
-                {
-                    "event": "preset_assigned",
+
+            except Exception as ex:
+                logger.error({
+                    "event": "preset_assignment_failed",
                     "file_id": file_id,
                     "file_type": file_type,
-                    "preset_id": str(preset.id) if preset else None,
-                },
-                extra={"context": {"file_id": file_id}},
-            )
-            return preset
-        else:
-            logger.debug(
-                {
-                    "event": "preset_assignment_skipped",
-                    "file_id": file_id,
-                    "file_type": file_type,
-                },
-                extra={"context": {"file_id": file_id}},
-            )
-            return None
+                    "error": str(ex),
+                }, extra={"context": {"file_id": file_id}})
+                return None
 
     def save_file(self, file: UploadFile) -> File:
         file_id = self.storage.save_file(file.file)
