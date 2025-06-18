@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'
-import { useAuthStore } from '../stores/auth' // Import auth store
+import { useAuthStore } from '../stores/auth'
 import { useFormatters } from '../composables/useFormatters'
 import MainLayout from '../components/MainLayout.vue'
 import ListView from '../components/ListView.vue'
@@ -17,13 +17,17 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const filesStore = useFilesStore()
-const authStore = useAuthStore() // Use auth store
+const authStore = useAuthStore()
 const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
 const uploadError = ref('')
 const showDeleteModal = ref(false)
 const deleteFileId = ref(null)
 const isLoading = ref(false)
-const showDeleteAllModal = ref(false) // New state for delete all confirmation
+const showDeleteAllModal = ref(false)
+
+// Pagination state for Processed Files
+const currentPage = ref(1)
+const itemsPerPage = 5
 
 // Computed property to check if user is admin
 const isAdmin = computed(() => authStore.user?.role === 'admin')
@@ -44,6 +48,35 @@ const formattedProcessed = computed(() => {
     formattedDate: formatDate(file.create_date)
   }))
 })
+
+// Paginated processed files
+const paginatedProcessed = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return formattedProcessed.value.slice(start, end)
+})
+
+// Total pages for pagination
+const totalPages = computed(() => Math.ceil(formattedProcessed.value.length / itemsPerPage))
+
+// Pagination navigation methods
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
 
 // Helper functions
 const isProcessing = (fileId) => {
@@ -254,7 +287,7 @@ const handleDownload = async (fileId) => {
 
         <!-- Processed Files -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
-          <ListView title="Processed Files" :items="formattedProcessed" empty-message="No processed files yet"
+          <ListView title="Processed Files" :items="paginatedProcessed" empty-message="No processed files yet"
             :get-item-title="item => item.filename" :get-item-subtitle="item => item.formattedSize"
             :get-item-metadata="item => item.formattedDate" :get-item-icon="() => DocumentCheckIcon">
             <template #empty>
@@ -278,6 +311,40 @@ const handleDownload = async (fileId) => {
               </div>
             </template>
           </ListView>
+          <!-- Pagination Controls -->
+          <div v-if="totalPages > 1" class="mt-4 flex justify-center items-center gap-2" role="navigation" aria-label="Processed files pagination">
+            <button
+              @click="prevPage"
+              :disabled="currentPage === 1"
+              class="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Previous page"
+            >
+              Previous
+            </button>
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold',
+                currentPage === page
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50'
+              ]"
+              :aria-current="currentPage === page ? 'page' : undefined"
+              :aria-label="`Go to page ${page}`"
+            >
+              {{ page }}
+            </button>
+            <button
+              @click="nextPage"
+              :disabled="currentPage === totalPages"
+              class="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Next page"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

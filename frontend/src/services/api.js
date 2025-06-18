@@ -13,7 +13,7 @@ const endpoints = {
     upload: '/files/upload',
     process: (fileId) => `/files/process/${fileId}`,
     delete: (fileId) => `/files/delete/${fileId}`,
-    deleteAll: '/files/all',
+    deleteAll: '/files/all_delete',
     download: (fileId) => `/files/download/${fileId}`,
   },
   maskingMaps: {
