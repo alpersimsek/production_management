@@ -198,57 +198,24 @@ class UserService(BaseService[User]):
 
 
 class HeaderMatcher:
-    """Utility class for matching file headers against preset headers."""
+    """Utility class for substring matching of file headers against preset headers."""
     
-    def __init__(self, case_sensitive: bool = False):
-        self.case_sensitive = case_sensitive
-        self.pattern_cache = {}  # Cache: {header: (match_type, compiled_pattern)}
+    def __init__(self):
+        pass  # No initialization needed for simple substring matching
 
-    def compile_pattern(self, header: str, match_type: str) -> Optional[re.Pattern]:
-        """Compile a regex pattern based on match type."""
-        cache_key = (header, match_type)
-        if cache_key in self.pattern_cache:
-            return self.pattern_cache[cache_key]
-        
-        try:
-            if not header:
-                return None
-            if match_type == "exact":
-                pattern = f"^{re.escape(header)}$"
-            elif match_type == "starts_with":
-                pattern = f"^{re.escape(header)}"
-            elif match_type == "contains":
-                pattern = f"{re.escape(header)}"
-            elif match_type == "regex":
-                pattern = header  # Assume header is a valid regex
-            else:
-                raise ValueError(f"Unsupported match type: {match_type}")
-            flags = 0 if self.case_sensitive else re.IGNORECASE
-            compiled_pattern = re.compile(pattern, flags)
-            self.pattern_cache[cache_key] = compiled_pattern
-            return compiled_pattern
-        except re.error as e:
-            logger.error({
-                "event": "pattern_compile_failed",
-                "header": header,
-                "match_type": match_type,
-                "error": str(e)
-            })
-            return None
-
-    def match_header(self, file_header: str, preset_header: str, match_type: str) -> bool:
-        """Check if file header matches preset header based on match type."""
-        pattern = self.compile_pattern(preset_header, match_type)
-        if not pattern:
+    def match_header(self, file_header: str, preset_header: str) -> bool:
+        """Check if preset header is a substring of file header."""
+        if preset_header is None:
             return False
-        return bool(pattern.search(file_header))
+        # Use simple string search for substring matching
+        return preset_header in file_header
 
 
 class FileService(BaseService[File]):
     def __init__(self, session: Session, user: User, storage: FileStorage):
         self.user = user
         self.storage = storage
-        self.header_matcher = HeaderMatcher(case_sensitive=False)
+        self.header_matcher = HeaderMatcher()
         self.preset_cache = {}
         super().__init__(File, session)
 
@@ -268,9 +235,11 @@ class FileService(BaseService[File]):
             used_space = 0
         return used_space
 
-    def get_preset(self, file_id: str, file_type: str) -> Preset | None:
+    def get_preset(self, file_id: str, file_type: str) -> Optional[Preset]:
+        """Match preset headers as substrings in file header; use default preset (header='') if no match."""
         if file_type == ContentType.TEXT.value:
             try:
+                # Read file header with encoding detection
                 src = self.storage.get(file_id)
                 encoding_res = from_path(src).best()
                 if not encoding_res:
@@ -278,41 +247,60 @@ class FileService(BaseService[File]):
                         "event": "encoding_detection_failed",
                         "file_id": file_id,
                         "error": "Cannot detect file encoding",
-                    },)
+                    }, )
                     return None
                 encoding = encoding_res.encoding
-                
+
                 with src.open("r", encoding=encoding) as file:
                     header = file.readline().strip()
-                logger.debug(
-                    {
-                        "event": "file_header_read",
-                        "file_id": file_id,
-                        "file_type": file_type,
-                        "header": header,
-                    },
-                )
+                
+                logger.debug({
+                    "event": "file_header_read",
+                    "file_id": file_id,
+                    "file_type": file_type,
+                    "header": header,
+                }, )
+
+                # Check cache for presets
                 if file_type not in self.preset_cache:
-                    # Query presets with non-null headers
+                    # Query presets, including those with empty headers
                     presets = self.session.query(Preset).filter(
-                        and_(Preset.header != None, Preset.header != '')
-                    ).all()
-                    self.preset_cache[file_type] = presets
+                        Preset.header != None
+                    ).order_by(Preset.id).all()
+                    # Find default preset (header = '')
+                    default_preset = next(
+                        (p for p in presets if p.header == ''),
+                        None
+                    )
+                    self.preset_cache[file_type] = {
+                        'presets': presets,
+                        'default': default_preset
+                    }
                 else:
-                    presets = self.preset_cache[file_type]
+                    presets = self.preset_cache[file_type]['presets']
+                    default_preset = self.preset_cache[file_type]['default']
 
                 if not presets:
-                    logger.debug({
+                    logger.warning({
                         "event": "no_presets_available",
                         "file_id": file_id,
                         "file_type": file_type,
-                    }, extra={"context": {"file_id": file_id}})
+                    }, )
                     return None
 
-                # Match header against presets
+                if not default_preset:
+                    logger.warning({
+                        "event": "no_default_preset",
+                        "file_id": file_id,
+                        "file_type": file_type,
+                    }, )
+                    return None
+
+                # Try substring matching against presets
                 for preset in presets:
-                    match_type = getattr(preset, 'match_type', 'contains')  # Default to contains
-                    if self.header_matcher.match_header(header, preset.header, match_type):
+                    if preset.header == "":  # Skip default preset in matching loop
+                        continue
+                    if self.header_matcher.match_header(header, preset.header):
                         logger.info({
                             "event": "preset_matched",
                             "file_id": file_id,
@@ -321,17 +309,20 @@ class FileService(BaseService[File]):
                             "preset_id": str(preset.id),
                             "preset_name": preset.name,
                             "preset_header": preset.header,
-                            "match_type": match_type,
-                        }, extra={"context": {"file_id": file_id}})
+                        }, )
                         return preset
 
-                logger.debug({
-                    "event": "no_preset_matched",
+                # No match found or blank header; return default preset
+                logger.info({
+                    "event": "default_preset_assigned",
                     "file_id": file_id,
                     "file_type": file_type,
                     "file_header": header,
-                }, extra={"context": {"file_id": file_id}})
-                return None
+                    "preset_id": str(default_preset.id),
+                    "preset_name": default_preset.name,
+                    "preset_header": default_preset.header,
+                },)
+                return default_preset
 
             except Exception as ex:
                 logger.error({
@@ -339,8 +330,27 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "file_type": file_type,
                     "error": str(ex),
-                }, extra={"context": {"file_id": file_id}})
+                },)
                 return None
+
+        elif file_type == ContentType.PCAP.value:
+            preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
+            logger.debug({
+                "event": "preset_assigned",
+                "file_id": file_id,
+                "file_type": file_type,
+                "preset_id": str(preset.id) if preset else None,
+                "preset_name": preset.name
+            },)
+            return preset
+
+        else:
+            logger.debug({
+                "event": "preset_assignment_skipped",
+                "file_id": file_id,
+                "file_type": file_type,
+            },)
+            return None
 
     def save_file(self, file: UploadFile) -> File:
         file_id = self.storage.save_file(file.file)
@@ -416,7 +426,7 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "error": "File not found",
                 },
-                extra={"context": {"file_id": file_id}},
+                
             )
             raise Exception("File not found")
 
@@ -427,7 +437,6 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "error": "File processing is already started",
                 },
-                extra={"context": {"file_id": file_id}},
             )
             raise Exception("File processing is already started")
 
@@ -438,7 +447,6 @@ class FileService(BaseService[File]):
                 "filename": file.filename,
                 "content_type": file.content_type.value,
             },
-            extra={"context": {"file_id": file_id}},
         )
         
         # Track if this is an archive
@@ -459,7 +467,6 @@ class FileService(BaseService[File]):
                     "extracted_size": file.extracted_size,
                     "file_count": len(files),
                 },
-                extra={"context": {"file_id": file_id}},
             )
         else:
             files = [file]
@@ -486,7 +493,6 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "filename": file.filename,
                 },
-                extra={"context": {"file_id": file_id}},
             )
         return file
 
@@ -568,7 +574,6 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "error": "File not found",
                 },
-                extra={"context": {"file_id": file_id}},
             )
             raise FileNotFoundError(f"File with id {file_id} not found.")
         file_obj.status = FileStatus.IN_PROGRESS
@@ -588,7 +593,6 @@ class FileService(BaseService[File]):
                 "file_type_description": file_type_description,
                 "is_capture_file": is_capture_file,
             },
-            extra={"context": {"file_id": file_id}},
         )
         processor = config.make_processor(content_type=content_type.value)
         
@@ -613,7 +617,6 @@ class FileService(BaseService[File]):
                             "file_id": file_id,
                             "error": "Can't detect encoding for file",
                         },
-                        extra={"context": {"file_id": file_id}},
                     )
                     raise PcapProcessingError("Can't detect encoding for file")
                 encoding = encoding_res.encoding
@@ -647,7 +650,6 @@ class FileService(BaseService[File]):
                                         "completed_size": done_size,
                                         "time_remaining": time_remain,
                                     },
-                                    extra={"context": {"file_id": file_id}},
                                 )
                                 report_count += 1
                                 unreported = 0
@@ -664,7 +666,6 @@ class FileService(BaseService[File]):
                                 "tuple": str(item),
                                 "expected": "(ts, output_path, linktype)",
                             },
-                            extra={"context": {"file_id": file_id}},
                         )
                         raise PcapProcessingError(f"Invalid packet tuple: {item}")
                     _ts, output_path, _linktype = item
@@ -677,7 +678,6 @@ class FileService(BaseService[File]):
                             "total_size": done_size,
                             "output_file": str(dst),
                         },
-                        extra={"context": {"file_id": file_id}},
                     )
                     break  # Only one output file is expected
                 file_obj.completed_size = done_size
@@ -690,7 +690,6 @@ class FileService(BaseService[File]):
                         "file_id": file_id,
                         "error": f"Unsupported content type: {content_type}",
                     },
-                    extra={"context": {"file_id": file_id}},
                 )
                 raise PcapProcessingError(f"Unsupported content type: {content_type}")
             logger.info(
@@ -700,7 +699,6 @@ class FileService(BaseService[File]):
                     "src_path": str(dst),
                     "dst_path": str(src),
                 },
-                extra={"context": {"file_id": file_id}},
             )
             file_obj.filename = dst_filename
             dst.rename(src)
@@ -716,7 +714,6 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "error": str(ex),
                 },
-                extra={"context": {"file_id": file_id}},
             )
             path = pathlib.Path(file_obj.filename)
             path_parts = list(path.parts)
