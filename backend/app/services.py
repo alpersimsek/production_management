@@ -1,5 +1,8 @@
+import zipfile
+import tarfile
+import tempfile
+import json
 from sqlalchemy.orm import Session
-import re
 from sqlalchemy import func, literal
 from database.models import (
     User,
@@ -42,7 +45,7 @@ class PcapProcessingError(Exception):
     pass
 
 class ProcessingConfig:
-    """Processign config class."""
+    """Processing config class."""
 
     MATCHER_MAP = {
         "regex": RegexpMatcher,
@@ -54,7 +57,6 @@ class ProcessingConfig:
         "replace": ReplacePatcher,
     }
 
-    # Content type -> processor class maping
     PROC_CLS_MAP = {
         ContentType.TEXT.value: TextProcessor,
         ContentType.PCAP.value: PcapProcessor,
@@ -64,10 +66,8 @@ class ProcessingConfig:
         self,
         rules_config: list[dict[str, Any]],
         maskingMapService,
-        # replacer_state: Optional[Mapping[str, str]] = None
     ):
         self.rules_config = rules_config
-        # self._replacer_state = replacer_state or {}
         self.maskingMapService = maskingMapService
         self._processor = None
 
@@ -76,9 +76,6 @@ class ProcessingConfig:
         patcher_type = cfg.pop("type")
         patcher_cls = self.PATCHERS_MAP[patcher_type]
         patcher = patcher_cls(self.maskingMapService, **cfg)
-        # if isinstance(patcher, ReplacePatcher):
-        #     # Set a shared state instance to replacer
-        #     patcher.set_state(self._replacer_state)
         return patcher
 
     def make_matcher(self, cfg: dict[str, Any]):
@@ -102,7 +99,6 @@ class ProcessingConfig:
             processor = proc_cls(rules)
             self._processor = processor
         return self._processor
-
 
 class BaseService(Generic[T]):
     def __init__(self, model: Type[T], session: Session):
@@ -151,7 +147,6 @@ class BaseService(Generic[T]):
         except JWTError:
             return False
 
-
 class UserService(BaseService[User]):
     def __init__(self, session: Session):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -196,22 +191,24 @@ class UserService(BaseService[User]):
             return None
         return user
 
-
 class HeaderMatcher:
     """Utility class for substring matching of file headers against preset headers."""
     
     def __init__(self):
-        pass  # No initialization needed for simple substring matching
+        pass
 
     def match_header(self, file_header: str, preset_header: str) -> bool:
         """Check if preset header is a substring of file header."""
         if preset_header is None:
             return False
-        # Use simple string search for substring matching
         return preset_header in file_header
 
-
 class FileService(BaseService[File]):
+    # Default limits for archive extraction
+    MAX_NESTING_DEPTH = 5  # Maximum depth for nested archives
+    MAX_EXTRACTED_SIZE = 1024 * 1024 * 1024  # 1GB limit for total extracted size
+    MAX_EXTRACTED_FILES = 1000  # Maximum number of extracted files per archive
+
     def __init__(self, session: Session, user: User, storage: FileStorage):
         self.user = user
         self.storage = storage
@@ -222,7 +219,6 @@ class FileService(BaseService[File]):
     def get_by_user(self) -> list[File]:
         files = self.user.files
         return [file for file in files if file.archive_id is None]
-        # return self.user.files
 
     def compute_used_space(self):
         used_space = (
@@ -239,7 +235,6 @@ class FileService(BaseService[File]):
         """Match preset headers as substrings in file header; use default preset (header='') if no match."""
         if file_type == ContentType.TEXT.value:
             try:
-                # Read file header with encoding detection
                 src = self.storage.get(file_id)
                 encoding_res = from_path(src).best()
                 if not encoding_res:
@@ -247,7 +242,7 @@ class FileService(BaseService[File]):
                         "event": "encoding_detection_failed",
                         "file_id": file_id,
                         "error": "Cannot detect file encoding",
-                    }, )
+                    })
                     return None
                 encoding = encoding_res.encoding
 
@@ -259,15 +254,12 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "file_type": file_type,
                     "header": header,
-                }, )
+                })
 
-                # Check cache for presets
                 if file_type not in self.preset_cache:
-                    # Query presets, including those with empty headers
                     presets = self.session.query(Preset).filter(
                         Preset.header != None
                     ).order_by(Preset.id).all()
-                    # Find default preset (header = '')
                     default_preset = next(
                         (p for p in presets if p.header == ''),
                         None
@@ -285,7 +277,7 @@ class FileService(BaseService[File]):
                         "event": "no_presets_available",
                         "file_id": file_id,
                         "file_type": file_type,
-                    }, )
+                    })
                     return None
 
                 if not default_preset:
@@ -293,12 +285,11 @@ class FileService(BaseService[File]):
                         "event": "no_default_preset",
                         "file_id": file_id,
                         "file_type": file_type,
-                    }, )
+                    })
                     return None
 
-                # Try substring matching against presets
                 for preset in presets:
-                    if preset.header == "":  # Skip default preset in matching loop
+                    if preset.header == "":
                         continue
                     if self.header_matcher.match_header(header, preset.header):
                         logger.info({
@@ -309,10 +300,9 @@ class FileService(BaseService[File]):
                             "preset_id": str(preset.id),
                             "preset_name": preset.name,
                             "preset_header": preset.header,
-                        }, )
+                        })
                         return preset
 
-                # No match found or blank header; return default preset
                 logger.info({
                     "event": "default_preset_assigned",
                     "file_id": file_id,
@@ -321,7 +311,7 @@ class FileService(BaseService[File]):
                     "preset_id": str(default_preset.id),
                     "preset_name": default_preset.name,
                     "preset_header": default_preset.header,
-                },)
+                })
                 return default_preset
 
             except Exception as ex:
@@ -330,7 +320,7 @@ class FileService(BaseService[File]):
                     "file_id": file_id,
                     "file_type": file_type,
                     "error": str(ex),
-                },)
+                })
                 return None
 
         elif file_type == ContentType.PCAP.value:
@@ -340,8 +330,7 @@ class FileService(BaseService[File]):
                 "file_id": file_id,
                 "file_type": file_type,
                 "preset_id": str(preset.id) if preset else None,
-                "preset_name": preset.name
-            },)
+            })
             return preset
 
         else:
@@ -349,7 +338,7 @@ class FileService(BaseService[File]):
                 "event": "preset_assignment_skipped",
                 "file_id": file_id,
                 "file_type": file_type,
-            },)
+            })
             return None
 
     def save_file(self, file: UploadFile) -> File:
@@ -367,7 +356,6 @@ class FileService(BaseService[File]):
             content_type = ContentType.ARCHIVE
             preset = None
         else:
-            # delete unsupported file from storage
             self.storage.delete(finfo.fid)
             raise ValueError(f"Unsupported file type: {finfo.ftype}")
 
@@ -384,126 +372,227 @@ class FileService(BaseService[File]):
         self.create(file_obj)
         return file_obj
 
-    def unpack_file(self, file: File) -> list[File]:
+    def unpack_file(self, file: File, nesting_level: int = 0) -> list[File]:
+        """Unpack an archive file recursively, continuing with extracted files even if errors occur."""
+        if nesting_level > self.MAX_NESTING_DEPTH:
+            logger.warning({
+                "event": "unpack_skipped",
+                "file_id": file.id,
+                "filename": file.filename,
+                "error": f"Maximum nesting depth ({self.MAX_NESTING_DEPTH}) exceeded",
+            }, extra={"context": {"file_id": file.id}})
+            return []
+
         files = []
-        for finfo in self.storage.unpack(file.id, file.filename):
-            # file_obj = self.add_file(file_info.fid, file_info.fname, archive_id=file.id)
-            file_obj = self.add_file(finfo, archive_id=file.id)
-            files.append(file_obj)
+        total_extracted_size = 0
+        extracted_count = 0
 
-            if self.compute_used_space() > settings.USER_STORAGE_LIMIT:
-                for file in files:
-                    self.delete_file(file.id)
-                logger.error(
-                    {
-                        "event": "process_failed",
-                        "error": "Not enough free space in user storage",
-                    },
-                )
-                raise Exception(f"Not enough free space in user storage")
+        try:
+            for finfo in self.storage.unpack(file.id, file.filename, nesting_level):
+                try:
+                    file_obj = self.add_file(finfo, archive_id=file.id)
+                    files.append(file_obj)
+                    total_extracted_size += finfo.fsize or 0
+                    extracted_count += 1
 
-            if len(self.user.files) > settings.MAX_USER_FILES:
-                for file in files:
-                    self.delete_file(file.id)
-                logger.error(
-                    {
-                        "event": "process_failed",
-                        "error": "Files per user limit ({settings.MAX_USER_FILES}) is exceeded",
-                    },
-                )
-                raise Exception(
-                    f"Files per user limit ({settings.MAX_USER_FILES}) is exceeded"
-                )
+                    if total_extracted_size > self.MAX_EXTRACTED_SIZE:
+                        for f in files:
+                            self.delete_file(f.id)
+                        logger.error({
+                            "event": "unpack_failed",
+                            "file_id": file.id,
+                            "filename": file.filename,
+                            "error": f"Extracted size exceeds limit ({self.MAX_EXTRACTED_SIZE})",
+                        }, extra={"context": {"file_id": file.id}})
+                        raise ValueError(f"Extracted size exceeds limit ({self.MAX_EXTRACTED_SIZE})")
+
+                    if extracted_count > self.MAX_EXTRACTED_FILES:
+                        for f in files:
+                            self.delete_file(f.id)
+                        logger.error({
+                            "event": "unpack_failed",
+                            "file_id": file.id,
+                            "filename": file.filename,
+                            "error": f"Extracted file count exceeds limit ({self.MAX_EXTRACTED_FILES})",
+                        }, extra={"context": {"file_id": file.id}})
+                        raise ValueError(f"Extracted file count exceeds limit ({self.MAX_EXTRACTED_FILES})")
+
+                    if self.compute_used_space() > settings.USER_STORAGE_LIMIT:
+                        for f in files:
+                            self.delete_file(f.id)
+                        logger.error({
+                            "event": "unpack_failed",
+                            "file_id": file.id,
+                            "filename": file.filename,
+                            "error": "Not enough free space in user storage",
+                        }, extra={"context": {"file_id": file.id}})
+                        raise ValueError("Not enough free space in user storage")
+
+                    if len(self.user.files) > settings.MAX_USER_FILES:
+                        for f in files:
+                            self.delete_file(f.id)
+                        logger.error({
+                            "event": "unpack_failed",
+                            "file_id": file.id,
+                            "filename": file.filename,
+                            "error": f"Files per user limit ({settings.MAX_USER_FILES}) is exceeded",
+                        }, extra={"context": {"file_id": file.id}})
+                        raise ValueError(f"Files per user limit ({settings.MAX_USER_FILES}) is exceeded")
+                except Exception as e:
+                    logger.warning({
+                        "event": "partial_unpack_failed",
+                        "file_id": file.id,
+                        "filename": file.filename,
+                        "child_fid": finfo.fid,
+                        "child_filename": finfo.fname,
+                        "nesting_level": nesting_level,
+                        "error": str(e),
+                    }, extra={"context": {"file_id": file.id}})
+                    continue
+        except Exception as e:
+            logger.warning({
+                "event": "unpack_error",
+                "file_id": file.id,
+                "filename": file.filename,
+                "nesting_level": nesting_level,
+                "error": str(e),
+            }, extra={"context": {"file_id": file.id}})
+            # Continue with any files extracted before the error
+
+        if not files:
+            logger.info({
+                "event": "no_files_extracted",
+                "file_id": file.id,
+                "filename": file.filename,
+                "nesting_level": nesting_level,
+                "message": "No files found in archive",
+            }, extra={"context": {"file_id": file.id}})
+
         return files
 
     def process_file(self, file_id: str):
+        """Process a file, handling archives and individual files without validation."""
         file = self.get_by_id(file_id)
-
         if not file:
-            logger.error(
-                {
-                    "event": "process_failed",
-                    "file_id": file_id,
-                    "error": "File not found",
-                },
-                
-            )
-            raise Exception("File not found")
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "error": "File not found",
+            })
+            raise ValueError("File not found")
 
         if file.status is not FileStatus.CREATED:
-            logger.error(
-                {
-                    "event": "process_failed",
-                    "file_id": file_id,
-                    "error": "File processing is already started",
-                },
-            )
-            raise Exception("File processing is already started")
-
-        logger.info(
-            {
-                "event": "process_started",
+            logger.error({
+                "event": "process_failed",
                 "file_id": file_id,
-                "filename": file.filename,
-                "content_type": file.content_type.value,
-            },
-        )
-        
-        # Track if this is an archive
-        is_archive = file.content_type is ContentType.ARCHIVE
+                "error": "File processing is already started",
+            })
+            raise ValueError("File processing is already started")
 
-        if is_archive:
-            files = self.unpack_file(file)
-            # Set initial progress
-            file.extracted_size = sum(f.file_size for f in files)
-            file.status = FileStatus.IN_PROGRESS
-            file.completed_size = 0
-            file.time_remaining = 0
-            self.session.commit()
-            logger.debug(
-                {
-                    "event": "archive_unpacked",
-                    "file_id": file_id,
-                    "extracted_size": file.extracted_size,
-                    "file_count": len(files),
-                },
-            )
-        else:
-            files = [file]
+        logger.info({
+            "event": "process_started",
+            "file_id": file_id,
+            "filename": file.filename,
+            "content_type": file.content_type.value,
+        })
 
-        task_configs = self.make_task_config(files)
+        is_archive = file.content_type == ContentType.ARCHIVE
+        files = []
 
-        for task_config in task_configs:
-            self.preprocess_file(**task_config)
+        try:
+            if is_archive:
+                files = self.unpack_file(file)
+                if files:
+                    file.extracted_size = sum(f.file_size for f in files)
+                    file.status = FileStatus.IN_PROGRESS
+                    file.completed_size = 0
+                    file.time_remaining = 0
+                    self.session.commit()
+                    logger.debug({
+                        "event": "archive_unpacked",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                        "extracted_size": file.extracted_size,
+                        "file_count": len(files),
+                    })
+                else:
+                    logger.info({
+                        "event": "archive_empty",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                        "message": "No files extracted, proceeding with empty archive",
+                    })
+                    file.status = FileStatus.DONE
+                    file.completed_size = file.file_size
+                    file.time_remaining = 0
+                    self.session.commit()
+                    return file
+            else:
+                files = [file]
 
-        # Re-pack files after processing
-        if is_archive:
-            self.storage.repack(file)
-            file.status = FileStatus.DONE
-            file.completed_size = file.file_size
-            file.time_remaining = 0
-            # Commit the updated file size and status
-            self.session.commit()
-
-            for child in file.archive_files:
-                self.delete_file(child.id)
-            logger.info(
-                {
-                    "event": "archive_repacked",
+            try:
+                task_configs = self.make_task_config(files)
+                for task_config in task_configs:
+                    self.preprocess_file(**task_config)
+            except Exception as e:
+                file.status = FileStatus.ERROR
+                self.session.commit()
+                logger.error({
+                    "event": "preprocess_failed",
                     "file_id": file_id,
                     "filename": file.filename,
-                },
-            )
-        return file
+                    "error": str(e),
+                })
+                raise ValueError(f"Failed to preprocess files: {str(e)}")
+
+            if is_archive and files:
+                try:
+                    self.storage.repack(file)
+                    file.status = FileStatus.DONE
+                    file.completed_size = file.file_size
+                    file.time_remaining = 0
+                    self.session.commit()
+                    for child in file.archive_files:
+                        self.delete_file(child.id)
+                    logger.info({
+                        "event": "archive_repacked",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                    })
+                except Exception as e:
+                    file.status = FileStatus.ERROR
+                    self.session.commit()
+                    logger.error({
+                        "event": "repack_failed",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                        "error": str(e),
+                    })
+                    raise ValueError(f"Failed to repack archive: {str(e)}")
+
+            return file
+
+        except ValueError as e:
+            raise
+        except Exception as e:
+            file.status = FileStatus.ERROR
+            self.session.commit()
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "filename": file.filename,
+                "error": str(e),
+            })
+            raise ValueError(f"Processing failed: {str(e)}")
 
     def preprocess_file(self, files: Dict[str, str], rules_configs: Dict[str, List]):
+        """Preprocess a list of files with the given rules configurations."""
         try:
             start_time = time.time()
             configs = {}
             for file_id, preset_id in files.items():
                 config = configs.get(preset_id)
                 if not config:
-                    # Init config with rules
                     config = ProcessingConfig(
                         rules_config=rules_configs[preset_id],
                         maskingMapService=MaskingMapService(self.session),
@@ -511,233 +600,221 @@ class FileService(BaseService[File]):
                     configs[preset_id] = config
                 self._process_file(config, file_id)
 
-                # After processing each file, update the parent archive's progress if applicable
                 processed_file = self.get_by_id(file_id)
-
-                # Check if this file is part of an archive
                 if processed_file and processed_file.archive_id:
-                    # Get the parent archive
                     parent = processed_file.archive
-
-                    # If the parent is currently being processed
                     if parent.status == FileStatus.IN_PROGRESS:
-                        # Calculate total extracted size from all files in the archive
-                        # total_extracted_size = sum(
-                        #     child.file_size for child in parent.archive_files
-                        # )
-
-                        # Calculate processed size across all completed files in the archive
                         processed_size = sum(
                             child.file_size
                             for child in parent.archive_files
                             if child.status == FileStatus.DONE
                         )
-
-                        # Update parent archive progress
                         parent.completed_size = processed_size
-
-                        # Calculate time remaining based on progress
                         if processed_size > 0:
-                            # Use the parent's create_date as the start time reference
-                            # start_time = parent.create_date.timestamp()
                             elapsed = time.time() - start_time
-
                             if elapsed > 0:
                                 rate = processed_size / elapsed
                                 remaining = parent.extracted_size - processed_size
                                 parent.time_remaining = (
                                     int(remaining / rate) if rate > 0 else 0
                                 )
-
                         self.session.commit()
-                        logger.debug(
-                            f"Updated archive {parent.id} progress after processing {file_id}: "
-                            f"completed_size={parent.completed_size}, "
-                            f"time_remaining={parent.time_remaining}"
-                        )
+                        logger.debug({
+                            "event": "archive_progress_updated",
+                            "file_id": file_id,
+                            "parent_id": parent.id,
+                            "completed_size": parent.completed_size,
+                            "time_remaining": parent.time_remaining,
+                        })
 
-        except Exception:
-            # Set error for all non-done files
+        except Exception as e:
             file_ids = list(files.keys())
-            logger.exception(f"Error processing files: {files}")
+            logger.error({
+                "event": "preprocess_failed",
+                "file_ids": file_ids,
+                "error": str(e),
+            }, extra={"context": {"file_id": file_ids}})
             self.session.query(File).filter(
                 (File.status != FileStatus.DONE) & File.id.in_(file_ids)
             ).update({"status": FileStatus.ERROR})
-            raise
+            self.session.commit()
+            raise ValueError(f"Preprocessing failed: {str(e)}")
 
     def _process_file(self, config: ProcessingConfig, file_id: str) -> None:
+        """Process a single file with the given configuration."""
         file_obj = self.get_by_id(file_id)
         if not file_obj:
-            logger.error(
-                {
-                    "event": "process_failed",
-                    "file_id": file_id,
-                    "error": "File not found",
-                },
-            )
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "error": "File not found",
+            })
             raise FileNotFoundError(f"File with id {file_id} not found.")
+
         file_obj.status = FileStatus.IN_PROGRESS
         content_type = file_obj.content_type
         src = self.storage.get(file_id)
-        # Log file type using python-magic
+
+        if not src.exists():
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "filename": file_obj.filename,
+                "error": f"Source file does not exist: {src}",
+            })
+            file_obj.status = FileStatus.ERROR
+            self.session.commit()
+            raise FileNotFoundError(f"Source file does not exist: {src}")
+
         mime = magic.from_file(str(src), mime=True)
         file_type_description = magic.from_file(str(src))
         is_capture_file = mime == "application/vnd.tcpdump.pcap"
-        logger.info(
-            {
-                "event": "file_processing_started",
-                "file_id": file_id,
-                "filename": file_obj.filename,
-                "content_type": content_type.value,
-                "mime_type": mime,
-                "file_type_description": file_type_description,
-                "is_capture_file": is_capture_file,
-            },
-        )
+        logger.info({
+            "event": "file_processing_started",
+            "file_id": file_id,
+            "filename": file_obj.filename,
+            "content_type": file_type_description,
+            "mime_type": mime,
+            "file_type_description": file_type_description,
+            "is_capture_file": is_capture_file,
+        })
+
         processor = config.make_processor(content_type=content_type.value)
-        
+
         base, ext = os.path.splitext(file_obj.filename)
         ext = ext.lower()
         if ext in ['.txt', '.csv', '.pcap', '.json', '.log']:
-            # Use known extension, add _masked suffix
             dst_filename = f"{base}_masked{ext}" if not base.endswith('_masked') else file_obj.filename
-        else:  # No or unknown extension
-            # Use content-based detection
+        else:
             file_type = self.storage.get_type(file_id)
             dst_filename = f"{base}_masked.pcap" if file_type == self.storage.T_PCAP else f"{base}_masked.txt"
-                
-        dst = src.parent.joinpath(dst_filename)
-        try:
-            if content_type == ContentType.TEXT:
-                encoding_res = from_path(src).best()
-                if not encoding_res:
-                    logger.error(
-                        {
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f"_masked{ext}", dir=self.storage.base_dir) as temp_file:
+            temp_dst = pathlib.Path(temp_file.name)
+            try:
+                if content_type == ContentType.TEXT:
+                    encoding_res = from_path(src).best()
+                    if not encoding_res:
+                        logger.error({
                             "event": "process_failed",
                             "file_id": file_id,
-                            "error": "Can't detect encoding for file",
-                        },
-                    )
-                    raise PcapProcessingError("Can't detect encoding for file")
-                encoding = encoding_res.encoding
-                done_size = 0
-                unreported = 0
-                total_size = self.storage.get_size(file_id)
-                max_report_num = int(total_size / settings.REPORT_STEP)
-                process_time = 0
-                report_count = 1
-                with dst.open("w", newline="", encoding=encoding) as f_dst:
-                    with src.open("r", newline="", encoding=encoding) as f_src:
-                        operation_time = time.time()
-                        for chunk in processor.feed(f_src):
-                            f_dst.write(chunk)
-                            chunk_bytes_len = len(chunk.encode())
-                            done_size += chunk_bytes_len
-                            unreported += chunk_bytes_len
-                            if unreported >= settings.REPORT_STEP:
-                                process_time += time.time() - operation_time
-                                average_process_time = process_time / report_count
-                                operation_time = time.time()
-                                chunk_num = max_report_num - report_count
-                                time_remain = int(chunk_num * average_process_time)
-                                file_obj.completed_size = done_size
-                                file_obj.time_remaining = time_remain
-                                self.session.commit()
-                                logger.debug(
-                                    {
+                            "filename": file_obj.filename,
+                            "error": "Cannot detect encoding for file",
+                        })
+                        raise PcapProcessingError("Cannot detect encoding for file")
+                    encoding = encoding_res.encoding
+                    done_size = 0
+                    unreported = 0
+                    total_size = self.storage.get_size(file_id)
+                    max_report_num = int(total_size / settings.REPORT_STEP)
+                    process_time = 0
+                    report_count = 1
+                    with temp_dst.open("w", newline="", encoding=encoding) as f_dst:
+                        with src.open("r", newline="", encoding=encoding) as f_src:
+                            operation_time = time.time()
+                            for chunk in processor.feed(f_src):
+                                f_dst.write(chunk)
+                                chunk_bytes_len = len(chunk.encode())
+                                done_size += chunk_bytes_len
+                                unreported += chunk_bytes_len
+                                if unreported >= settings.REPORT_STEP:
+                                    process_time += time.time() - operation_time
+                                    average_process_time = process_time / report_count
+                                    operation_time = time.time()
+                                    chunk_num = max_report_num - report_count
+                                    time_remain = int(chunk_num * average_process_time)
+                                    file_obj.completed_size = done_size
+                                    file_obj.time_remaining = time_remain
+                                    self.session.commit()
+                                    logger.debug({
                                         "event": "progress_update",
                                         "file_id": file_id,
                                         "completed_size": done_size,
                                         "time_remaining": time_remain,
-                                    },
-                                )
-                                report_count += 1
-                                unreported = 0
-            elif content_type == ContentType.PCAP:
-                done_size = 0
-                total_size = self.storage.get_size(file_id)
-                operation_time = time.time()
-                for item in processor.feed(src):
-                    if len(item) != 3:
-                        logger.error(
-                            {
+                                    })
+                                    report_count += 1
+                                    unreported = 0
+
+                elif content_type == ContentType.PCAP:
+                    done_size = 0
+                    total_size = self.storage.get_size(file_id)
+                    operation_time = time.time()
+                    for item in processor.feed(src):
+                        if len(item) != 3:
+                            logger.error({
                                 "event": "invalid_packet_tuple",
                                 "file_id": file_id,
+                                "filename": file_obj.filename,
                                 "tuple": str(item),
                                 "expected": "(ts, output_path, linktype)",
-                            },
-                        )
-                        raise PcapProcessingError(f"Invalid packet tuple: {item}")
-                    _ts, output_path, _linktype = item
-                    done_size = os.path.getsize(output_path)
-                    os.rename(output_path, dst)
-                    logger.info(
-                        {
+                            })
+                            raise PcapProcessingError(f"Invalid packet tuple: {item}")
+                        _ts, output_path, _linktype = item
+                        done_size = os.path.getsize(output_path)
+                        os.rename(output_path, temp_dst)
+                        logger.info({
                             "event": "pcap_processed",
                             "file_id": file_id,
+                            "filename": file_obj.filename,
                             "total_size": done_size,
-                            "output_file": str(dst),
-                        },
-                    )
-                    break  # Only one output file is expected
-                file_obj.completed_size = done_size
-                file_obj.time_remaining = 0
-                self.session.commit()
-            else:
-                logger.error(
-                    {
+                            "output_file": str(temp_dst),
+                        })
+                        break
+                    file_obj.completed_size = done_size
+                    file_obj.time_remaining = 0
+                    self.session.commit()
+
+                else:
+                    logger.error({
                         "event": "process_failed",
                         "file_id": file_id,
+                        "filename": file_obj.filename,
                         "error": f"Unsupported content type: {content_type}",
-                    },
-                )
-                raise PcapProcessingError(f"Unsupported content type: {content_type}")
-            logger.info(
-                {
-                    "event": "file_renamed",
+                    })
+                    raise PcapProcessingError(f"Unsupported content type: {content_type}")
+
+                logger.info({
+                    "event": "file_processed",
                     "file_id": file_id,
-                    "src_path": str(dst),
+                    "filename": file_obj.filename,
+                    "new_filename": dst_filename,
+                    "src_path": str(temp_dst),
                     "dst_path": str(src),
-                },
-            )
-            file_obj.filename = dst_filename
-            dst.rename(src)
-            file_obj.status = FileStatus.DONE
-            file_obj.completed_size = done_size
-            file_obj.time_remaining = 0
-            file_obj.file_size = self.storage.get_size(file_id)
-            self.session.commit()
-        except Exception as ex:
-            logger.exception(
-                {
+                })
+                temp_dst.rename(src)
+                file_obj.filename = dst_filename
+                file_obj.status = FileStatus.DONE
+                file_obj.completed_size = done_size
+                file_obj.time_remaining = 0
+                file_obj.file_size = self.storage.get_size(file_id)
+                self.session.commit()
+
+            except Exception as ex:
+                logger.error({
                     "event": "process_error",
                     "file_id": file_id,
+                    "filename": file_obj.filename,
                     "error": str(ex),
-                },
-            )
-            path = pathlib.Path(file_obj.filename)
-            path_parts = list(path.parts)
-            path_parts[-1] = "failed_" + path_parts[-1]
-            filename = "/".join(path_parts)
-            file_obj.status = FileStatus.ERROR
-            file_obj.filename = filename
-            if dst.exists():
-                dst.unlink()
-            self.session.commit()
-            raise PcapProcessingError(f"Error processing file {file_id}: {str(ex)}")
+                })
+                path = pathlib.Path(file_obj.filename)
+                path_parts = list(path.parts)
+                path_parts[-1] = "failed_" + path_parts[-1]
+                filename = "/".join(path_parts)
+                file_obj.status = FileStatus.ERROR
+                file_obj.filename = filename
+                if temp_dst.exists():
+                    temp_dst.unlink()
+                self.session.commit()
+                raise PcapProcessingError(f"Error processing file {file_id}: {str(ex)}")
 
     def get_rule_config(self, presetRule: PresetRule):
-        # config = []
-        # for presetRule in preset_rules:
         cfg = presetRule.rule.config
         cfg["category"] = presetRule.rule.category
         cfg["patcher_cfg"] = presetRule.action
-        # config.append(cfg)
         return cfg
 
     def make_task_config(self, file_objs: list[File]):
         """Make task config."""
-        # make sure all files have assigned presets
         file_wo_preset = (
             self.session.query(File)
             .filter(
@@ -747,9 +824,8 @@ class FileService(BaseService[File]):
             .all()
         )
         if file_wo_preset:
-            raise Exception(f"{file_wo_preset[0].filename}  has no assigned preset")
+            raise Exception(f"{file_wo_preset[0].filename} has no assigned preset")
 
-        # Create configs for processing
         files = {}
         presets_cfgs = {}
         for file_obj in file_objs:
@@ -762,15 +838,12 @@ class FileService(BaseService[File]):
                 presets_cfgs[preset_id] = configs
             files[file_obj.id] = {"preset_id": preset_id, "size": file_obj.file_size}
 
-        # Create preset cfg -> list of files mapping
         preset_files_map = collections.defaultdict(list)
         files_items = sorted(files.items(), key=lambda x: -x[1]["size"])
         for file_id, file_info in files_items:
             preset_files_map[file_info["preset_id"]].append(file_id)
 
         tasks_configs = []
-
-        # Create config
         group_files = {}
         group_rules = {}
         for preset_id, file_ids in preset_files_map.items():
@@ -782,15 +855,13 @@ class FileService(BaseService[File]):
         return tasks_configs
 
     def delete_file(self, file_id):
-        """Delete db object and file from the storage."""
+        """Delete db object and file from storage."""
         self.storage.delete(file_id)
         self.delete(file_id)
-
 
 class ProductService(BaseService[Product]):
     def __init__(self, session: Session):
         super().__init__(Product, session)
-
 
 class PresetService(BaseService[Preset]):
     def __init__(self, session: Session):
@@ -804,7 +875,6 @@ class PresetService(BaseService[Preset]):
         config = None
         return config
 
-
 class RuleService(BaseService[Rule]):
     def __init__(self, session: Session):
         super().__init__(Rule, session)
@@ -816,7 +886,6 @@ class RuleService(BaseService[Rule]):
             raise Exception(f"Rule with id {rule_id} not found")
         return cfg.config
 
-
 class PresetRuleService(BaseService[PresetRule]):
     def __init__(self, session: Session):
         super().__init__(PresetRule, session)
@@ -826,7 +895,6 @@ class PresetRuleService(BaseService[PresetRule]):
         cfg = self.model.rule.get_config(self.model.rule_id)
         cfg["patcher_cfg"] = self.model.action
         return cfg
-
 
 class MaskingMapService(BaseService[MaskingMap]):
     """Service class to interact with MaskingMap table."""
@@ -866,61 +934,40 @@ class MaskingMapService(BaseService[MaskingMap]):
         sort: Optional[str] = "created_at:desc",
     ) -> list[MaskingMap]:
         """Search for masking maps based on query and filters."""
-        # Start with a base query
         db_query = self.session.query(MaskingMap)
-
-        # Apply text search if provided
         if query:
             search_term = f"%{query}%"
             db_query = db_query.filter(
-                # Search in both original and masked values
                 or_(
                     MaskingMap.original_value.ilike(search_term),
                     MaskingMap.masked_value.ilike(search_term),
                 )
             )
-
-        # Filter by categories if provided
         if categories and len(categories) > 0:
-            # Convert string categories to RuleCategory enum
             enum_categories = []
             for cat in categories:
                 try:
                     enum_categories.append(RuleCategory(cat))
                 except ValueError:
-                    # Skip invalid categories
                     continue
-
             if enum_categories:
                 db_query = db_query.filter(MaskingMap.category.in_(enum_categories))
-
-        # Apply sorting
         if sort:
             parts = sort.split(":")
             if len(parts) == 2:
                 field_name, direction = parts
-
-                # Get the actual column to sort by
                 if hasattr(MaskingMap, field_name):
                     sort_column = getattr(MaskingMap, field_name)
-
-                    # Apply sorting direction
                     if direction.lower() == "desc":
                         db_query = db_query.order_by(sort_column.desc())
                     else:
                         db_query = db_query.order_by(sort_column.asc())
             else:
-                # Default sort by created_at descending
                 db_query = db_query.order_by(MaskingMap.created_at.desc())
-
-        # Apply pagination
         db_query = db_query.limit(limit).offset(offset)
-
-        # Execute query and return results
         return db_query.all()
 
     def get_categories(self) -> list[str]:
         """Get all available categories that have masked values."""
         categories = self.session.query(MaskingMap.category).distinct().all()
-        # Convert to list of strings
         return [cat[0].value for cat in categories]
