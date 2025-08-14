@@ -18,7 +18,7 @@ from database.models import (
     RuleCategory,
 )
 from gdpr.processors import BaseProcessor, TextProcessor, PcapProcessor
-from gdpr.matchers import RegexpMatcher, IPAddrMatcher, MacAddrMatcher
+from gdpr.matchers import RegexpMatcher, IPAddrMatcher, MacAddrMatcher, SIPPhoneMatcher, SIPUsernameMatcher, SIPDomainMatcher
 from gdpr.patchers import ReplacePatcher
 import collections
 import pathlib
@@ -51,6 +51,9 @@ class ProcessingConfig:
         "regex": RegexpMatcher,
         "ip_addr": IPAddrMatcher,
         "mac_addr": MacAddrMatcher,
+        "sip_phone": SIPPhoneMatcher,
+        "sip_username": SIPUsernameMatcher,
+        "sip_domain": SIPDomainMatcher,
     }
 
     PATCHERS_MAP = {

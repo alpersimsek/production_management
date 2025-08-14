@@ -19,6 +19,13 @@ DATABASE_URL = (
     f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
+EXCEPTION_PATTERNS = {
+    "phone_num": [
+        r'^\-?\d{4}\.\d{2}\.\d{2}\-\d{6}$',  # Matches -2025.05.05-001833 or 2025.05.05-001833
+        r'^\d{4}\.\d{2}\.\d{2}$',  # Matches 2025.05.05
+    ],
+}
+
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
 
@@ -27,3 +34,19 @@ SIGNED_URL_EXPIRY_MINUTES = 5  # 5 minutes
 MAX_USER_FILES = 200
 REPORT_STEP = 100_000  # 100 KB
 USER_STORAGE_LIMIT = 10 * 1204**3  # 10 GB
+
+
+'''
+SIP Username:
+Category: username
+Pattern: (?:sip:)?([a-zA-Z0-9][a-zA-Z0-9._%+-]*)@(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})
+
+SIP Phone:
+Category: phone_num
+Pattern: (?:sip:)?(\+?[\d-]{7,15})@
+
+
+SIP Domain:
+Category: domain
+Pattern: (?:sip:)?[^@]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d+)?
+'''

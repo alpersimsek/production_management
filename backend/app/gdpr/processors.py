@@ -1,7 +1,7 @@
 import abc
 import itertools
 import os
-from gdpr.matchers import BaseMatcher, RegexpMatcher, IPAddrMatcher, MacAddrMatcher, Match
+from gdpr.matchers import BaseMatcher, RegexpMatcher, IPAddrMatcher, MacAddrMatcher, Match, SIPPhoneMatcher, SIPDomainMatcher, SIPUsernameMatcher
 from typing import Union, Sequence, Mapping, Any, Optional, Iterator, Tuple
 from scapy.all import rdpcap, wrpcap, Packet, DLT_EN10MB
 from scapy.layers.inet import IP, TCP, UDP
@@ -13,7 +13,11 @@ from logger import logger
 class BaseProcessor(abc.ABC):
     """Base processor class."""
     def __init__(self, matchers: Sequence[BaseMatcher]):
-        self.matchers = matchers
+        # Prioritize SIP matchers to process before generic matchers
+        self.matchers = sorted(
+            matchers,
+            key=lambda m: 0 if isinstance(m, (SIPPhoneMatcher, SIPUsernameMatcher, SIPDomainMatcher)) else 1
+        )
 
     @staticmethod
     def get_overlap(a: tuple[int, int], b: tuple[int, int]) -> int:
@@ -23,8 +27,26 @@ class BaseProcessor(abc.ABC):
     def analyze(self, data):
         result = []
         for matcher in self.matchers:
-            matches = list(matcher.search_iter(data))
-            result.append(matches)
+            try:
+                matches = list(matcher.search_iter(data))
+                logger.debug(
+                    {
+                        "event": "matcher_processed",
+                        "matcher": matcher.__class__.__name__,
+                        "match_count": sum(len(line_matches) for line_matches in matches),
+                    }
+                )
+                result.append(matches)
+            except Exception as e:
+                logger.warning(
+                    {
+                        "event": "matcher_error",
+                        "matcher": matcher.__class__.__name__,
+                        "error": str(e),
+                    },
+                    extra={"context": {"matcher": matcher.__class__.__name__}}
+                )
+                result.append([])
 
         per_line_matches = []
         for line_matches in zip(*result):
@@ -32,13 +54,34 @@ class BaseProcessor(abc.ABC):
             filtered_matches = []
             for rule_matches in line_matches:
                 for match in rule_matches:
-                    match_interval = (match.start, match.end)
-                    for detected_interval in detected_intervals:
-                        if self.get_overlap(match_interval, detected_interval) > 0:
-                            break
-                    else:
-                        detected_intervals.append(match_interval)
-                        filtered_matches.append(match)
+                    try:
+                        match_interval = (match.start, match.end)
+                        for detected_interval in detected_intervals:
+                            if self.get_overlap(match_interval, detected_interval) > 0:
+                                logger.debug(
+                                    {
+                                        "event": "match_overlapped",
+                                        "matcher": rule_matches.__class__.__name__ if rule_matches else "unknown",
+                                        "word": match.word,
+                                        "start": match.start,
+                                        "end": match.end,
+                                    }
+                                )
+                                break
+                        else:
+                            detected_intervals.append(match_interval)
+                            filtered_matches.append(match)
+                    except AttributeError as e:
+                        logger.warning(
+                            {
+                                "event": "invalid_match",
+                                "error": str(e),
+                                "match_data": str(match),
+                                "matcher": rule_matches.__class__.__name__ if rule_matches else "unknown",
+                            },
+                            extra={"context": {"matcher": rule_matches.__class__.__name__ if rule_matches else "unknown"}}
+                        )
+                        continue
             filtered_matches.sort(key=lambda x: x.start)
             per_line_matches.append(filtered_matches)
         return per_line_matches
