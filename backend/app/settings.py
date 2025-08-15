@@ -49,4 +49,7 @@ Pattern: (?:sip:)?(\+?[\d-]{7,15})@
 SIP Domain:
 Category: domain
 Pattern: (?:sip:)?[^@]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d+)?
+
+MAC Address:
+Pattern: (?<![:0-9a-fA-F])[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}(?![:0-9a-fA-F])
 '''
