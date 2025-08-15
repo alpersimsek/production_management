@@ -1,7 +1,10 @@
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
+import glob
+import time
+from logging.handlers import RotatingFileHandler
 
 # ANSI color codes for console output
 COLORS = {
@@ -44,6 +47,29 @@ class PlainStructuredFormatter(logging.Formatter):
             log_entry.update(record.context)
         return json.dumps(log_entry)
 
+def cleanup_old_logs(log_dir: str, max_age_days: int = 30):
+    """Delete log files older than max_age_days in log_dir."""
+    max_age_seconds = max_age_days * 24 * 60 * 60  # Convert days to seconds
+    current_time = time.time()
+    log_pattern = os.path.join(log_dir, "gdpr.log*")  # Match gdpr.log and rotated files
+    for log_file in glob.glob(log_pattern):
+        try:
+            file_mtime = os.path.getmtime(log_file)
+            file_age = current_time - file_mtime
+            if file_age > max_age_seconds:
+                os.unlink(log_file)
+                logging.getLogger("gdpr").debug({
+                    "event": "log_file_deleted",
+                    "file_path": log_file,
+                    "age_days": file_age / (24 * 60 * 60),
+                })
+        except Exception as e:
+            logging.getLogger("gdpr").warning({
+                "event": "log_cleanup_failed",
+                "file_path": log_file,
+                "error": str(e),
+            })
+
 logger = logging.getLogger("gdpr")
 logger.setLevel(logging.DEBUG)  # Set to DEBUG for detailed logging
 
@@ -52,11 +78,18 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(StructuredFormatter())
 logger.addHandler(console_handler)
 
-# File handler with plain JSON output
+# File handler with rotation at 3MB
 log_dir = os.path.join(os.path.dirname(__file__), "logs")
 os.makedirs(log_dir, exist_ok=True)
-file_handler = logging.FileHandler(os.path.join(log_dir, "gdpr.log"))
+file_handler = RotatingFileHandler(
+    os.path.join(log_dir, "gdpr.log"),
+    maxBytes=3 * 1024 * 1024,  # 3MB
+    backupCount=10,  # Keep up to 10 rotated files
+)
 file_handler.setFormatter(PlainStructuredFormatter())
 logger.addHandler(file_handler)
+
+# Cleanup old logs during initialization
+cleanup_old_logs(log_dir, max_age_days=30)
 
 logger.propagate = False

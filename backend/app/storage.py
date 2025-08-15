@@ -97,6 +97,8 @@ class FileStorage(BaseStorage):
         "application/x-iso9660-image": T_ISO,
         "application/vnd.tcpdump.pcap": T_PCAP,
         "application/octet-stream": None,  # Handled by magic signature
+        "application/json": T_TEXT,  # Handle JSON as text
+        "application/x-ndjson": T_TEXT,  # Handle NDJSON as text
     }
 
     EXTENSIONS = {
