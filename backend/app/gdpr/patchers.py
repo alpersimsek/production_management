@@ -41,7 +41,7 @@ class ReplacePatcher(BasePatcher):
             return f"user{count}"
 
         if self.category == RuleCategory.DOMAIN:
-            return f"domain{count}.masked"
+            return f"domain{count}.com"
 
         if self.category == RuleCategory.PHONE_NUM:
             return f"+0{count:010d}"
