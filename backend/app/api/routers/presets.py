@@ -40,6 +40,11 @@ class PresetsRouter(APIRouter):
         )(self.update_preset_rule)
         self.delete("/preset-rules/{preset_id}/{rule_id}")(self.delete_preset_rule)
 
+        # Debug Routes
+        self.get("/presets/debug/state")(self.get_database_state)
+        self.get("/presets/debug/all-tables")(self.get_all_tables_state)
+        self.post("/presets/debug/fix-sequence")(self.fix_sequence)
+
     # Preset Endpoints
     def get_presets(self, req: Request):
         """Get all presets."""
@@ -361,6 +366,57 @@ class PresetsRouter(APIRouter):
             return JSONResponse({"detail": "Rule removed from preset successfully"})
         except HTTPException:
             raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
+
+    def get_database_state(self, req: Request):
+        """Debug endpoint to check database state and sequence information."""
+        # Check admin role
+        if not req.state.user or req.state.user.role != Role.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+            )
+        
+        preset_service = PresetService(req.state.db)
+        try:
+            state_info = preset_service.get_database_state_info()
+            return JSONResponse(content=state_info)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
+
+    def get_all_tables_state(self, req: Request):
+        """Debug endpoint to check state of all auto-increment tables."""
+        # Check admin role
+        if not req.state.user or req.state.user.role != Role.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+            )
+        
+        preset_service = PresetService(req.state.db)
+        try:
+            state_info = preset_service.get_all_tables_state()
+            return JSONResponse(content=state_info)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
+
+    def fix_sequence(self, req: Request):
+        """Debug endpoint to manually fix the PostgreSQL sequence."""
+        # Check admin role
+        if not req.state.user or req.state.user.role != Role.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+            )
+        
+        preset_service = PresetService(req.state.db)
+        try:
+            result = preset_service.fix_sequence()
+            return JSONResponse(content=result)
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)

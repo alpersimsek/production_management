@@ -77,7 +77,12 @@ const emit = defineEmits(['close', 'saved', 'error'])
 const form = ref({ name: '', header: '', productId: null })
 const saving = ref(false)
 const successMessage = ref('')
-const editing = computed(() => !!props.editPreset && typeof props.editPreset === 'object')
+const editing = computed(() => {
+  const isEditing = !!props.editPreset && typeof props.editPreset === 'object'
+  console.log('PresetForm - editPreset prop:', props.editPreset)
+  console.log('PresetForm - editing computed:', isEditing)
+  return isEditing
+})
 
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
@@ -87,19 +92,27 @@ watch(() => props.open, (isOpen) => {
 })
 
 const initializeForm = () => {
+  console.log('PresetForm - initializeForm called')
+  console.log('PresetForm - props.editPreset:', props.editPreset)
+  console.log('PresetForm - props.defaultProductId:', props.defaultProductId)
+  
   if (props.editPreset && typeof props.editPreset === 'object') {
+    console.log('PresetForm - Initializing form for EDITING')
     form.value = {
       name: props.editPreset.name || '',
       header: props.editPreset.header || '',
       productId: props.editPreset.product_id || null
     }
   } else {
+    console.log('PresetForm - Initializing form for ADDING NEW')
     form.value = {
       name: '',
       header: '',
       productId: props.defaultProductId || (props.products && props.products.length > 0 ? props.products[0].id : null)
     }
   }
+  
+  console.log('PresetForm - Form initialized with:', form.value)
 }
 
 const savePreset = async () => {

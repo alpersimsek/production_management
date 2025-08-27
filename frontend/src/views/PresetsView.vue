@@ -106,14 +106,28 @@ const loadPresetRules = async (presetId) => {
 }
 
 const openPresetModal = (preset = null, productId = null) => {
-  editingPreset.value = null // Reset to avoid stale state
+  console.log('openPresetModal called with:', { preset, productId })
+  
+  // Always reset to ensure clean state
+  editingPreset.value = null
   defaultProductId.value = null
-  if (preset && typeof preset === 'object') {
+  
+  // Only set editingPreset if we're actually editing an existing preset
+  if (preset && typeof preset === 'object' && preset.id) {
     editingPreset.value = { ...preset } // Deep copy to ensure reactivity
+    console.log('Opening preset modal for EDITING preset:', editingPreset.value)
+  } else {
+    console.log('Opening preset modal for ADDING new preset')
   }
+  
   defaultProductId.value = productId
   showPresetModal.value = true
-  console.log('Opening preset modal with preset:', editingPreset.value)
+  
+  console.log('Modal state after opening:', {
+    showPresetModal: showPresetModal.value,
+    editingPreset: editingPreset.value,
+    defaultProductId: defaultProductId.value
+  })
 }
 
 const handleAddPreset = (productId) => {
@@ -281,7 +295,7 @@ const closeCustomRuleForm = () => {
             </svg>
             Manage Rules
           </button>
-          <button type="button" @click="openPresetModal"
+          <button type="button" @click="openPresetModal()"
             class="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
             aria-label="Add preset">
             <PlusIcon class="h-5 w-5 mr-2" />
@@ -310,7 +324,7 @@ const closeCustomRuleForm = () => {
           @add-rule-to-preset="handleAddRuleToPreset" @edit-preset-rule="handleEditPresetRule"
           @delete-preset-rule="handleDeletePresetRule" @load-preset-rules="loadPresetRules" class="animate-fade-in" />
       </div>
-      <PresetForm v-if="showPresetModal" :open="showPresetModal" :products="products" :edit-preset="editingPreset"
+      <PresetForm v-if="showPresetModal" :open="showPresetModal" :products="products" :editPreset="editingPreset"
         :defaultProductId="defaultProductId" @close="showPresetModal = false" @saved="handlePresetSaved"
         @error="handlePresetError" />
       <transition name="modal">

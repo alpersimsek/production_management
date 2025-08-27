@@ -109,9 +109,34 @@ class BaseService(Generic[T]):
         self.session = session
 
     def create(self, db_obj: T) -> T:
-        self.session.add(db_obj)
-        self.session.flush()
-        return db_obj
+        """Create a new database object with ID conflict resolution."""
+        try:
+            table_name = db_obj.__class__.__tablename__
+            
+            # Handle auto-increment tables (presets, products, rules, masking_map)
+            if hasattr(db_obj, 'id') and table_name in ['presets', 'products', 'rules', 'masking_map']:
+                # Always calculate and set the next available ID for auto-increment tables
+                try:
+                    max_id = self.session.query(db_obj.__class__.id).order_by(
+                        db_obj.__class__.id.desc()
+                    ).first()
+                    next_id = (max_id[0] + 1) if max_id else 1
+                    
+                    # Set the ID to avoid sequence conflicts
+                    db_obj.id = next_id
+                    print(f"Info: {table_name} - Setting ID to {next_id} to avoid sequence conflicts")
+                    
+                except Exception as e:
+                    print(f"Warning: Could not determine next ID for {table_name}: {e}")
+                    # Fallback: let PostgreSQL handle it (might still fail)
+            
+            self.session.add(db_obj)
+            self.session.flush()
+            return db_obj
+        except Exception as e:
+            # Rollback on any error to prevent PendingRollbackError
+            self.session.rollback()
+            raise e
 
     def get_by_id(self, id: str) -> T | None:
         return self.session.get(self.model, id)
@@ -866,11 +891,161 @@ class ProductService(BaseService[Product]):
     def __init__(self, session: Session):
         super().__init__(Product, session)
 
+    def get_next_available_id(self) -> int:
+        """Get the next available ID for products table."""
+        try:
+            max_id = self.session.query(Product.id).order_by(Product.id.desc()).first()
+            if max_id:
+                return max_id[0] + 1
+            else:
+                return 1
+        except Exception:
+            return 1
+
+    def create(self, db_obj: Product) -> Product:
+        """Override create method to ensure proper ID assignment."""
+        try:
+            # Always ensure we have the next available ID
+            next_id = self.get_next_available_id()
+            db_obj.id = next_id
+            print(f"Info: Product - Setting ID to {next_id} to avoid sequence conflicts")
+            
+            # Use the base create method
+            return super().create(db_obj)
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
 class PresetService(BaseService[Preset]):
     def __init__(self, session: Session):
         super().__init__(Preset, session)
         self.presetRule_service = PresetRuleService(self.session)
         self.rule_service = RuleService(self.session)
+
+    def get_next_available_id(self) -> int:
+        """Get the next available ID for presets table."""
+        try:
+            # Get the maximum ID currently in use
+            max_id = self.session.query(Preset.id).order_by(Preset.id.desc()).first()
+            if max_id:
+                return max_id[0] + 1
+            else:
+                return 1
+        except Exception as e:
+            # Fallback: try to get the next sequence value
+            try:
+                result = self.session.execute("SELECT nextval('presets_id_seq')")
+                return result.scalar()
+            except:
+                # If all else fails, start from 1
+                return 1
+
+    def get_database_state_info(self) -> dict:
+        """Get information about the current database state for debugging."""
+        try:
+            # Get all preset IDs
+            preset_ids = [p.id for p in self.session.query(Preset.id).order_by(Preset.id).all()]
+            
+            # Get sequence info if possible
+            sequence_info = {}
+            try:
+                result = self.session.execute("SELECT last_value, is_called FROM presets_id_seq")
+                row = result.fetchone()
+                if row:
+                    sequence_info = {
+                        "last_value": row[0],
+                        "is_called": row[1]
+                    }
+            except Exception:
+                sequence_info = {"error": "Could not read sequence"}
+            
+            return {
+                "existing_preset_ids": preset_ids,
+                "next_available_id": self.get_next_available_id(),
+                "sequence_info": sequence_info,
+                "total_presets": len(preset_ids)
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_all_tables_state(self) -> dict:
+        """Get information about all auto-increment tables."""
+        try:
+            from services import ProductService, RuleService, MaskingMapService
+            
+            product_service = ProductService(self.session)
+            rule_service = RuleService(self.session)
+            masking_service = MaskingMapService(self.session)
+            
+            return {
+                "presets": {
+                    "existing_ids": [p.id for p in self.session.query(Preset.id).order_by(Preset.id).all()],
+                    "next_available_id": self.get_next_available_id()
+                },
+                "products": {
+                    "existing_ids": [p.id for p in self.session.query(Product.id).order_by(Product.id).all()],
+                    "next_available_id": product_service.get_next_available_id()
+                },
+                "rules": {
+                    "existing_ids": [r.id for r in self.session.query(Rule.id).order_by(Rule.id).all()],
+                    "next_available_id": rule_service.get_next_available_id()
+                },
+                "masking_map": {
+                    "existing_ids": [m.id for m in self.session.query(MaskingMap.id).order_by(MaskingMap.id).all()],
+                    "next_available_id": masking_service.get_next_available_id()
+                }
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def fix_sequence(self) -> dict:
+        """Manually fix the PostgreSQL sequence for presets table."""
+        try:
+            # Get the maximum ID currently in use
+            max_id = self.session.query(Preset.id).order_by(Preset.id.desc()).first()
+            if not max_id:
+                return {"message": "No presets found", "sequence_set": 0}
+            
+            max_id_value = max_id[0]
+            
+            # Try to fix the sequence
+            try:
+                result = self.session.execute(
+                    f"SELECT setval('presets_id_seq', {max_id_value})"
+                )
+                next_val = self.session.execute("SELECT nextval('presets_id_seq')").scalar()
+                
+                return {
+                    "message": "Sequence fixed successfully",
+                    "max_id_found": max_id_value,
+                    "sequence_set_to": max_id_value,
+                    "next_sequence_value": next_val,
+                    "status": "success"
+                }
+            except Exception as seq_error:
+                return {
+                    "message": "Failed to fix sequence",
+                    "max_id_found": max_id_value,
+                    "sequence_error": str(seq_error),
+                    "status": "error"
+                }
+        except Exception as e:
+            return {"error": str(e), "status": "error"}
+
+    def create(self, db_obj: Preset) -> Preset:
+        """Override create method to ensure proper ID assignment."""
+        try:
+            # Always ensure we have the next available ID
+            next_id = self.get_next_available_id()
+            db_obj.id = next_id
+            print(f"Info: Preset - Setting ID to {next_id} to avoid sequence conflicts")
+            
+            # Use the base create method
+            return super().create(db_obj)
+        except Exception as e:
+            # Rollback on any error
+            self.session.rollback()
+            raise e
 
     def get_rules_config(self, preset: Preset):
         """Generate processing config for preset."""
@@ -881,6 +1056,31 @@ class PresetService(BaseService[Preset]):
 class RuleService(BaseService[Rule]):
     def __init__(self, session: Session):
         super().__init__(Rule, session)
+
+    def get_next_available_id(self) -> int:
+        """Get the next available ID for rules table."""
+        try:
+            max_id = self.session.query(Rule.id).order_by(Rule.id.desc()).first()
+            if max_id:
+                return max_id[0] + 1
+            else:
+                return 1
+        except Exception:
+            return 1
+
+    def create(self, db_obj: Rule) -> Rule:
+        """Override create method to ensure proper ID assignment."""
+        try:
+            # Always ensure we have the next available ID
+            next_id = self.get_next_available_id()
+            db_obj.id = next_id
+            print(f"Info: Rule - Setting ID to {next_id} to avoid sequence conflicts")
+            
+            # Use the base create method
+            return super().create(db_obj)
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def get_config(self, rule_id: int):
         """Generate rule config to processing."""
@@ -893,6 +1093,32 @@ class PresetRuleService(BaseService[PresetRule]):
     def __init__(self, session: Session):
         super().__init__(PresetRule, session)
 
+    def create(self, db_obj: PresetRule) -> PresetRule:
+        """Override create method to handle composite key table."""
+        try:
+            # For PresetRule, we don't need to set IDs as it uses composite keys
+            # But we should verify the preset and rule exist
+            from services import PresetService, RuleService
+            
+            preset_service = PresetService(self.session)
+            rule_service = RuleService(self.session)
+            
+            # Verify preset exists
+            preset = preset_service.get_by_id(db_obj.preset_id)
+            if not preset:
+                raise Exception(f"Preset with id {db_obj.preset_id} not found")
+            
+            # Verify rule exists
+            rule = rule_service.get_by_id(db_obj.rule_id)
+            if not rule:
+                raise Exception(f"Rule with id {db_obj.rule_id} not found")
+            
+            # Use the base create method
+            return super().create(db_obj)
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
     def get_config(self):
         """Generate rule/action config for preset rule."""
         cfg = self.model.rule.get_config(self.model.rule_id)
@@ -904,6 +1130,31 @@ class MaskingMapService(BaseService[MaskingMap]):
 
     def __init__(self, session: Session):
         super().__init__(MaskingMap, session)
+
+    def get_next_available_id(self) -> int:
+        """Get the next available ID for masking_map table."""
+        try:
+            max_id = self.session.query(MaskingMap.id).order_by(MaskingMap.id.desc()).first()
+            if max_id:
+                return max_id[0] + 1
+            else:
+                return 1
+        except Exception:
+            return 1
+
+    def create(self, db_obj: MaskingMap) -> MaskingMap:
+        """Override create method to ensure proper ID assignment."""
+        try:
+            # Always ensure we have the next available ID
+            next_id = self.get_next_available_id()
+            db_obj.id = next_id
+            print(f"Info: MaskingMap - Setting ID to {next_id} to avoid sequence conflicts")
+            
+            # Use the base create method
+            return super().create(db_obj)
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def count_entries(self, category: RuleCategory) -> int:
         """Count number of existing masked values for a given entity type."""
@@ -925,8 +1176,8 @@ class MaskingMapService(BaseService[MaskingMap]):
         new_entry = MaskingMap(
             original_value=original_value, masked_value=masked_value, category=category
         )
-        self.session.add(new_entry)
-        self.session.flush()
+        # Use the create method to ensure proper ID assignment
+        return self.create(new_entry)
 
     def search_masks(
         self,
