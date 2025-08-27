@@ -230,6 +230,21 @@ class HeaderMatcher:
         if preset_header is None:
             return False
         return preset_header in file_header
+    
+    def is_valid_pcap(self, file_path) -> bool:
+        """Check if a file is a valid PCAP file by reading its magic number."""
+        try:
+            with open(file_path, 'rb') as file:
+                magic_bytes = file.read(4)
+                magic_hex = magic_bytes.hex()
+                valid_pcap_magics = [
+                    "a1b2c3d4",  # Standard PCAP (Little Endian)
+                    "d4c3b2a1",  # Swapped PCAP (Big Endian)
+                    "0a0d0d0a",  # PCAP-NG format
+                ]
+                return magic_hex in valid_pcap_magics
+        except Exception:
+            return False
 
 class FileService(BaseService[File]):
     # Default limits for archive extraction
@@ -352,14 +367,67 @@ class FileService(BaseService[File]):
                 return None
 
         elif file_type == ContentType.PCAP.value:
-            preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
-            logger.debug({
-                "event": "preset_assigned",
-                "file_id": file_id,
-                "file_type": file_type,
-                "preset_id": str(preset.id) if preset else None,
-            })
-            return preset
+            try:
+                src = self.storage.get(file_id)
+                # Read first 4 bytes for PCAP magic number
+                with src.open("rb") as file:  # Note: binary mode
+                    magic_bytes = file.read(4)
+                    magic_hex = magic_bytes.hex()
+                
+                logger.debug({
+                    "event": "pcap_header_read",
+                    "file_id": file_id,
+                    "file_type": file_type,
+                    "magic_hex": magic_hex,
+                })
+                
+                # Check if it's a valid PCAP file (multiple formats supported)
+                valid_pcap_magics = [
+                    "a1b2c3d4",  # Standard PCAP (Little Endian)
+                    "d4c3b2a1",  # Swapped PCAP (Big Endian)
+                    "0a0d0d0a",  # PCAP-NG format
+                ]
+                
+                if magic_hex in valid_pcap_magics:
+                    # Valid PCAP file - find PCAP preset
+                    preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
+                    if preset:
+                        logger.info({
+                            "event": "pcap_preset_assigned",
+                            "file_id": file_id,
+                            "file_type": file_type,
+                            "preset_id": str(preset.id),
+                            "preset_name": preset.name,
+                            "magic_hex": magic_hex,
+                            "format": "PCAP-NG" if magic_hex == "0a0d0d0a" else "PCAP",
+                        })
+                        return preset
+                    else:
+                        logger.warning({
+                            "event": "pcap_preset_not_found",
+                            "file_id": file_id,
+                            "file_type": file_type,
+                        })
+                        return None
+                else:
+                    # Not a valid PCAP file
+                    logger.warning({
+                        "event": "invalid_pcap_file",
+                        "file_id": file_id,
+                        "file_type": file_type,
+                        "magic_hex": magic_hex,
+                        "expected": valid_pcap_magics,
+                    })
+                    return None
+                    
+            except Exception as ex:
+                logger.error({
+                    "event": "pcap_header_read_failed",
+                    "file_id": file_id,
+                    "file_type": file_type,
+                    "error": str(ex),
+                })
+                return None
 
         else:
             logger.debug({

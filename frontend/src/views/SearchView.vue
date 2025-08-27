@@ -82,12 +82,19 @@ const loadData = async (resetPagination = true) => {
 
     // Call the API
     const results = await ApiService.searchMaskingMaps(params)
+    
+    console.log('API results:', results.length, 'items')
+    if (selectedCategory.value) {
+      console.log('Filtered by category:', selectedCategory.value)
+    }
 
     if (resetPagination) {
       searchResults.value = results
+      console.log('Updated searchResults to:', searchResults.value.length, 'items')
     } else {
       // Append results for pagination
       searchResults.value = [...searchResults.value, ...results]
+      console.log('Appended to searchResults, total:', searchResults.value.length, 'items')
     }
 
     // Check if there might be more results
@@ -157,7 +164,8 @@ watch(searchQuery, () => {
 })
 
 // Watch for filter or sort changes
-watch([selectedCategory], () => {
+watch([selectedCategory], (newValues) => {
+  console.log('Category changed to:', newValues[0])
   loadData(true)
 }, { deep: true })
 
