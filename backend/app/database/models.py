@@ -2,6 +2,7 @@ from sqlalchemy.orm import DeclarativeBase, Relationship, Mapped, mapped_column
 from sqlalchemy import (
     String,
     Integer,
+    BigInteger,
     ForeignKey,
     DateTime,
     Enum,
@@ -77,9 +78,9 @@ class File(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
-    extracted_size: Mapped[int] = mapped_column(Integer, nullable=True)
-    completed_size: Mapped[int] = mapped_column(Integer, default=0)
+    file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    extracted_size: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    completed_size: Mapped[int] = mapped_column(BigInteger, default=0)
     time_remaining: Mapped[int] = mapped_column(Integer, nullable=True)
     content_type: Mapped[ContentType] = mapped_column(
         Enum(ContentType), default=ContentType.DEFAULT

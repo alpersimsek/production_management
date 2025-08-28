@@ -37,19 +37,6 @@ USER_STORAGE_LIMIT = 10 * 1204**3  # 10 GB
 
 
 '''
-SIP Username:
-Category: username
-Pattern: (?:sip:)?([a-zA-Z0-9][a-zA-Z0-9._%+-]*)@(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})
-
-SIP Phone:
-Category: phone_num
-Pattern: (?:sip:)?(\+?[\d-]{7,15})@
-
-
-SIP Domain:
-Category: domain
-Pattern: (?:sip:)?[^@]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d+)?
-
-MAC Address:
-Pattern: (?<![:0-9a-fA-F])[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}(?![:0-9a-fA-F])
+Note: Regex patterns are now configured in the database rules table.
+This file only contains application configuration settings.
 '''

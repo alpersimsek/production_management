@@ -156,13 +156,13 @@ class ApiService {
               new CustomEvent('file-upload-progress', { detail: { fileId: file.name, progress } })
             )
           },
-          timeout: 60000,
+          timeout: 0,
         })
         return response.data
       } catch (axiosError) {
         if (axiosError.code === 'ECONNABORTED') {
           throw new ApiError(408, 'Upload timed out. Please try again.')
-        }
+        }   
         if (axiosError.response?.status === 413) {
           throw new ApiError(413, 'File size exceeds server limit')
         }

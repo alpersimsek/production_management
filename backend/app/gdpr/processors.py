@@ -1,7 +1,7 @@
 import abc
 import itertools
 import os
-from gdpr.matchers import BaseMatcher, RegexpMatcher, IPAddrMatcher, MacAddrMatcher, Match, SIPPhoneMatcher, SIPDomainMatcher, SIPUsernameMatcher
+from gdpr.matchers import BaseMatcher, RegexpMatcher, IPAddrMatcher, MacAddrMatcher, Match
 from typing import Union, Sequence, Mapping, Any, Optional, Iterator, Tuple
 from scapy.all import rdpcap, wrpcap, Packet, DLT_EN10MB
 from scapy.layers.inet import IP, TCP, UDP
@@ -13,10 +13,10 @@ from logger import logger
 class BaseProcessor(abc.ABC):
     """Base processor class."""
     def __init__(self, matchers: Sequence[BaseMatcher]):
-        # Prioritize SIP matchers to process before generic matchers
+        # Prioritize specialized matchers to process before generic matchers
         self.matchers = sorted(
             matchers,
-            key=lambda m: 0 if isinstance(m, (SIPPhoneMatcher, SIPUsernameMatcher, SIPDomainMatcher)) else 1
+            key=lambda m: 0 if isinstance(m, (IPAddrMatcher, MacAddrMatcher, RegexpMatcher)) else 1
         )
 
     @staticmethod

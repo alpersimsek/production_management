@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
+from starlette.requests import Request
+from starlette.responses import Response
 import uvicorn.logging
 from api.middlewares import DBSessionMiddleware, AuthMiddleware
 from database.session import init_db
@@ -41,11 +43,35 @@ def init_middlewares():
     ]
     return middleware
 
+class LargeFileMiddleware:
+    """Middleware to handle large file uploads by increasing request size limits."""
+    
+    def __init__(self, app):
+        self.app = app
+    
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            # Set maximum request size to 8GB + buffer
+            scope["max_content_length"] = 9 * 1024 * 1024 * 1024  # 9GB limit
+        
+        await self.app(scope, receive, send)
+
 
 def get_app():
     storage = FileStorage(settings.DATA_DIR)
     middleware = init_middlewares()
-    app = FastAPI(lifespan=lifespan, middleware=middleware, debug=True)
+    app = FastAPI(
+        lifespan=lifespan, 
+        middleware=middleware, 
+        debug=True,
+        # Increase file upload limits for large files
+        title="GDPR Tool API",
+        description="API for GDPR compliance tool with support for large file uploads (up to 8GB)",
+        version="1.0.0"
+    )
+    
+    # Add middleware for large file uploads
+    app.add_middleware(LargeFileMiddleware)
 
     # Initialize api routers
     api_router = APIRouter(prefix=settings.API_PREFIX)

@@ -1,8 +1,8 @@
-"""initial migration
+"""Initial Migration
 
-Revision ID: d0d5c466d92b
+Revision ID: a9f241ac3bee
 Revises: 
-Create Date: 2025-03-05 23:46:35.382928
+Create Date: 2025-08-27 16:33:59.134295
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd0d5c466d92b'
+revision: str = 'a9f241ac3bee'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -61,11 +61,11 @@ def upgrade() -> None:
     op.create_table('files',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('filename', sa.String(), nullable=False),
-    sa.Column('file_size', sa.Integer(), nullable=False),
-    sa.Column('extracted_size', sa.Integer(), nullable=True),
-    sa.Column('completed_size', sa.Integer(), nullable=False),
+    sa.Column('file_size', sa.BigInteger(), nullable=False),
+    sa.Column('extracted_size', sa.BigInteger(), nullable=True),
+    sa.Column('completed_size', sa.BigInteger(), nullable=False),
     sa.Column('time_remaining', sa.Integer(), nullable=True),
-    sa.Column('content_type', sa.Enum('TEXT', 'PCAP', 'ARCHIVE', 'UNKNOWN', name='contenttype'), nullable=False),
+    sa.Column('content_type', sa.Enum('TEXT', 'PCAP', 'ARCHIVE', 'JSON', 'UNKNOWN', name='contenttype'), nullable=False),
     sa.Column('status', sa.Enum('CREATED', 'IN_PROGRESS', 'DONE', 'ERROR', name='filestatus'), nullable=False),
     sa.Column('create_date', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
