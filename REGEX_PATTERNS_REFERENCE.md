@@ -137,7 +137,7 @@ Identifies SIP usernames in email-like format, with optional SIP prefix.
 
 ### Pattern
 ```regex
-(?:sip:)?(\+[1-9]\d{2,14})@
+(?:sip:)?(\+[1-9]\d{2,14})@|\[DN:\s*(\d{7,15})\](?:\s|$|;|,|\)|>|\[)
 ```
 
 ### Category
@@ -147,12 +147,21 @@ Identifies SIP usernames in email-like format, with optional SIP prefix.
 Identifies E164 format phone numbers with optional SIP prefix.
 
 ### Breakdown
-- `(?:sip:)?` - Optional SIP prefix (non-capturing group)
-- `(\+[1-9]\d{2,14})` - Phone number part (capturing group)
-  - `\+` - Plus symbol (required)
-  - `[1-9]` - Country code first digit (1-9, not 0)
-  - `\d{2,14}` - 2 to 14 additional digits (national number)
-- `@` - At symbol separator
+- `(?:sip:)?(\+[1-9]\d{2,14})@` - **SIP Phone Number Format**:
+  - `(?:sip:)?` - Optional SIP prefix (non-capturing group)
+  - `(\+[1-9]\d{2,14})` - Phone number part (capturing group)
+    - `\+` - Plus symbol (required)
+    - `[1-9]` - Country code first digit (1-9, not 0)
+    - `\d{2,14}` - 2 to 14 additional digits (national number)
+  - `@` - At symbol separator
+- `|` - **OR**
+- `\[DN:\s*(\d{7,15})\](?:\s|$|;|,|\)|>|\[)` - **Directory Number Format**:
+  - `\[DN:` - Literal "[DN:" prefix
+  - `\s*` - Zero or more whitespace characters
+  - `(\d{7,15})` - Phone number (capturing group)
+    - `\d{7,15}` - 7-15 digits (typical phone number length)
+  - `\]` - Closing bracket
+  - `(?:\s|$|;|,|\)|>|\[)` - **Must end with**: space, end of line, semicolon, comma, closing parenthesis, >, or opening bracket [
 
 ### E164 Format Requirements
 - **Total length**: 3-15 digits (including country code)
@@ -166,6 +175,9 @@ Identifies E164 format phone numbers with optional SIP prefix.
 - `sip:+44123456789@domain.com` (11 digits total)
 - `+380123456789@domain.com` (12 digits total)
 - `+123456789012345@domain.com` (15 digits total - maximum)
+- `[DN: 22334455]` (8 digits - Directory Number format)
+- `[DN: 123456789012345]` (15 digits - Directory Number format)
+- `[DN:1234567]` (7 digits - Directory Number format, no space)
 
 **Invalid matches:**
 - `+44@domain.com` (only 2 digits - just country code)
@@ -173,6 +185,8 @@ Identifies E164 format phone numbers with optional SIP prefix.
 - `+0123456789@domain.com` (country code starts with 0)
 - `123456789@domain.com` (missing + symbol)
 - `+1-234-567-890@domain.com` (contains hyphens)
+- `[DN: 123456]` (6 digits - below minimum for DN format)
+- `[DN: 1234567890123456]` (16 digits - above maximum for DN format)
 
 ---
 
@@ -231,21 +245,21 @@ Identifies domains in multiple contexts including SIP protocol, HTTP URLs, admin
 
 ### Pattern
 ```regex
-(?:\[(?:HEADER:\s*)?)?(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):\s*(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)|x-nt-party-id:\s*/([^\]\s\)}]+)|Obfuscated Contact-\s*:\s*sip:([^@]+)@|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@|\[CONTACTS:\s*\[(?:REPLY TO|LOCATED AT)\]\s*<\s*<sip:([^@]+)@|Retrieving presence information for:\s*([^<\s]+)\s*<sip:
+(?:\[(?:HEADER:\s*)?|^)(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):\s*(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))|\[(?:NAME|USERNAME|OUNAME):\s*([^\]\s]+(?:\s+[^\]\s]+)*)|x-nt-party-id:\s*/([^\]\s\)}]+)|Obfuscated Contact-\s*:\s*sip:([^@]+)@|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@|\[CONTACTS:\s*\[(?:REPLY TO|LOCATED AT)\]\s*<\s*<sip:([^@]+)@|Retrieving presence information for:\s*([^<\s]+)\s*<sip:
 ```
 
 ### Category
 `username`
 
 ### Description
-Identifies display names and usernames in multiple header formats including To, FROM, NAME, REMPTY, USERNM, Contact, and various SIP-related fields. This comprehensive pattern handles all username formats in one unified rule.
+Identifies display names and usernames in multiple header formats including To, FROM, NAME, REMPTY, USERNM, Contact, and various SIP-related fields. This comprehensive pattern handles all username formats in one unified rule. **The pattern requires headers to be preceded by either an opening bracket [ or start of string ^, preventing partial matches like "Service Name:" from incorrectly matching "NAME:"**.
 
 ### Breakdown
-- `(?:\[(?:HEADER:\s*)?)?(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):\s*(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))` - **Standard header formats**:
-  - `(?:\[(?:HEADER:\s*)?)?` - Optional brackets with optional HEADER prefix
+- `(?:\[(?:HEADER:\s*)?|^)(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):\s*(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))` - **Standard header formats**:
+  - `(?:\[(?:HEADER:\s*)?|^)` - **Must be preceded by**: opening bracket with optional HEADER prefix OR start of string
   - `(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):` - Header types (case insensitive for FROM)
   - `(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))` - Quoted or unquoted text with spaces
-- `|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)` - **NAME field format**
+- `|\[(?:NAME|USERNAME|OUNAME):\s*([^\]\s]+(?:\s+[^\]\s]+)*)` - **NAME/USERNAME/OUNAME field formats**
 - `|x-nt-party-id:\s*/([^\]\s\)}]+)` - **x-nt-party-id format** (value after /)
 - `|Obfuscated Contact-\s*:\s*sip:([^@]+)@` - **Obfuscated Contact format**
 - `|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@` - **Contact header format**
@@ -260,6 +274,8 @@ Identifies display names and usernames in multiple header formats including To, 
 - `[REMPTY: cp1 Karakas <sip:user1@domain1.com>]` → Captures: `cp1 Karakas` (REMPTY header)
 - `[USERNM: cp1]` → Captures: `cp1` (USERNM header)
 - `[NAME: cp1 Karakas]` → Captures: `cp1 Karakas` (NAME field)
+- `[USERNAME: cp1]` → Captures: `cp1` (USERNAME field)
+- `[OUNAME: cp1]` → Captures: `cp1` (OUNAME field)
 - `[HEADER: x-nt-party-id: /cp1]` → Captures: `cp1` (value after /)
 - `Obfuscated Contact- : sip:cp1@` → Captures: `cp1` (Obfuscated Contact)
 - `[HEADER: Contact: <sip:cp1@` → Captures: `cp1` (Contact header)
@@ -362,9 +378,9 @@ These patterns handle special cases that might be incorrectly identified as phon
 | `domain` | `https?://([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})(?:\d+)?\|user=[^@]+@([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` | HTTP domains and query parameters | Variable | Variable |
 | `user` | `Request-URI User Part:\s*(\d{7,15});` | Request-URI User Part field | 7 digits | 15 digits |
 | `username` | `(?:sip:)?([a-zA-Z0-9][a-zA-Z0-9._%+-]*)@(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})` | SIP usernames | Variable | Variable |
-| `phone_num` | `(?:sip:)?(\+[1-9]\d{2,14})@` | E164 phone numbers | 3 digits | 15 digits |
+| `phone_num` | `(?:sip:)?(\+[1-9]\d{2,14})@\|\[DN:\s*(\d{7,15})\](?:\s\|$\|;\|,\|\)\|>\|\[)` | E164 phone numbers and Directory Numbers | 3 digits (E164) / 7 digits (DN) | 15 digits |
 | `domain` | `(?:sip:[^@]*@\|sip:\|ROOTDOM:\s*\|https?://\|user=.*@\|REGISTER\s+sip:\|\[USER:\s*[^@]*@\|\[USERNAME:\s*[^@]*@\|\[SUBR:\s*[^@]*@\|getUserAndDomain\s*==\s*[^@]*@)([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` | Comprehensive domain coverage | Variable | Variable |
-| `username` | `(?:\[(?:HEADER:\s*)?)?(?:To\|TO\|[Ff]rom\|NAME\|REMPTY\|USERNM):\s*(?:"([^"]+)"\|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))\|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)\|x-nt-party-id:\s*/([^\]\s\)}]+)\|Obfuscated Contact-\s*:\s*sip:([^@]+)@\|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@\|\[CONTACTS:\s*\[(?:REPLY TO\|LOCATED AT)\]\s*<\s*<sip:([^@]+)@\|Retrieving presence information for:\s*([^<\s]+)\s*<sip:` | Display names and usernames | Variable | Variable |
+| `username` | `(?:\[(?:HEADER:\s*)?\|^)(?:To\|TO\|[Ff]rom\|NAME\|REMPTY\|USERNM):\s*(?:"([^"]+)"\|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))\|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)\|x-nt-party-id:\s*/([^\]\s\)}]+)\|Obfuscated Contact-\s*:\s*sip:([^@]+)@\|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@\|\[CONTACTS:\s*\[(?:REPLY TO\|LOCATED AT)\]\s*<\s*<sip:([^@]+)@\|Retrieving presence information for:\s*([^<\s]+)\s*<sip:` | Display names and usernames | Variable | Variable |
 | `mac_address` | `(?<![:0-9a-fA-F])[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}` | MAC addresses | 17 chars | 17 chars |
 
 ---
