@@ -3,13 +3,55 @@
 This document provides a comprehensive reference for all regex patterns used in the GDPR tool for data classification and identification.
 
 ## Table of Contents
-1. [Request-URI User Part Pattern](#request-uri-user-part-pattern)
-2. [SIP Username Pattern](#sip-username-pattern)
-3. [SIP Phone Number Pattern](#sip-phone-number-pattern)
-4. [SIP Domain Pattern](#sip-domain-pattern)
-5. [MAC Address Pattern](#mac-address-pattern)
-6. [Exception Patterns](#exception-patterns)
-7. [Usage Guidelines](#usage-guidelines)
+1. [HTTP Domain Pattern](#http-domain-pattern)
+2. [Request-URI User Part Pattern](#request-uri-user-part-pattern)
+3. [SIP Username Pattern](#sip-username-pattern)
+4. [SIP Phone Number Pattern](#sip-phone-number-pattern)
+5. [SIP Domain Pattern](#sip-domain-pattern)
+6. [Display Name Pattern](#display-name-pattern)
+7. [MAC Address Pattern](#mac-address-pattern)
+8. [Exception Patterns](#exception-patterns)
+9. [Usage Guidelines](#usage-guidelines)
+
+---
+
+## HTTP Domain Pattern
+
+### Pattern
+```regex
+https?://([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})(?:\d+)?|user=[^@]+@([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})
+```
+
+### Category
+`domain`
+
+### Description
+Identifies domains in HTTP URLs and query parameters, handling both hostname domains and email addresses in query strings.
+
+### Breakdown
+- `https?://([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})(?:\d+)?` - **Hostname domain capture**:
+  - `https?://` - Matches `http://` or `https://`
+  - `([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` - Domain part (capturing group)
+    - `[a-zA-Z]` - Must start with letter (excludes IPs)
+    - `[a-zA-Z0-9-]*` - Followed by letters, digits, hyphens
+    - `\.` - Dot separator
+    - `[a-zA-Z]{2,4}` - TLD (2-4 letters)
+  - `(?:\d+)?` - Optional port number
+- `|` - OR
+- `user=[^@]+@([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` - **Query parameter domain capture**:
+  - `user=[^@]+@` - User parameter with @ symbol
+  - `([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` - Domain part (capturing group)
+
+### Examples
+**Valid matches:**
+- `https://example.com` → Captures: `example.com` (hostname)
+- `https://api.company.org:8080` → Captures: `api.company.org` (hostname with port)
+- `?user=cp1@skarakas.com` → Captures: `skarakas.com` (query parameter)
+- `user=john@domain.co.uk` → Captures: `domain.co.uk` (query parameter)
+
+**Invalid matches:**
+- `https://192.168.1.1` → No match (IP address, not domain)
+- `ftp://domain.com` → No match (FTP protocol, not HTTP)
 
 ---
 
@@ -17,7 +59,7 @@ This document provides a comprehensive reference for all regex patterns used in 
 
 ### Pattern
 ```regex
-Request-URI User Part:\s*([^;]*)
+Request-URI User Part:\s*(\d{7,15});
 ```
 
 ### Category
@@ -138,40 +180,97 @@ Identifies E164 format phone numbers with optional SIP prefix.
 
 ### Pattern
 ```regex
-(?:sip:)?[^@]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?::\d+)?
+(?:sip:[^@]*@|sip:|ROOTDOM:\s*|https?://|user=.*@|REGISTER\s+sip:|\[USER:\s*[^@]*@|\[USERNAME:\s*[^@]*@|\[SUBR:\s*[^@]*@|getUserAndDomain\s*==\s*[^@]*@)([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})
 ```
 
 ### Category
 `domain`
 
 ### Description
-Identifies SIP domains with optional SIP prefix and port number.
+Identifies domains in multiple contexts including SIP protocol, HTTP URLs, administrative fields, and function calls. This comprehensive pattern catches domains in all supported formats.
 
 ### Breakdown
-- `(?:sip:)?` - Optional SIP prefix (non-capturing group)
-- `[^@]+` - Any characters except @ (username part)
-- `@` - At symbol separator
-- `([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})` - Domain part (capturing group)
-  - `[a-zA-Z0-9.-]+` - Domain name (alphanumeric, dots, hyphens)
+- `(?:sip:[^@]*@|sip:|ROOTDOM:\s*|https?://|user=.*@|REGISTER\s+sip:|\[USER:\s*[^@]*@|\[USERNAME:\s*[^@]*@|\[SUBR:\s*[^@]*@|getUserAndDomain\s*==\s*[^@]*@)` - **Multiple context prefixes**:
+  - `sip:[^@]*@` - SIP with user@domain format
+  - `sip:` - SIP with direct domain format
+  - `ROOTDOM:\s*` - ROOTDOM administrative field
+  - `https?://` - HTTP/HTTPS URLs
+  - `user=.*@` - User parameters in URLs
+  - `REGISTER\s+sip:` - REGISTER SIP command
+  - `\[USER:\s*[^@]*@` - USER field with email format
+  - `\[USERNAME:\s*[^@]*@` - USERNAME field with email format
+  - `\[SUBR:\s*[^@]*@` - SUBR field with email format
+  - `getUserAndDomain\s*==\s*[^@]*@` - getUserAndDomain function call
+- `([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` - **Domain capture**:
+  - `[a-zA-Z]` - Must start with letter (excludes IPs)
+  - `[a-zA-Z0-9-]*` - Followed by letters, digits, hyphens
   - `\.` - Dot separator
-  - `[a-zA-Z]{2,}` - TLD (2 or more letters)
-- `(?::\d+)?` - Optional port number (non-capturing group)
-  - `:` - Colon separator
-  - `\d+` - One or more digits
+  - `[a-zA-Z]{2,4}` - TLD (2-4 letters)
 
 ### Examples
 **Valid matches:**
-- `user@domain.com`
-- `sip:user@domain.com`
-- `user@192.168.1.1`
-- `user@example.co.uk`
-- `user@domain.com:5060`
-- `sip:user@domain.com:5060`
+- `REGISTER sip:skarakas.com SIP/2.0` → Captures: `skarakas.com` (REGISTER command)
+- `sip:user@domain.com` → Captures: `domain.com` (SIP with user@)
+- `sip:example.co.uk` → Captures: `example.co.uk` (SIP direct domain)
+- `[ROOTDOM: skarakas.com]` → Captures: `skarakas.com` (ROOTDOM field)
+- `https://api.company.org:8080` → Captures: `api.company.org` (HTTP URL)
+- `user=cp1@domain.org` → Captures: `domain.org` (User parameter)
+- `[USER: user1@skarakas.com]` → Captures: `skarakas.com` (USER field)
+- `[USERNAME: user1@skarakas.com]` → Captures: `skarakas.com` (USERNAME field)
+- `[SUBR: Y:user1@skarakas.com]` → Captures: `skarakas.com` (SUBR field)
+- `getUserAndDomain == user1@skarakas.com` → Captures: `skarakas.com` (Function call)
 
-**Invalid matches:**
-- `@domain.com` (no username)
-- `user@` (no domain)
-- `user@domain` (no TLD)
+**Invalid matches (excluded to reduce false positives):**
+- `https://192.168.1.1` → No match (IP address, not domain)
+- `sip:user@192.168.1.1` → No match (IP address starts with digit)
+- `random text with domain.com` → No match (no context)
+
+---
+
+## Display Name Pattern
+
+### Pattern
+```regex
+(?:\[(?:HEADER:\s*)?)?(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):\s*(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)|x-nt-party-id:\s*/([^\]\s\)}]+)|Obfuscated Contact-\s*:\s*sip:([^@]+)@|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@|\[CONTACTS:\s*\[(?:REPLY TO|LOCATED AT)\]\s*<\s*<sip:([^@]+)@|Retrieving presence information for:\s*([^<\s]+)\s*<sip:
+```
+
+### Category
+`username`
+
+### Description
+Identifies display names and usernames in multiple header formats including To, FROM, NAME, REMPTY, USERNM, Contact, and various SIP-related fields. This comprehensive pattern handles all username formats in one unified rule.
+
+### Breakdown
+- `(?:\[(?:HEADER:\s*)?)?(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):\s*(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))` - **Standard header formats**:
+  - `(?:\[(?:HEADER:\s*)?)?` - Optional brackets with optional HEADER prefix
+  - `(?:To|TO|[Ff]rom|NAME|REMPTY|USERNM):` - Header types (case insensitive for FROM)
+  - `(?:"([^"]+)"|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))` - Quoted or unquoted text with spaces
+- `|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)` - **NAME field format**
+- `|x-nt-party-id:\s*/([^\]\s\)}]+)` - **x-nt-party-id format** (value after /)
+- `|Obfuscated Contact-\s*:\s*sip:([^@]+)@` - **Obfuscated Contact format**
+- `|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@` - **Contact header format**
+- `|\[CONTACTS:\s*\[(?:REPLY TO|LOCATED AT)\]\s*<\s*<sip:([^@]+)@` - **CONTACTS field formats**
+- `|Retrieving presence information for:\s*([^<\s]+)\s*<sip:` - **Presence information format**
+
+### Examples
+**Valid matches:**
+- `[TO: cp1 <sip:user1@domain1.com>]` → Captures: `cp1` (To header)
+- `[FROM: cp1 Karakas <sip:user1@domain1.com>]` → Captures: `cp1 Karakas` (From header)
+- `[from: cp1 Karakas <sip:user1@domain1.com>]` → Captures: `cp1 Karakas` (from lowercase)
+- `[REMPTY: cp1 Karakas <sip:user1@domain1.com>]` → Captures: `cp1 Karakas` (REMPTY header)
+- `[USERNM: cp1]` → Captures: `cp1` (USERNM header)
+- `[NAME: cp1 Karakas]` → Captures: `cp1 Karakas` (NAME field)
+- `[HEADER: x-nt-party-id: /cp1]` → Captures: `cp1` (value after /)
+- `Obfuscated Contact- : sip:cp1@` → Captures: `cp1` (Obfuscated Contact)
+- `[HEADER: Contact: <sip:cp1@` → Captures: `cp1` (Contact header)
+- `[CONTACTS: [REPLY TO] < <sip:cp1@` → Captures: `cp1` (CONTACTS REPLY TO)
+- `[CONTACTS: [LOCATED AT] < <sip:cp1@` → Captures: `cp1` (CONTACTS LOCATED AT)
+- `Retrieving presence information for: cp1 <sip:user1@domain1.com>]` → Captures: `cp1` (Presence info)
+
+**Invalid matches (excluded by exception patterns):**
+- `[TO: null <sip:user1@domain1.com>]` → No match (null excluded)
+- `[FROM: undefined <sip:user1@domain1.com>]` → No match (undefined excluded)
+- `[NAME: none]` → No match (none excluded)
 
 ---
 
@@ -220,8 +319,18 @@ Identifies MAC addresses in colon-separated format with word boundary protection
 ^\d{4}\.\d{2}\.\d{2}$  # Matches 2025.05.05
 ```
 
+### Username Exceptions
+```regex
+^null$      # Excludes 'null' from username matching
+^NULL$      # Case insensitive exclusion
+^undefined$ # Excludes 'undefined' from username matching
+^UNDEFINED$ # Case insensitive exclusion
+^none$      # Excludes 'none' from username matching
+^NONE$      # Case insensitive exclusion
+```
+
 ### Description
-These patterns handle special cases that might be incorrectly identified as phone numbers.
+These patterns handle special cases that might be incorrectly identified as phone numbers or usernames. Exception patterns override standard patterns to prevent false positives.
 
 ---
 
@@ -250,10 +359,12 @@ These patterns handle special cases that might be incorrectly identified as phon
 
 | Category | Pattern | Purpose | Min Length | Max Length |
 |----------|---------|---------|------------|------------|
-| `user` | `Request-URI User Part:\s*([^;]*)` | Request-URI User Part field | Variable | Variable |
-| `username` | `(?:sip:)?([a-zA-Z0-9][a-zA-Z0-9._%+-]*)@...` | SIP usernames | Variable | Variable |
+| `domain` | `https?://([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})(?:\d+)?\|user=[^@]+@([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` | HTTP domains and query parameters | Variable | Variable |
+| `user` | `Request-URI User Part:\s*(\d{7,15});` | Request-URI User Part field | 7 digits | 15 digits |
+| `username` | `(?:sip:)?([a-zA-Z0-9][a-zA-Z0-9._%+-]*)@(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})` | SIP usernames | Variable | Variable |
 | `phone_num` | `(?:sip:)?(\+[1-9]\d{2,14})@` | E164 phone numbers | 3 digits | 15 digits |
-| `domain` | `(?:sip:)?[^@]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})` | SIP domains | Variable | Variable |
+| `domain` | `(?:sip:[^@]*@\|sip:\|ROOTDOM:\s*\|https?://\|user=.*@\|REGISTER\s+sip:\|\[USER:\s*[^@]*@\|\[USERNAME:\s*[^@]*@\|\[SUBR:\s*[^@]*@\|getUserAndDomain\s*==\s*[^@]*@)([a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,4})` | Comprehensive domain coverage | Variable | Variable |
+| `username` | `(?:\[(?:HEADER:\s*)?)?(?:To\|TO\|[Ff]rom\|NAME\|REMPTY\|USERNM):\s*(?:"([^"]+)"\|([^<>\s\]\)}]+(?:\s+[^<>\s\]\)}]+)*))\|\[NAME:\s*([^\]\s]+(?:\s+[^\]\s]+)*)\|x-nt-party-id:\s*/([^\]\s\)}]+)\|Obfuscated Contact-\s*:\s*sip:([^@]+)@\|(?:\[HEADER:\s*)?Contact:\s*<sip:([^@]+)@\|\[CONTACTS:\s*\[(?:REPLY TO\|LOCATED AT)\]\s*<\s*<sip:([^@]+)@\|Retrieving presence information for:\s*([^<\s]+)\s*<sip:` | Display names and usernames | Variable | Variable |
 | `mac_address` | `(?<![:0-9a-fA-F])[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}` | MAC addresses | 17 chars | 17 chars |
 
 ---

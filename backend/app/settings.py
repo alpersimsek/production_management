@@ -24,6 +24,14 @@ EXCEPTION_PATTERNS = {
         r'^\-?\d{4}\.\d{2}\.\d{2}\-\d{6}$',  # Matches -2025.05.05-001833 or 2025.05.05-001833
         r'^\d{4}\.\d{2}\.\d{2}$',  # Matches 2025.05.05
     ],
+    "username": [
+        r'^null$',  # Excludes 'null' from being caught as username
+        r'^NULL$',  # Case insensitive exclusion
+        r'^undefined$',  # Excludes 'undefined' as well
+        r'^UNDEFINED$',  # Case insensitive exclusion
+        r'^none$',  # Excludes 'none' as well
+        r'^NONE$',  # Case insensitive exclusion
+    ],
 }
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")

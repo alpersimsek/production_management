@@ -88,6 +88,8 @@ class ProcessingConfig:
         if patcher_cfg:
             patcher = self.make_patcher(patcher_cfg)
             cfg["patcher"] = patcher
+        # Pass the category to the matcher for exception pattern checking
+        cfg["category"] = matcher_cat
         matcher = matcher_cls(**cfg)
         return matcher
 
