@@ -1,3 +1,37 @@
+<!--
+GDPR Tool Update Password Modal - Password Update Modal Component
+
+This component provides a modal dialog for updating user passwords in the GDPR compliance tool.
+It allows administrators to change user passwords with confirmation validation.
+
+Key Features:
+- Password Update: Form for updating user passwords
+- Password Confirmation: Confirms password matches before submission
+- Form Validation: Required field validation with error handling
+- Modal Interface: Full-screen modal with backdrop and transitions
+- Accessibility: Proper ARIA attributes and keyboard navigation
+- Form Reset: Automatic form reset after successful submission
+
+Props:
+- isOpen: Whether the modal is open (boolean, required)
+- username: Username of the user being updated (string, required)
+
+Events:
+- close: Emitted when modal is closed
+- submit: Emitted when form is submitted with password data
+
+Features:
+- Password Input: Secure password input field
+- Confirm Password: Password confirmation field
+- Password Matching: Validates that passwords match
+- Error Display: Clear error messages for validation failures
+- Form Validation: Ensures all required fields are filled
+- Responsive Design: Mobile-first responsive modal layout
+
+The component provides a secure interface for password updates in the
+GDPR compliance tool with proper validation and feedback.
+-->
+
 <script setup>
 import { ref } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'

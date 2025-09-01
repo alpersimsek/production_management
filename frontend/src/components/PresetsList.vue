@@ -1,3 +1,44 @@
+<!--
+GDPR Tool Presets List - Presets Management Component
+
+This component provides a comprehensive interface for managing presets in the GDPR compliance tool.
+It displays presets grouped by products with expandable sections for rules management.
+
+Key Features:
+- Product Grouping: Groups presets by their associated products
+- Expandable Sections: Collapsible product and preset sections
+- Preset Management: Add, edit, and delete presets
+- Rule Management: Add, edit, and delete rules within presets
+- Loading States: Visual feedback during operations
+- Empty States: Messages when no presets or rules are present
+
+Props:
+- presets: Array of presets (array, required)
+- products: Array of products (array, required)
+- rules: Array of all available rules (array, required)
+- loading: Whether data is loading (boolean, default: false)
+
+Events:
+- addPreset: Emitted when adding a new preset (productId: number/string)
+- editPreset: Emitted when editing a preset (preset: object)
+- deletePreset: Emitted when deleting a preset (preset: object)
+- addRuleToPreset: Emitted when adding a rule to a preset (presetId: number/string)
+- editPresetRule: Emitted when editing a preset rule (data: object)
+- deletePresetRule: Emitted when deleting a preset rule (data: object)
+- loadPresetRules: Emitted when loading preset rules (presetId: number/string)
+
+Features:
+- Product Grouping: Automatically groups presets by product
+- Expandable UI: Collapsible sections for better organization
+- Rule Display: Shows rules associated with each preset
+- Action Buttons: Edit and delete buttons for presets and rules
+- Loading States: Spinner during data operations
+- Empty States: Helpful messages when no data is present
+
+The component provides a comprehensive interface for preset and rule management in the
+GDPR compliance tool with proper organization and user feedback.
+-->
+
 <script setup>
 import { ref, watch } from 'vue'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'

@@ -1,3 +1,53 @@
+<!--
+GDPR Tool Confirm Delete Dialog - Confirmation Modal Component
+
+This component provides a confirmation dialog for delete operations in the GDPR compliance tool.
+It ensures users confirm destructive actions with proper warnings and loading states.
+
+Key Features:
+- Confirmation Dialog: Modal dialog for confirming delete operations
+- Warning Display: Clear warning message about irreversible actions
+- Loading States: Visual feedback during delete operations
+- Accessibility: Proper ARIA attributes and keyboard navigation
+- Animation Effects: Smooth transitions and hover animations
+- Responsive Design: Mobile-first responsive layout
+
+Props:
+- open: Whether the dialog is open (boolean, required)
+- itemType: Type of item being deleted (string, default: 'item')
+
+Events:
+- close: Emitted when dialog is closed
+- confirm: Emitted when delete is confirmed
+
+Features:
+- Warning Icon: Visual warning indicator
+- Confirmation Message: Clear message about irreversible action
+- Action Buttons: Cancel and Delete buttons with proper styling
+- Loading State: Spinner animation during delete operation
+- Hover Effects: Shake animation on delete button hover
+- Backdrop Blur: Blurred background for focus
+
+The component provides a safe and user-friendly confirmation interface for
+destructive operations in the GDPR compliance tool.
+-->
+
+<script setup>
+import { ref } from 'vue'
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+
+defineProps({ open: { type: Boolean, required: true }, itemType: { type: String, default: 'item' } })
+const emit = defineEmits(['close', 'confirm'])
+const loading = ref(false)
+
+const handleConfirm = () => {
+  loading.value = true
+  emit('confirm')
+  loading.value = false
+}
+</script>
+
 <template>
   <Dialog as="div" class="relative z-30" @close="$emit('close')" :open="open">
     <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity duration-300" />
@@ -33,22 +83,6 @@
     </div>
   </Dialog>
 </template>
-
-<script setup>
-import { ref } from 'vue'
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-
-defineProps({ open: { type: Boolean, required: true }, itemType: { type: String, default: 'item' } })
-const emit = defineEmits(['close', 'confirm'])
-const loading = ref(false)
-
-const handleConfirm = () => {
-  loading.value = true
-  emit('confirm')
-  loading.value = false
-}
-</script>
 
 <style scoped>
 .transition-all {

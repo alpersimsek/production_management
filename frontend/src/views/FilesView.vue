@@ -1,3 +1,35 @@
+<!--
+GDPR Tool Files View - File Management Interface
+
+This component provides the file management interface for the GDPR compliance tool.
+It allows users to upload, process, and manage files with product-based processing workflow.
+
+Key Features:
+- File Upload: Drag-and-drop file upload with progress tracking
+- Product-Based Processing: Select products before processing files
+- File Management: View, download, and delete uploaded and processed files
+- Processing Status: Real-time processing progress with time estimates
+- Pagination: Efficient handling of large file lists
+- Admin Features: Bulk delete operations for administrators
+- Error Handling: Comprehensive error states and user feedback
+
+File Management Features:
+- Upload Files: Support for multiple file types with validation
+- Process Files: Product selection modal for targeted processing
+- Download Files: Download processed files with proper error handling
+- Delete Files: Individual and bulk file deletion with confirmation
+- File Status: Real-time processing status and progress tracking
+
+Processing Workflow:
+- Product Selection: Choose product before processing for targeted rules
+- Progress Tracking: Real-time progress updates with time estimates
+- Status Management: Handle processing states and error conditions
+- File Organization: Separate views for uploaded and processed files
+
+The component provides comprehensive file management functionality for
+GDPR compliance tool users with proper workflow and error handling.
+-->
+
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'

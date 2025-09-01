@@ -1,3 +1,33 @@
+<!--
+GDPR Tool Dashboard View - Main Dashboard Interface
+
+This component provides the main dashboard interface for the GDPR compliance tool.
+It displays file management overview, processing status, and quick access to key features.
+
+Key Features:
+- File Overview: Display uploaded and processed files with counts
+- Processing Status: Real-time processing progress and time estimates
+- Quick Actions: Direct access to file management and user management
+- Role-Based Access: Admin features shown only to administrators
+- File Operations: Process, download, and delete files directly from dashboard
+- Responsive Design: Mobile-first responsive layout with expandable cards
+
+Dashboard Features:
+- File Statistics: Overview of uploaded and processed files
+- Processing Progress: Real-time status updates for file processing
+- Quick File Operations: Process, download, and delete files
+- Navigation Cards: Quick access to main application features
+- User Welcome: Personalized greeting with username
+
+Admin Features:
+- User Management Access: Quick link to user management (admin only)
+- Enhanced File Operations: Additional administrative capabilities
+- Role-Based UI: Interface adapts based on user role
+
+The component provides a comprehensive dashboard overview for GDPR compliance
+tool users with role-based functionality and efficient file management.
+-->
+
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'

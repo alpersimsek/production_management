@@ -1,3 +1,25 @@
+<!--
+GDPR Tool Application - Root Component
+
+This is the root Vue component for the GDPR compliance tool frontend application.
+It provides the main application structure with authentication management and routing.
+
+Key Features:
+- Authentication Management: Handles user authentication state and token validation
+- Token Expiration Monitoring: Periodic checks for token expiration with automatic logout
+- Router Integration: Provides the main routing outlet for the application
+- Session Management: Automatic session cleanup and user redirection
+
+Authentication Features:
+- Token Validation: Checks JWT token expiration every minute
+- Automatic Logout: Logs out users when tokens expire
+- User Notifications: Shows alert messages for expired sessions
+- Route Protection: Redirects to login page on authentication failure
+
+The component serves as the entry point for the Vue application and manages
+global authentication state and routing for the GDPR compliance tool.
+-->
+
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from './stores/auth'

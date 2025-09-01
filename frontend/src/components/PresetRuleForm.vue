@@ -1,51 +1,40 @@
-<template>
-  <Dialog :open="open" @close="$emit('close')" class="relative z-20">
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300" aria-hidden="true" />
-    <div class="fixed inset-0 flex items-center justify-center p-4">
-      <DialogPanel
-        class="w-full max-w-md transform overflow-hidden rounded-xl bg-white p-6 shadow-2xl transition-all duration-300">
-        <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Rule for Preset' : 'Add Rule          to Preset' }}</DialogTitle>
-        <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center animate-fade-in">
-          <CheckCircleIcon class="h-5 w-5 text-green-400" />
-          <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
-        </div>
-        <div v-if="errorMessage" class="mt-4 rounded-md bg-red-50 p-3 flex items-center animate-fade-in">
-          <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
-          <p class="ml-2 text-sm text-red-800">{{ errorMessage }}</p>
-          <button type="button" @click="errorMessage = ''" class="ml-auto text-red-500 hover:text-red-700"
-            aria-label="Dismiss error">
-            <XMarkIcon class="h-5 w-5" />
-          </button>
-        </div>
-        <div class="mt-6 space-y-4">
-          <div>
-            <label for="rule" class="block text-sm font-medium text-gray-700">Rule</label>
-            <select id="rule" v-model="formData.rule_id"
-              class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              :class="{ 'border-red-300': errors.rule_id }" required @focus="clearError('rule_id')">
-              <option value="" disabled>Select a rule</option>
-              <option v-for="rule in availableRules" :key="rule.id" :value="rule.id">{{ rule.name }}</option>
-            </select>
-            <p v-if="errors.rule_id" class="mt-1 text-sm text-red-600">{{ errors.rule_id }}</p>
-          </div>
-        </div>
-        <div class="mt-8 flex justify-end space-x-3">
-          <button type="button" @click="$emit('close')"
-            class="inline-flex rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
-            :disabled="saving">Cancel</button>
-          <button type="button" @click="save" :disabled="!isValid || saving"
-            class="inline-flex rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-indigo-400">
-            <svg v-if="saving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
-            </svg>
-            {{ isEdit ? 'Update' : 'Add' }} Rule
-          </button>
-        </div>
-      </DialogPanel>
-    </div>
-  </Dialog>
-</template>
+<!--
+GDPR Tool Preset Rule Form - Preset Rule Management Modal Component
+
+This component provides a modal dialog for adding and editing rules within presets
+in the GDPR compliance tool. It allows users to associate rules with specific presets.
+
+Key Features:
+- Rule Association: Add rules to presets
+- Rule Editing: Edit existing preset rules
+- Rule Selection: Select from available rules
+- Duplicate Prevention: Prevents adding duplicate rules to presets
+- Form Validation: Required field validation with error handling
+- Success Feedback: Clear success messages and error handling
+
+Props:
+- open: Whether the modal is open (boolean, required)
+- presetId: ID of the preset (number/string, required)
+- rules: Array of available rules (array, required)
+- presetRules: Array of existing preset rules (array, default: [])
+- editRule: Rule object for editing (object, optional)
+
+Events:
+- close: Emitted when modal is closed
+- saved: Emitted when rule is successfully saved
+- error: Emitted when an error occurs
+
+Features:
+- Rule Selection: Dropdown for selecting available rules
+- Duplicate Prevention: Filters out already assigned rules
+- Form Validation: Ensures rule selection before submission
+- Success Messages: Clear feedback for successful operations
+- Error Handling: Comprehensive error handling and display
+- Loading States: Visual feedback during save operations
+
+The component provides a comprehensive interface for preset rule management in the
+GDPR compliance tool with proper validation and user feedback.
+-->
 
 <script setup>
 import { ref, computed, watch } from 'vue'
@@ -144,6 +133,55 @@ const save = async () => {
   }
 }
 </script>
+
+<template>
+  <Dialog :open="open" @close="$emit('close')" class="relative z-20">
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300" aria-hidden="true" />
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <DialogPanel
+        class="w-full max-w-md transform overflow-hidden rounded-xl bg-white p-6 shadow-2xl transition-all duration-300">
+        <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Rule for Preset' : 'Add Rule          to Preset' }}</DialogTitle>
+        <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center animate-fade-in">
+          <CheckCircleIcon class="h-5 w-5 text-green-400" />
+          <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
+        </div>
+        <div v-if="errorMessage" class="mt-4 rounded-md bg-red-50 p-3 flex items-center animate-fade-in">
+          <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
+          <p class="ml-2 text-sm text-red-800">{{ errorMessage }}</p>
+          <button type="button" @click="errorMessage = ''" class="ml-auto text-red-500 hover:text-red-700"
+            aria-label="Dismiss error">
+            <XMarkIcon class="h-5 w-5" />
+          </button>
+        </div>
+        <div class="mt-6 space-y-4">
+          <div>
+            <label for="rule" class="block text-sm font-medium text-gray-700">Rule</label>
+            <select id="rule" v-model="formData.rule_id"
+              class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              :class="{ 'border-red-300': errors.rule_id }" required @focus="clearError('rule_id')">
+              <option value="" disabled>Select a rule</option>
+              <option v-for="rule in availableRules" :key="rule.id" :value="rule.id">{{ rule.name }}</option>
+            </select>
+            <p v-if="errors.rule_id" class="mt-1 text-sm text-red-600">{{ errors.rule_id }}</p>
+          </div>
+        </div>
+        <div class="mt-8 flex justify-end space-x-3">
+          <button type="button" @click="$emit('close')"
+            class="inline-flex rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+            :disabled="saving">Cancel</button>
+          <button type="button" @click="save" :disabled="!isValid || saving"
+            class="inline-flex rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-indigo-400">
+            <svg v-if="saving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
+            </svg>
+            {{ isEdit ? 'Update' : 'Add' }} Rule
+          </button>
+        </div>
+      </DialogPanel>
+    </div>
+  </Dialog>
+</template>
 
 <style scoped>
 .transition-all {

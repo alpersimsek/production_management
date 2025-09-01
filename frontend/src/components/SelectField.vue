@@ -1,39 +1,38 @@
-<template>
-  <div class="w-full">
-    <!-- Label -->
-    <label v-if="label" :for="inputId" class="block text-sm font-semibold text-gray-900 mb-1">
-      {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
-    </label>
+<!--
+GDPR Tool Select Field - Reusable Select Component
 
-    <div class="relative rounded-md shadow-sm">
-      <!-- Select element -->
-      <select :id="inputId" :name="inputId" :value="modelValue" :disabled="disabled" :required="required" :class="[
-        'block w-full rounded-md bg-white/95 border border-gray-200 shadow-sm focus:border-primary focus:ring-primary focus:ring-offset-1 sm:text-sm py-2 pr-8 appearance-none',
-        { 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:outline-none focus:ring-red-500': error },
-        { 'bg-gray-50 text-gray-500': disabled },
-        customClass
-      ]" @change="$emit('update:modelValue', $event.target.value)" v-bind="$attrs">
-        <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
-        <slot></slot>
-      </select>
-      <!-- Custom arrow -->
-      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-          aria-hidden="true">
-          <path fill-rule="evenodd"
-            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-            clip-rule="evenodd" />
-        </svg>
-      </div>
-    </div>
+This component provides a reusable select dropdown component for the GDPR compliance tool.
+It supports validation states, custom styling, and accessibility features for form inputs.
 
-    <!-- Helper text or error message -->
-    <p v-if="error || helperText" class="mt-1 text-sm" :class="error ? 'text-red-500' : 'text-gray-500'">
-      {{ error || helperText }}
-    </p>
-  </div>
-</template>
+Key Features:
+- Custom Styling: Tailwind CSS with custom arrow and focus states
+- Validation States: Error states with visual feedback
+- Accessibility: Proper labeling and ARIA attributes
+- Helper Text: Optional helper text and error messages
+- v-model Support: Two-way data binding
+- Placeholder Support: Optional placeholder option
+- Custom Styling: Additional CSS classes support
+
+Props:
+- modelValue: Select value (v-model)
+- label: Select label text
+- id: Select ID (auto-generated if not provided)
+- placeholder: Placeholder text for first option
+- required: Whether select is required
+- error: Error message to display
+- helperText: Helper text to display
+- disabled: Whether select is disabled
+- customClass: Additional CSS classes
+
+Slots:
+- default: Option elements for the select
+
+Events:
+- update:modelValue: Emitted when select value changes
+
+The component provides consistent select styling and behavior across the
+GDPR compliance tool with proper validation and accessibility support.
+-->
 
 <script setup>
 // Generate a unique ID for this component instance
@@ -83,3 +82,40 @@ const inputId = props.id || instanceId
 
 defineEmits(['update:modelValue'])
 </script>
+
+<template>
+  <div class="w-full">
+    <!-- Label -->
+    <label v-if="label" :for="inputId" class="block text-sm font-semibold text-gray-900 mb-1">
+      {{ label }}
+      <span v-if="required" class="text-red-500">*</span>
+    </label>
+
+    <div class="relative rounded-md shadow-sm">
+      <!-- Select element -->
+      <select :id="inputId" :name="inputId" :value="modelValue" :disabled="disabled" :required="required" :class="[
+        'block w-full rounded-md bg-white/95 border border-gray-200 shadow-sm focus:border-primary focus:ring-primary focus:ring-offset-1 sm:text-sm py-2 pr-8 appearance-none',
+        { 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:outline-none focus:ring-red-500': error },
+        { 'bg-gray-50 text-gray-500': disabled },
+        customClass
+      ]" @change="$emit('update:modelValue', $event.target.value)" v-bind="$attrs">
+        <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
+        <slot></slot>
+      </select>
+      <!-- Custom arrow -->
+      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+          aria-hidden="true">
+          <path fill-rule="evenodd"
+            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Helper text or error message -->
+    <p v-if="error || helperText" class="mt-1 text-sm" :class="error ? 'text-red-500' : 'text-gray-500'">
+      {{ error || helperText }}
+    </p>
+  </div>
+</template>

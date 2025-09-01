@@ -1,3 +1,35 @@
+<!--
+GDPR Tool Search View - Data Masking Search Interface
+
+This component provides the main search interface for the GDPR compliance tool.
+It allows users to search, filter, and export GDPR data masking records with advanced functionality.
+
+Key Features:
+- Advanced Search: Text-based search with debounced input
+- Category Filtering: Filter results by data categories (IP, username, phone, etc.)
+- Sorting Options: Sort by date, relevance, or other criteria
+- Pagination: Load more results with infinite scroll
+- Export Functionality: Export individual records or entire search results
+- Real-time Updates: Automatic search as user types
+- Responsive Design: Mobile-first responsive layout
+
+Search Features:
+- Query Search: Text search across masking records
+- Category Filter: Filter by specific data categories
+- Sort Options: Newest first, oldest first, most relevant
+- Table Sorting: Click column headers to sort results
+- Export Options: Download individual files or bulk export
+
+Data Management:
+- Real-time Search: Debounced search with 500ms delay
+- Pagination: Load more results without losing current view
+- Export Formats: CSV export for processed files
+- Error Handling: Comprehensive error states and retry functionality
+
+The component provides a comprehensive search and data management interface
+for GDPR compliance tool users to find and export masked data records.
+-->
+
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import MainLayout from '../components/MainLayout.vue'

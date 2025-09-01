@@ -1,3 +1,51 @@
+/**
+ * Centralized API service for the GDPR tool frontend
+ * 
+ * This service provides a comprehensive interface for all backend API communications.
+ * It handles HTTP requests, error management, authentication headers, and data formatting
+ * for the entire application. All API calls are centralized here for consistency and
+ * maintainability.
+ * 
+ * Key Features:
+ * - Complete API endpoint definitions for all backend services
+ * - Centralized error handling with custom ApiError class
+ * - File upload with progress tracking and size validation
+ * - Authentication token management via axios interceptors
+ * - Request/response data transformation and validation
+ * - Timeout handling for long-running operations
+ * 
+ * API Endpoints Covered:
+ * - Authentication (login)
+ * - User management (CRUD operations)
+ * - File operations (upload, process, delete, download)
+ * - Masking maps (search, categories, export)
+ * - Presets management (CRUD operations)
+ * - Rules management (CRUD operations)
+ * - Preset-rules associations
+ * - Products listing
+ * 
+ * Error Handling:
+ * - Custom ApiError class with status codes and messages
+ * - HTTP status code mapping to user-friendly messages
+ * - Network error handling (service unavailable)
+ * - Request timeout handling
+ * - File size validation and error reporting
+ * 
+ * Usage:
+ * ```javascript
+ * import ApiService from '@/services/api'
+ * 
+ * // Login
+ * const authData = await ApiService.login({ username, password })
+ * 
+ * // Upload file
+ * const fileData = await ApiService.uploadFile(file)
+ * 
+ * // Search masking maps
+ * const results = await ApiService.searchMaskingMaps(params)
+ * ```
+ */
+
 import axios from 'axios'
 
 const endpoints = {

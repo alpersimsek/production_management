@@ -1,3 +1,100 @@
+<!--
+GDPR Tool Navigation Bar - Main Navigation Component
+
+This component provides the main navigation bar for the GDPR compliance tool application.
+It includes responsive navigation, user authentication, role-based menu items, and mobile support.
+
+Key Features:
+- Responsive Design: Desktop and mobile navigation with hamburger menu
+- Role-Based Access: Shows different menu items based on user role (admin/user)
+- User Authentication: Displays user information and logout functionality
+- Active Route Highlighting: Highlights the current page in navigation
+- Logo Integration: Custom logo with fallback support
+- Mobile Menu: Collapsible mobile navigation with smooth animations
+
+Navigation Items:
+- Dashboard: Main dashboard for all authenticated users
+- Files: File management and processing for all users
+- Search: Data masking search for all users
+- Users: User management (admin only)
+- Presets: Preset configuration (admin only)
+
+User Features:
+- User Dropdown: Shows username, role, and logout option
+- User Initials: Displays user initials in avatar
+- Logout Functionality: Secure logout with route redirection
+- Mobile User Info: User information display in mobile menu
+
+The component provides comprehensive navigation functionality with proper
+authentication and authorization for the GDPR compliance tool.
+-->
+
+<script setup>
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+import logo from '../assets/ribbon-logo.svg' // Import the SVG logo
+
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+
+// Navigation state
+const showMobileMenu = ref(false)
+const showUserMenu = ref(false)
+const useFallbackLogo = ref(false) // For fallback logo
+
+// Navigation items
+const navigationItems = [
+  { name: 'Dashboard', href: '/dashboard', requiresAuth: true },
+  { name: 'Files', href: '/files', requiresAuth: true },
+  { name: 'Search', href: '/search', requiresAuth: true },
+  { name: 'Users', href: '/users', requiresAuth: true, requiresAdmin: true },
+  { name: 'Presets', href: '/presets', requiresAuth: true, requiresAdmin: true },
+]
+
+// User information
+const username = computed(() => authStore.user?.username || 'User')
+const userRole = computed(() => authStore.user?.role || 'user')
+const userInitials = computed(() => {
+  const name = username.value
+  return name.charAt(0).toUpperCase()
+})
+
+// Check if a path is the active route
+const isActive = (path) => {
+  if (route.path === path) return true
+  return route.path.startsWith(path) && path !== '/'
+}
+
+// Check if a navigation item should be shown based on user permissions
+const shouldShowItem = (item) => {
+  if (item.requiresAuth && !authStore.isAuthenticated) return false
+  if (item.requiresAdmin && (!authStore.user || authStore.user.role !== 'admin')) return false
+  return true
+}
+
+// Toggle mobile menu
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+  if (showMobileMenu.value) {
+    showUserMenu.value = false
+  }
+}
+
+// Toggle user menu
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+// Handle logout
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
+</script>
+
 <template>
   <nav class="bg-white shadow-lg sticky top-0 z-50">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -123,72 +220,6 @@
     </div>
   </nav>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
-import logo from '../assets/ribbon-logo.svg' // Import the SVG logo
-
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
-
-// Navigation state
-const showMobileMenu = ref(false)
-const showUserMenu = ref(false)
-const useFallbackLogo = ref(false) // For fallback logo
-
-// Navigation items
-const navigationItems = [
-  { name: 'Dashboard', href: '/dashboard', requiresAuth: true },
-  { name: 'Files', href: '/files', requiresAuth: true },
-  { name: 'Search', href: '/search', requiresAuth: true },
-  { name: 'Users', href: '/users', requiresAuth: true, requiresAdmin: true },
-  { name: 'Presets', href: '/presets', requiresAuth: true, requiresAdmin: true },
-]
-
-// User information
-const username = computed(() => authStore.user?.username || 'User')
-const userRole = computed(() => authStore.user?.role || 'user')
-const userInitials = computed(() => {
-  const name = username.value
-  return name.charAt(0).toUpperCase()
-})
-
-// Check if a path is the active route
-const isActive = (path) => {
-  if (route.path === path) return true
-  return route.path.startsWith(path) && path !== '/'
-}
-
-// Check if a navigation item should be shown based on user permissions
-const shouldShowItem = (item) => {
-  if (item.requiresAuth && !authStore.isAuthenticated) return false
-  if (item.requiresAdmin && (!authStore.user || authStore.user.role !== 'admin')) return false
-  return true
-}
-
-// Toggle mobile menu
-const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value
-  if (showMobileMenu.value) {
-    showUserMenu.value = false
-  }
-}
-
-// Toggle user menu
-const toggleUserMenu = () => {
-  showUserMenu.value = !showUserMenu.value
-}
-
-// Handle logout
-const handleLogout = () => {
-  authStore.logout()
-  router.push('/login')
-}
-</script>
 
 <style scoped>
 /* Custom animations for dropdown and mobile menu */

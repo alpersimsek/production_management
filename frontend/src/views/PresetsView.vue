@@ -1,3 +1,36 @@
+<!--
+GDPR Tool Presets View - Preset Management Interface
+
+This component provides the preset management interface for the GDPR compliance tool.
+It allows administrators to create, edit, and manage product presets and their associated rules.
+
+Key Features:
+- Preset Management: Create, edit, and delete product presets
+- Rule Management: Add, edit, and remove rules from presets
+- Product Integration: Link presets to specific products
+- Modal Forms: Inline editing with modal dialogs
+- Nested Modals: Rule management with custom rule forms
+- Admin Protection: Admin-only access with route protection
+- Error Handling: Comprehensive error states and validation
+
+Preset Management Features:
+- Add Presets: Create new presets for specific products
+- Edit Presets: Update existing preset configurations
+- Delete Presets: Remove presets with confirmation
+- Product Assignment: Link presets to products
+- Header Matching: Configure header-based preset selection
+
+Rule Management Features:
+- Add Rules: Add existing rules to presets
+- Edit Rules: Modify rule configurations within presets
+- Delete Rules: Remove rules from presets
+- Custom Rules: Create and manage custom rules
+- Rule Categories: Organize rules by data categories
+
+The component provides comprehensive preset and rule management functionality
+for GDPR compliance tool administrators with proper validation and security.
+-->
+
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'

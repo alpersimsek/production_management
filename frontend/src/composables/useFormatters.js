@@ -1,5 +1,26 @@
 /**
- * Composable providing utility formatting functions
+ * Composable providing utility formatting functions for the GDPR tool frontend
+ * 
+ * This composable provides reusable formatting utilities that can be imported
+ * and used across Vue components. It includes functions for formatting file sizes,
+ * dates, and time durations in a user-friendly manner.
+ * 
+ * Key Features:
+ * - File size formatting (bytes to human-readable format like KB, MB, GB)
+ * - Date formatting (ISO strings to locale-specific format)
+ * - Time remaining formatting (seconds to minutes and seconds)
+ * 
+ * Usage:
+ * ```javascript
+ * import { useFormatters } from '@/composables/useFormatters'
+ * 
+ * const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
+ * ```
+ * 
+ * Functions:
+ * - formatFileSize(bytes): Converts bytes to human-readable format (B, KB, MB, GB)
+ * - formatDate(dateString): Converts ISO date string to locale string
+ * - formatTimeRemaining(seconds): Formats seconds as "Xm Ys" or "Xs"
  */
 export function useFormatters() {
   /**

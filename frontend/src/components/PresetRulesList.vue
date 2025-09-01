@@ -1,3 +1,91 @@
+<!--
+GDPR Tool Preset Rules List - Preset Rules Management Component
+
+This component provides a list interface for managing rules within presets
+in the GDPR compliance tool. It displays preset rules with add, edit, and delete actions.
+
+Key Features:
+- Rules Display: Shows all rules associated with a preset
+- Rule Management: Add, edit, and delete rules from presets
+- Loading States: Visual feedback during rule operations
+- Empty State: Displays message when no rules are present
+- Action Buttons: Edit and delete buttons for each rule
+- Rule Information: Shows rule names and action types
+
+Props:
+- presetId: ID of the preset (number/string, required)
+- presetRules: Array of preset rules (array, default: [])
+- allRules: Array of all available rules (array, default: [])
+- loading: Whether rules are loading (boolean, default: false)
+
+Events:
+- addRule: Emitted when add rule button is clicked (presetId: number/string)
+- editRule: Emitted when edit rule button is clicked (rule: object)
+- deleteRule: Emitted when delete rule button is clicked (data: object)
+
+Features:
+- Rule List: Displays all rules associated with the preset
+- Add Button: Button to add new rules to the preset
+- Edit Actions: Edit buttons for each rule
+- Delete Actions: Delete buttons for each rule
+- Loading State: Spinner during rule operations
+- Empty State: Message when no rules are present
+- Rule Names: Displays rule names from allRules array
+
+The component provides a comprehensive interface for preset rule management in the
+GDPR compliance tool with proper action handling and user feedback.
+-->
+
+<script setup>
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
+const props = defineProps({
+  presetId: {
+    type: [Number, String],
+    required: true
+  },
+  presetRules: {
+    type: Array,
+    default: () => []
+  },
+  allRules: {
+    type: Array,
+    default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['addRule', 'editRule', 'deleteRule'])
+
+// Method to get rule name by ID
+const getRuleName = (ruleId) => {
+  const rule = props.allRules.find(r => r.id === ruleId)
+  if (!rule) {
+    console.warn(`Rule with ID ${ruleId} not found in allRules array for presetId: ${props.presetId}`)
+  }
+  return rule ? rule.name : 'Unknown'
+}
+
+// Event emission with debug logs
+const emitAddRule = () => {
+  console.log('Emitting addRule for presetId:', props.presetId)
+  emit('addRule', props.presetId)
+}
+
+const emitEditRule = (rule) => {
+  console.log('Emitting editRule for presetId:', props.presetId, 'ruleId:', rule.rule_id)
+  emit('editRule', rule)
+}
+
+const emitDeleteRule = (data) => {
+  console.log('Emitting deleteRule for presetId:', data.preset_id, 'ruleId:', data.rule_id)
+  emit('deleteRule', data)
+}
+</script>
+
 <template>
   <div>
     <div class="border-t border-gray-200">
@@ -51,56 +139,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
-
-const props = defineProps({
-  presetId: {
-    type: [Number, String],
-    required: true
-  },
-  presetRules: {
-    type: Array,
-    default: () => []
-  },
-  allRules: {
-    type: Array,
-    default: () => []
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
-})
-
-const emit = defineEmits(['addRule', 'editRule', 'deleteRule'])
-
-// Method to get rule name by ID
-const getRuleName = (ruleId) => {
-  const rule = props.allRules.find(r => r.id === ruleId)
-  if (!rule) {
-    console.warn(`Rule with ID ${ruleId} not found in allRules array for presetId: ${props.presetId}`)
-  }
-  return rule ? rule.name : 'Unknown'
-}
-
-// Event emission with debug logs
-const emitAddRule = () => {
-  console.log('Emitting addRule for presetId:', props.presetId)
-  emit('addRule', props.presetId)
-}
-
-const emitEditRule = (rule) => {
-  console.log('Emitting editRule for presetId:', props.presetId, 'ruleId:', rule.rule_id)
-  emit('editRule', rule)
-}
-
-const emitDeleteRule = (data) => {
-  console.log('Emitting deleteRule for presetId:', data.preset_id, 'ruleId:', data.rule_id)
-  emit('deleteRule', data)
-}
-</script>
 
 <style scoped>
 /* Smooth transitions for hover effects */

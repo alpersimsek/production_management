@@ -1,3 +1,35 @@
+<!--
+GDPR Tool Login View - User Authentication Interface
+
+This component provides the login interface for the GDPR compliance tool.
+It handles user authentication with secure form validation and error handling.
+
+Key Features:
+- Secure Authentication: Username and password login with JWT tokens
+- Form Validation: Required field validation and error display
+- Error Handling: User-friendly error messages for various scenarios
+- Loading States: Visual feedback during authentication process
+- Responsive Design: Mobile-first responsive layout
+- Accessibility: Proper ARIA labels and form structure
+- Branding: GDPR-themed logo and consistent styling
+
+Authentication Features:
+- Username/Password: Standard credential authentication
+- JWT Tokens: Secure token-based session management
+- Error Mapping: Backend errors mapped to user-friendly messages
+- Auto-redirect: Automatic redirect to dashboard on successful login
+- Loading Indicators: Visual feedback during authentication
+
+Security Features:
+- Input Validation: Client-side validation for required fields
+- Error Sanitization: Safe error message display
+- Secure Routing: Protected route redirection
+- Session Management: Automatic token handling
+
+The component provides a secure and user-friendly authentication interface
+for the GDPR compliance tool with proper error handling and accessibility.
+-->
+
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'

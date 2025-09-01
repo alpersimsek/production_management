@@ -1,3 +1,33 @@
+/**
+ * Vue Router configuration for the GDPR tool frontend
+ * 
+ * This file defines the application's routing structure, including route definitions,
+ * navigation guards, and authentication checks. It handles route protection based on
+ * user authentication status and admin privileges.
+ * 
+ * Key Features:
+ * - Route definitions for all application views (login, dashboard, files, users, search, presets)
+ * - Authentication guards that check for valid JWT tokens
+ * - Admin role protection for sensitive routes (presets management)
+ * - Automatic redirection based on authentication status
+ * - Token expiration handling during navigation
+ * 
+ * Routes:
+ * - / (redirects to /dashboard)
+ * - /login: Login page (no auth required)
+ * - /dashboard: Main dashboard (auth required)
+ * - /files: File management (auth required)
+ * - /users: User management (auth required)
+ * - /search: Search masking records (auth required)
+ * - /presets: Preset management (auth + admin required)
+ * 
+ * Navigation Guards:
+ * - beforeEach: Checks authentication, token expiration, and admin privileges
+ * - Redirects unauthenticated users to login
+ * - Redirects authenticated users away from login page
+ * - Handles token expiration with automatic logout
+ */
+
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 

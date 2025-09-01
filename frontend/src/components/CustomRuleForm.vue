@@ -1,3 +1,39 @@
+<!--
+GDPR Tool Custom Rule Form - Rule Creation and Editing Modal Component
+
+This component provides a modal dialog for creating and editing custom GDPR rules
+in the GDPR compliance tool. It allows users to define regex patterns for data masking.
+
+Key Features:
+- Rule Creation: Form for creating new custom rules
+- Rule Editing: Edit existing rules with pre-populated data
+- Regex Validation: Validates regex patterns before saving
+- Category Selection: Choose from predefined rule categories
+- Form Validation: Comprehensive field validation with error handling
+- Stay Open Option: Option to add multiple rules without closing modal
+- Success Feedback: Clear success messages and error handling
+
+Props:
+- open: Whether the modal is open (boolean, required)
+- rule: Rule object for editing (object, optional)
+
+Events:
+- close: Emitted when modal is closed
+- saved: Emitted when rule is successfully saved
+- error: Emitted when an error occurs
+
+Features:
+- Rule Categories: Predefined categories (ipv4_addr, mac_addr, username, domain, phone_num)
+- Regex Validation: Validates regex patterns before submission
+- Form Reset: Automatic form reset after successful creation
+- Focus Management: Proper focus handling for accessibility
+- Loading States: Visual feedback during save operations
+- Error Handling: Clear error messages with dismiss functionality
+
+The component provides a comprehensive interface for rule management in the
+GDPR compliance tool with proper validation and user feedback.
+-->
+
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'

@@ -1,3 +1,36 @@
+<!--
+GDPR Tool Add User Modal - User Creation Modal Component
+
+This component provides a modal dialog for creating new users in the GDPR compliance tool.
+It allows administrators to add new users with username, password, and role assignment.
+
+Key Features:
+- User Creation: Form for adding new users to the system
+- Role Assignment: Select between user and admin roles
+- Form Validation: Required field validation with error handling
+- Modal Interface: Full-screen modal with backdrop and transitions
+- Accessibility: Proper ARIA attributes and keyboard navigation
+- Form Reset: Automatic form reset after successful submission
+
+Props:
+- isOpen: Whether the modal is open (boolean, required)
+
+Events:
+- close: Emitted when modal is closed
+- submit: Emitted when form is submitted with user data
+
+Features:
+- Username Input: Text input for username
+- Password Input: Secure password input field
+- Role Selection: Dropdown for user role (user/admin)
+- Error Display: Clear error messages for validation failures
+- Form Validation: Ensures all required fields are filled
+- Responsive Design: Mobile-first responsive modal layout
+
+The component provides a secure and user-friendly interface for user creation
+in the GDPR compliance tool with proper validation and feedback.
+-->
+
 <script setup>
 import { ref } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'

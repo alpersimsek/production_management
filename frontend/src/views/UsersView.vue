@@ -1,3 +1,35 @@
+<!--
+GDPR Tool Users View - User Management Interface
+
+This component provides the user management interface for the GDPR compliance tool.
+It allows administrators to create, edit, and delete user accounts with role-based permissions.
+
+Key Features:
+- User Management: Create, edit, and delete user accounts
+- Role-Based Access: Admin and user role management
+- Form Validation: Required field validation and error handling
+- Modal Dialogs: Inline editing with modal forms
+- Security Features: Prevent self-deletion and role validation
+- Responsive Design: Mobile-first responsive layout
+- Error Handling: Comprehensive error states and retry functionality
+
+User Management Features:
+- Add Users: Create new user accounts with username, password, and role
+- Edit Users: Update existing user information
+- Delete Users: Remove user accounts (with safety checks)
+- Role Assignment: Assign admin or user roles
+- Password Management: Secure password handling
+
+Security Features:
+- Self-Protection: Prevent users from deleting their own accounts
+- Role Validation: Proper role assignment and validation
+- Form Validation: Client-side validation for required fields
+- Error Sanitization: Safe error message display
+
+The component provides comprehensive user management functionality for
+GDPR compliance tool administrators with proper security and validation.
+-->
+
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import MainLayout from '../components/MainLayout.vue'

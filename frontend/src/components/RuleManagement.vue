@@ -1,3 +1,42 @@
+<!--
+GDPR Tool Rule Management - Rules Management Modal Component
+
+This component provides a comprehensive interface for managing rules in the GDPR compliance tool.
+It displays rules in a table format with sorting, filtering, pagination, and CRUD operations.
+
+Key Features:
+- Rules Display: Shows all rules in a sortable table format
+- Rule Management: Add, edit, and delete rules
+- Category Filtering: Filter rules by category
+- Sorting: Sort rules by name or category
+- Pagination: Navigate through large rule sets
+- Search and Filter: Advanced filtering capabilities
+- Confirmation Dialogs: Safe deletion with confirmation
+
+Props:
+- open: Whether the modal is open (boolean, required)
+
+Events:
+- close: Emitted when modal is closed
+- saved: Emitted when rules are saved
+- open-rule-form: Emitted when opening rule form (rule: object, optional)
+- delete: Emitted when rule is deleted
+
+Features:
+- Rule Table: Displays rules with name, category, pattern, and patcher
+- Category Filter: Filter rules by predefined categories
+- Sorting: Click column headers to sort rules
+- Pagination: Navigate through rule pages
+- Add Rule: Button to create new rules
+- Edit Rule: Edit existing rules
+- Delete Rule: Delete rules with confirmation
+- Loading States: Visual feedback during operations
+- Error Handling: Clear error messages and retry functionality
+
+The component provides a comprehensive interface for rule management in the
+GDPR compliance tool with proper data handling and user feedback.
+-->
+
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'

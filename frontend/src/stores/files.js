@@ -1,3 +1,61 @@
+/**
+ * Files management store for the GDPR tool frontend using Pinia
+ * 
+ * This store manages file-related state and operations, including file uploads,
+ * processing status tracking, and file management operations. It handles real-time
+ * progress updates, polling for processing status, and maintains separate collections
+ * for uploaded and processed files.
+ * 
+ * Key Features:
+ * - File upload with progress tracking and event handling
+ * - Real-time processing status monitoring with polling
+ * - Separate state management for uploads and processed files
+ * - Progress tracking for both upload and processing operations
+ * - File operations (delete, download, bulk delete)
+ * - Product-based file processing with enhanced workflow
+ * 
+ * State:
+ * - uploads: Array of files in 'created' or 'in-progress' status
+ * - processed: Array of files in 'done' status
+ * - processingFiles: Map tracking processing progress by file ID
+ * - uploadProgress: Map tracking upload progress by file name
+ * 
+ * Actions:
+ * - fetchFiles(): Retrieves all files and categorizes by status
+ * - uploadFile(file): Handles file upload with progress tracking
+ * - processFile(fileId): Initiates file processing with status polling
+ * - processFileWithProduct(fileId, productId): Enhanced processing with product selection
+ * - deleteFile(fileId): Removes file from both uploads and processed arrays
+ * - deleteAllFiles(): Clears all files and progress tracking
+ * - downloadFile(fileId): Initiates file download
+ * 
+ * Getters:
+ * - getUploads: Returns array of uploaded files
+ * - getProcessed: Returns array of processed files
+ * - getProcessingStatus(fileId): Returns processing status for specific file
+ * 
+ * Progress Tracking:
+ * - Upload progress: Tracks bytes uploaded vs total file size
+ * - Processing progress: Tracks completed size vs total size with time remaining
+ * - Real-time updates: Uses polling and custom events for live updates
+ * 
+ * Usage:
+ * ```javascript
+ * import { useFilesStore } from '@/stores/files'
+ * 
+ * const filesStore = useFilesStore()
+ * 
+ * // Upload file
+ * await filesStore.uploadFile(file)
+ * 
+ * // Process file
+ * await filesStore.processFile(fileId)
+ * 
+ * // Get processing status
+ * const status = filesStore.getProcessingStatus(fileId)
+ * ```
+ */
+
 import { defineStore } from 'pinia'
 import ApiService from '@/services/api'
 

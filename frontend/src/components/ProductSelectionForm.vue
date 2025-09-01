@@ -1,105 +1,36 @@
-<template>
-  <TransitionRoot as="template" :show="isOpen">
-    <Dialog class="relative z-30" :open="isOpen" @close="handleCancel">
-      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
-        leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity" />
-      </TransitionChild>
-      <div class="fixed inset-0 overflow-y-auto">
-        <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
-          <TransitionChild as="template" enter="ease-out duration-300"
-            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
-            leave-from="opacity-100 translate-y-0 sm:scale-100"
-            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel
-              class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
-              <button type="button"
-                class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                @click="handleCancel" aria-label="Close modal">
-                <XMarkIcon class="h-6 w-6" />
-              </button>
-              <DialogTitle as="h3" class="text-lg font-bold text-gray-900">
-                Select Product for Processing
-              </DialogTitle>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500">
-                  Choose a product to apply specific processing rules.
-                </p>
-              </div>
-              
-              <form @submit.prevent="handleProcess" class="mt-6 space-y-6">
-                <!-- File Info -->
-                <div class="p-3 bg-gray-50 rounded-md">
-                  <div class="text-sm">
-                    <p><span class="font-medium">File:</span> {{ file?.filename }}</p>
-                    <p><span class="font-medium">Type:</span> {{ fileType }}</p>
-                    <p><span class="font-medium">Size:</span> {{ formatFileSize(file?.file_size) }}</p>
-                  </div>
-                </div>
+<!--
+GDPR Tool Product Selection Form - Product Selection Modal Component
 
-                <!-- Product Selection -->
-                <div>
-                  <label for="product-select" class="block text-sm font-medium text-gray-700 mb-2">
-                    Product *
-                  </label>
-                                  <select
-                  id="product-select"
-                  v-model="selectedProduct"
-                  :disabled="productsLoading"
-                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': showError }"
-                >
-                  <option value="">Select a product...</option>
-                  <option v-for="product in products" :key="product.id" :value="product.id">
-                    {{ product.name }}
-                  </option>
-                </select>
-                  <p v-if="showError" class="mt-1 text-sm text-red-600">
-                    Please select a product to continue.
-                  </p>
-                </div>
-              </form>
+This component provides a modal dialog for selecting a product before file processing
+in the GDPR compliance tool. It allows users to choose specific products for targeted processing rules.
 
+Key Features:
+- Product Selection: Dropdown selection of available products
+- File Information: Display file details (name, type, size)
+- Form Validation: Required product selection with error handling
+- Loading States: Visual feedback during product loading and processing
+- Modal Interface: Full-screen modal with backdrop and transitions
+- Accessibility: Proper ARIA attributes and keyboard navigation
 
-              
-              <!-- Action buttons -->
-              <div class="mt-8 flex flex-row-reverse gap-3">
-                <AppButton
-                  type="button"
-                  variant="primary"
-                  :loading="processing"
-                  :disabled="!selectedProduct || processing"
-                  @click="handleProcess"
-                  aria-label="Process file"
-                >
-                  <span v-if="processing" class="flex items-center">
-                    <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                      <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
-                    </svg>
-                    Processing...
-                  </span>
-                  <span v-else>Process File</span>
-                </AppButton>
-                <AppButton
-                  type="button"
-                  variant="secondary"
-                  @click="handleCancel"
-                  :disabled="processing"
-                  aria-label="Cancel"
-                >
-                  Cancel
-                </AppButton>
-              </div>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </div>
-    </Dialog>
-  </TransitionRoot>
-</template>
+Props:
+- isOpen: Whether the modal is open (boolean, required)
+- file: File object with processing information (object, required)
+
+Events:
+- close: Emitted when modal is closed
+- process: Emitted when processing is confirmed with product selection
+
+Features:
+- File Details: Shows filename, type, and size information
+- Product Loading: Async loading of available products
+- Form Validation: Ensures product selection before processing
+- Processing State: Loading indicator during processing
+- Error Handling: Clear error messages for validation failures
+- Responsive Design: Mobile-first responsive modal layout
+
+The component provides a user-friendly interface for product-based file processing
+in the GDPR compliance tool with proper validation and feedback.
+-->
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
@@ -221,6 +152,109 @@ onMounted(() => {
   }
 })
 </script>
+
+<template>
+  <TransitionRoot as="template" :show="isOpen">
+    <Dialog class="relative z-30" :open="isOpen" @close="handleCancel">
+      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
+        leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+        <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity" />
+      </TransitionChild>
+      <div class="fixed inset-0 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
+          <TransitionChild as="template" enter="ease-out duration-300"
+            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+            leave-from="opacity-100 translate-y-0 sm:scale-100"
+            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <DialogPanel
+              class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
+              <button type="button"
+                class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                @click="handleCancel" aria-label="Close modal">
+                <XMarkIcon class="h-6 w-6" />
+              </button>
+              <DialogTitle as="h3" class="text-lg font-bold text-gray-900">
+                Select Product for Processing
+              </DialogTitle>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  Choose a product to apply specific processing rules.
+                </p>
+              </div>
+              
+              <form @submit.prevent="handleProcess" class="mt-6 space-y-6">
+                <!-- File Info -->
+                <div class="p-3 bg-gray-50 rounded-md">
+                  <div class="text-sm">
+                    <p><span class="font-medium">File:</span> {{ file?.filename }}</p>
+                    <p><span class="font-medium">Type:</span> {{ fileType }}</p>
+                    <p><span class="font-medium">Size:</span> {{ formatFileSize(file?.file_size) }}</p>
+                  </div>
+                </div>
+
+                <!-- Product Selection -->
+                <div>
+                  <label for="product-select" class="block text-sm font-medium text-gray-700 mb-2">
+                    Product *
+                  </label>
+                                  <select
+                  id="product-select"
+                  v-model="selectedProduct"
+                  :disabled="productsLoading"
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': showError }"
+                >
+                  <option value="">Select a product...</option>
+                  <option v-for="product in products" :key="product.id" :value="product.id">
+                    {{ product.name }}
+                  </option>
+                </select>
+                  <p v-if="showError" class="mt-1 text-sm text-red-600">
+                    Please select a product to continue.
+                  </p>
+                </div>
+              </form>
+
+
+              
+              <!-- Action buttons -->
+              <div class="mt-8 flex flex-row-reverse gap-3">
+                <AppButton
+                  type="button"
+                  variant="primary"
+                  :loading="processing"
+                  :disabled="!selectedProduct || processing"
+                  @click="handleProcess"
+                  aria-label="Process file"
+                >
+                  <span v-if="processing" class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
+                    </svg>
+                    Processing...
+                  </span>
+                  <span v-else>Process File</span>
+                </AppButton>
+                <AppButton
+                  type="button"
+                  variant="secondary"
+                  @click="handleCancel"
+                  :disabled="processing"
+                  aria-label="Cancel"
+                >
+                  Cancel
+                </AppButton>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </div>
+    </Dialog>
+  </TransitionRoot>
+</template>
 
 <style scoped>
 .transition-all {
