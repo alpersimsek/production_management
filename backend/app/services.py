@@ -1256,6 +1256,7 @@ class MaskingMapService(BaseService[MaskingMap]):
     ) -> list[MaskingMap]:
         """Search for masking maps based on query and filters."""
         db_query = self.session.query(MaskingMap)
+        
         if query:
             search_term = f"%{query}%"
             db_query = db_query.filter(
@@ -1264,15 +1265,18 @@ class MaskingMapService(BaseService[MaskingMap]):
                     MaskingMap.masked_value.ilike(search_term),
                 )
             )
+            
         if categories and len(categories) > 0:
             enum_categories = []
             for cat in categories:
                 try:
-                    enum_categories.append(RuleCategory(cat))
+                    enum_cat = RuleCategory(cat)
+                    enum_categories.append(enum_cat)
                 except ValueError:
                     continue
             if enum_categories:
                 db_query = db_query.filter(MaskingMap.category.in_(enum_categories))
+                
         if sort:
             parts = sort.split(":")
             if len(parts) == 2:
@@ -1285,6 +1289,7 @@ class MaskingMapService(BaseService[MaskingMap]):
                         db_query = db_query.order_by(sort_column.asc())
             else:
                 db_query = db_query.order_by(MaskingMap.created_at.desc())
+                
         db_query = db_query.limit(limit).offset(offset)
         return db_query.all()
 

@@ -84,9 +84,6 @@ const loadData = async (resetPagination = true) => {
     const results = await ApiService.searchMaskingMaps(params)
     
     console.log('API results:', results.length, 'items')
-    if (selectedCategory.value) {
-      console.log('Filtered by category:', selectedCategory.value)
-    }
 
     if (resetPagination) {
       searchResults.value = results
@@ -164,10 +161,9 @@ watch(searchQuery, () => {
 })
 
 // Watch for filter or sort changes
-watch([selectedCategory], (newValues) => {
-  console.log('Category changed to:', newValues[0])
+watch(selectedCategory, () => {
   loadData(true)
-}, { deep: true })
+})
 
 // Load categories on component mount
 const loadCategories = async () => {

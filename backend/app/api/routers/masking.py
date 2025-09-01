@@ -39,7 +39,7 @@ class MaskingMapRouter(APIRouter):
         self,
         req: Request,
         query: Optional[str] = None,
-        categories: Optional[List[str]] = Query(None),
+        categories: Optional[str] = Query(None, description="Comma-separated list of categories to filter by"),
         limit: Optional[int] = 100,
         offset: Optional[int] = 0,
         sort: Optional[str] = "created_at:desc",
@@ -58,10 +58,15 @@ class MaskingMapRouter(APIRouter):
                 if len(parts) != 2 or parts[1].lower() not in ["asc", "desc"]:
                     sort = "created_at:desc"  # Default to created_at desc if invalid
 
+            # Parse categories from comma-separated string
+            categories_list = None
+            if categories:
+                categories_list = [cat.strip() for cat in categories.split(',') if cat.strip()]
+
             # Execute search
             results = service.search_masks(
                 query=query,
-                categories=categories,
+                categories=categories_list,
                 limit=limit,
                 offset=offset,
                 sort=sort,

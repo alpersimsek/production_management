@@ -229,8 +229,9 @@ class ApiService {
   static async searchMaskingMaps(params) {
     try {
       const validatedParams = { ...params }
-      if (validatedParams.categories && !Array.isArray(validatedParams.categories)) {
-        validatedParams.categories = [validatedParams.categories]
+      // Convert categories array to comma-separated string for backend
+      if (validatedParams.categories && Array.isArray(validatedParams.categories)) {
+        validatedParams.categories = validatedParams.categories.join(',')
       }
       const response = await axios.get(endpoints.maskingMaps.search, { params: validatedParams })
       return Array.isArray(response.data) ? response.data : []
@@ -242,8 +243,9 @@ class ApiService {
   static async exportMaskingMaps(params) {
     try {
       const validatedParams = { ...params }
-      if (validatedParams.categories && !Array.isArray(validatedParams.categories)) {
-        validatedParams.categories = [validatedParams.categories]
+      // Convert categories array to comma-separated string for backend
+      if (validatedParams.categories && Array.isArray(validatedParams.categories)) {
+        validatedParams.categories = validatedParams.categories.join(',')
       }
       const response = await axios.get(endpoints.maskingMaps.export, {
         params: validatedParams,
