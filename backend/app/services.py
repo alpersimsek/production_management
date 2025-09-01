@@ -446,10 +446,8 @@ class FileService(BaseService[File]):
     def add_file(self, finfo: FileInfo, archive_id: str | None = None) -> File:
         if finfo.ftype in self.storage.FILE_TYPES:
             content_type = ContentType(finfo.ftype)
-            preset = self.get_preset(finfo.fid, finfo.ftype)
         elif finfo.ftype in self.storage.ARCHIVE_TYPES:
             content_type = ContentType.ARCHIVE
-            preset = None
         else:
             self.storage.delete(finfo.fid)
             raise ValueError(f"Unsupported file type: {finfo.ftype}")
@@ -460,8 +458,8 @@ class FileService(BaseService[File]):
             file_size=finfo.fsize,
             content_type=content_type,
             user=self.user,
-            preset=preset,
-            product=preset.product if preset else None,
+            preset=None,  # No preset assignment during upload
+            product=None,  # No product assignment during upload
             archive_id=archive_id,
         )
         self.create(file_obj)
@@ -627,6 +625,123 @@ class FileService(BaseService[File]):
 
             try:
                 task_configs = self.make_task_config(files)
+                for task_config in task_configs:
+                    self.preprocess_file(**task_config)
+            except Exception as e:
+                file.status = FileStatus.ERROR
+                self.session.commit()
+                logger.error({
+                    "event": "preprocess_failed",
+                    "file_id": file_id,
+                    "filename": file.filename,
+                    "error": str(e),
+                })
+                raise ValueError(f"Failed to preprocess files: {str(e)}")
+
+            if is_archive and files:
+                try:
+                    self.storage.repack(file)
+                    file.status = FileStatus.DONE
+                    file.completed_size = file.file_size
+                    file.time_remaining = 0
+                    self.session.commit()
+                    for child in file.archive_files:
+                        self.delete_file(child.id)
+                    logger.info({
+                        "event": "archive_repacked",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                    })
+                except Exception as e:
+                    file.status = FileStatus.ERROR
+                    self.session.commit()
+                    logger.error({
+                        "event": "repack_failed",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                        "error": str(e),
+                    })
+                    raise ValueError(f"Failed to repack archive: {str(e)}")
+
+            return file
+
+        except ValueError as e:
+            raise
+        except Exception as e:
+            file.status = FileStatus.ERROR
+            self.session.commit()
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "filename": file.filename,
+                "error": str(e),
+            })
+            raise ValueError(f"Processing failed: {str(e)}")
+
+    def process_file_with_product(self, file_id: str, product_id: int):
+        """Process a file using product-specific presets and rules."""
+        file = self.get_by_id(file_id)
+        if not file:
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "error": "File not found",
+            })
+            raise ValueError("File not found")
+
+        if file.status is not FileStatus.CREATED:
+            logger.error({
+                "event": "process_failed",
+                "file_id": file_id,
+                "error": "File processing is already started",
+            })
+            raise ValueError("File processing is already started")
+
+        logger.info({
+            "event": "product_process_started",
+            "file_id": file_id,
+            "filename": file.filename,
+            "content_type": file.content_type.value,
+            "product_id": product_id,
+        })
+
+        is_archive = file.content_type == ContentType.ARCHIVE
+        files = []
+
+        try:
+            if is_archive:
+                files = self.unpack_file(file)
+                if files:
+                    file.extracted_size = sum(f.file_size for f in files)
+                    file.status = FileStatus.IN_PROGRESS
+                    file.completed_size = 0
+                    file.time_remaining = 0
+                    self.session.commit()
+                    logger.debug({
+                        "event": "archive_unpacked",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                        "extracted_size": file.extracted_size,
+                        "file_count": len(files),
+                    })
+                else:
+                    logger.info({
+                        "event": "archive_empty",
+                        "file_id": file_id,
+                        "filename": file.filename,
+                        "message": "No files extracted, proceeding with empty archive",
+                    })
+                    file.status = FileStatus.DONE
+                    file.completed_size = file.file_size
+                    file.time_remaining = 0
+                    self.session.commit()
+                    return file
+            else:
+                files = [file]
+
+            try:
+                # Use product-specific preset selection and rules
+                task_configs = self.make_product_task_config(files, product_id)
                 for task_config in task_configs:
                     self.preprocess_file(**task_config)
             except Exception as e:
@@ -948,6 +1063,176 @@ class FileService(BaseService[File]):
         tasks_configs.append({"files": group_files, "rules_configs": group_rules})
 
         return tasks_configs
+
+    def make_product_task_config(self, file_objs: list[File], product_id: int):
+        """Make task config using product-specific presets and rules with header matching."""
+        try:
+            # Get all presets for the specified product
+            product_presets = self.session.query(Preset).filter(Preset.product_id == product_id).all()
+            
+            if not product_presets:
+                logger.warning({
+                    "event": "no_product_presets",
+                    "product_id": product_id,
+                    "message": "No presets found for product, using default processing"
+                })
+                # Fall back to default processing if no product presets
+                return self.make_task_config(file_objs)
+            
+            logger.info({
+                "event": "product_presets_loaded",
+                "product_id": product_id,
+                "preset_count": len(product_presets),
+                "preset_names": [p.name for p in product_presets]
+            })
+            
+            # For each file, try to match headers with product presets
+            file_preset_map = {}
+            for file_obj in file_objs:
+                matched_preset = self.match_file_with_product_presets(file_obj, product_presets)
+                if matched_preset:
+                    file_preset_map[file_obj.id] = matched_preset
+                    logger.info({
+                        "event": "preset_matched_for_file",
+                        "file_id": file_obj.id,
+                        "filename": file_obj.filename,
+                        "preset_id": matched_preset.id,
+                        "preset_name": matched_preset.name,
+                        "product_id": product_id
+                    })
+                else:
+                    # If no header match, use the first preset (or could be random selection)
+                    file_preset_map[file_obj.id] = product_presets[0]
+                    logger.info({
+                        "event": "default_preset_assigned",
+                        "file_id": file_obj.id,
+                        "filename": file_obj.filename,
+                        "preset_id": product_presets[0].id,
+                        "preset_name": product_presets[0].name,
+                        "product_id": product_id
+                    })
+            
+            # Create task configurations - use same structure as make_task_config
+            files = {}
+            presets_cfgs = {}
+            for file_obj in file_objs:
+                preset = file_preset_map[file_obj.id]
+                preset_id = str(preset.id)
+                if preset_id not in presets_cfgs:
+                    preset_rules = [self.get_rule_config(pr) for pr in preset.rules]
+                    presets_cfgs[preset_id] = preset_rules
+                files[file_obj.id] = {"preset_id": preset_id, "size": file_obj.file_size}
+
+            preset_files_map = collections.defaultdict(list)
+            files_items = sorted(files.items(), key=lambda x: -x[1]["size"])
+            for file_id, file_info in files_items:
+                preset_files_map[file_info["preset_id"]].append(file_id)
+
+            tasks_configs = []
+            group_files = {}
+            group_rules = {}
+            for preset_id, file_ids in preset_files_map.items():
+                group_rules[preset_id] = presets_cfgs[preset_id]
+                for file_id in file_ids:
+                    group_files[file_id] = preset_id
+            tasks_configs.append({"files": group_files, "rules_configs": group_rules})
+            
+            logger.info({
+                "event": "product_task_config_created",
+                "product_id": product_id,
+                "file_count": len(file_objs),
+                "task_config_count": len(tasks_configs)
+            })
+            
+            return tasks_configs
+            
+        except Exception as e:
+            logger.error({
+                "event": "product_task_config_failed",
+                "product_id": product_id,
+                "error": str(e)
+            })
+            # Fall back to default processing on error
+            return self.make_task_config(file_objs)
+
+    def match_file_with_product_presets(self, file_obj: File, product_presets: list[Preset]) -> Optional[Preset]:
+        """Match a file with product presets using header matching."""
+        try:
+            if file_obj.content_type == ContentType.TEXT:
+                # Read file header for text files
+                src = self.storage.get(file_obj.id)
+                encoding_res = from_path(src).best()
+                if not encoding_res:
+                    logger.error({
+                        "event": "encoding_detection_failed",
+                        "file_id": file_obj.id,
+                        "error": "Cannot detect file encoding",
+                    })
+                    return None
+                encoding = encoding_res.encoding
+
+                with src.open("r", encoding=encoding) as file:
+                    header = file.readline().strip()
+                
+                logger.debug({
+                    "event": "file_header_read",
+                    "file_id": file_obj.id,
+                    "filename": file_obj.filename,
+                    "header": header,
+                })
+
+                # Try to match header with product presets
+                for preset in product_presets:
+                    if preset.header and preset.header in header:
+                        logger.info({
+                            "event": "header_match_found",
+                            "file_id": file_obj.id,
+                            "preset_id": preset.id,
+                            "preset_name": preset.name,
+                            "header": header,
+                            "preset_header": preset.header
+                        })
+                        return preset
+                
+                # No header match found
+                logger.debug({
+                    "event": "no_header_match",
+                    "file_id": file_obj.id,
+                    "filename": file_obj.filename,
+                    "header": header,
+                    "available_headers": [p.header for p in product_presets if p.header]
+                })
+                return None
+
+            elif file_obj.content_type == ContentType.PCAP:
+                # For PCAP files, look for PCAP-specific preset within product
+                for preset in product_presets:
+                    if preset.name.lower() == "pcap":
+                        logger.info({
+                            "event": "pcap_preset_found",
+                            "file_id": file_obj.id,
+                            "preset_id": preset.id,
+                            "preset_name": preset.name
+                        })
+                        return preset
+                return None
+
+            else:
+                # For other file types, return the first preset
+                logger.debug({
+                    "event": "default_preset_for_file_type",
+                    "file_id": file_obj.id,
+                    "content_type": file_obj.content_type.value
+                })
+                return product_presets[0] if product_presets else None
+
+        except Exception as e:
+            logger.error({
+                "event": "preset_matching_failed",
+                "file_id": file_obj.id,
+                "error": str(e)
+            })
+            return None
 
     def delete_file(self, file_id):
         """Delete db object and file from storage."""

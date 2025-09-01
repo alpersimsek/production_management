@@ -8,6 +8,7 @@ import ListView from '../components/ListView.vue'
 import FileUploader from '../components/FileUploader.vue'
 import ProcessingStatus from '../components/ProcessingStatus.vue'
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog.vue'
+import ProductSelectionForm from '../components/ProductSelectionForm.vue'
 import {
   DocumentIcon,
   DocumentCheckIcon,
@@ -21,9 +22,11 @@ const authStore = useAuthStore()
 const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
 const uploadError = ref('')
 const showDeleteModal = ref(false)
-const deleteFileId = ref(null)
+const deleteFileId = ref(false)
 const isLoading = ref(false)
 const showDeleteAllModal = ref(false)
+const showProductModal = ref(false)
+const selectedFileForProcessing = ref(null)
 
 // Pagination state for Processed Files
 const currentPage = ref(1)
@@ -154,13 +157,34 @@ const handleFileUpload = async (files) => {
 
 const handleProcess = async (fileId) => {
   try {
+    const file = filesStore.uploads.find(f => f.id === fileId)
+    if (file) {
+      selectedFileForProcessing.value = file
+      showProductModal.value = true
+    }
+  } catch (error) {
+    console.error('Failed to open product selection:', error)
+    uploadError.value = `Failed to open product selection: ${error.message || 'Unknown error'}`
+  }
+}
+
+const handleProductProcess = async (processOptions) => {
+  try {
     uploadError.value = ''
-    await filesStore.processFile(fileId)
+    // Send product ID to backend for product-based processing
+    await filesStore.processFileWithProduct(selectedFileForProcessing.value.id, processOptions.productId)
     await filesStore.fetchFiles()
+    showProductModal.value = false
+    selectedFileForProcessing.value = null
   } catch (error) {
     console.error('Failed to process file:', error)
     uploadError.value = `Failed to process file: ${error.message || 'Unknown error'}`
   }
+}
+
+const handleProductModalClose = () => {
+  showProductModal.value = false
+  selectedFileForProcessing.value = null
 }
 
 const handleDelete = (fileId) => {
@@ -421,6 +445,14 @@ const handleDownload = async (fileId) => {
       <!-- Delete All Confirmation Dialog -->
       <ConfirmDeleteDialog v-if="showDeleteAllModal" :open="showDeleteAllModal" item-type="all files"
         @close="showDeleteAllModal = false" @confirm="confirmDeleteAll" />
+
+      <!-- Product Selection Modal -->
+      <ProductSelectionForm
+        :is-open="showProductModal"
+        :file="selectedFileForProcessing"
+        @close="handleProductModalClose"
+        @process="handleProductProcess"
+      />
 
       <!-- Footer Branding -->
       <footer class="mt-12 text-center text-sm text-gray-500 px-4 sm:px-16">

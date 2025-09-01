@@ -186,6 +186,18 @@ class ApiService {
     }
   }
 
+  static async processFileWithProduct(fileId, productId) {
+    try {
+      const response = await axios.post(endpoints.files.process(fileId), { productId }, { timeout: 2000 })
+      return response.data
+    } catch (error) {
+      if (error.code === 'ECONNABORTED') {
+        return { status: 'in-progress' }
+      }
+      handleApiError(error)
+    }
+  }
+
   static async deleteFile(fileId) {
     try {
       const response = await axios.delete(endpoints.files.delete(fileId))

@@ -1,11 +1,11 @@
-from fastapi import APIRouter, UploadFile, HTTPException, Request, status
+from fastapi import APIRouter, UploadFile, HTTPException, Request, status, Body
 from fastapi.responses import StreamingResponse, JSONResponse
 import urllib.parse
 from storage import FileStorage
 from services import FileService
 from api.schemas import FileResponse
 import settings
-from typing import Dict
+from typing import Dict, Optional
 from database.models import Role
 
 router = APIRouter()
@@ -185,12 +185,19 @@ class FilesRouter(APIRouter):
             )
 
     # Start file processing
-    def process_file(self, req: Request, file_id: str):
+    def process_file(self, req: Request, file_id: str, process_options: Optional[dict] = Body(None)):
         try:
             user = req.state.user
             session = req.state.db
             file_service = FileService(session, user, self.storage)
-            file = file_service.process_file(file_id)
+            
+            if process_options and process_options.get('productId'):
+                # Product-based processing
+                file = file_service.process_file_with_product(file_id, process_options['productId'])
+            else:
+                # Default processing (fallback)
+                file = file_service.process_file(file_id)
+                
             return {"detail": f"Processing {file.filename} completed"}
         except Exception as ex:
             raise HTTPException(

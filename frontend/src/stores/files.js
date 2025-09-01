@@ -151,6 +151,77 @@ export const useFilesStore = defineStore('files', {
       }
     },
 
+    async processFileWithProduct(fileId, productId) {
+      try {
+        const file = this.uploads.find((f) => f.id === fileId)
+        if (!file) {
+          console.log(`File ${fileId} not found in uploads`)
+          return
+        }
+
+        console.log(`Starting process for file with product:`, file, productId)
+
+        // Initialize processing status
+        this.processingFiles.set(fileId, {
+          completedSize: 0,
+          totalSize: file.extracted_size || file.file_size,
+          timeRemaining: 0,
+        })
+
+        // Start processing in background with product ID
+        ApiService.processFileWithProduct(fileId, productId).catch((error) => {
+          console.error('Process request failed:', error)
+        })
+
+        // Start polling for progress immediately
+        const pollInterval = setInterval(async () => {
+          try {
+            console.log(`Polling for file ${fileId} status...`)
+            const files = await ApiService.getFiles()
+            // console.log('All files:', files)
+
+            const processingFile = files.find((f) => f.id === fileId)
+            // console.log(`Found processing file:`, processingFile)
+
+            if (!processingFile) {
+              console.log(`File ${fileId} not found in poll response`)
+              clearInterval(pollInterval)
+              this.processingFiles.delete(fileId)
+              return
+            }
+
+            // console.log(`File status: ${processingFile.status}`)
+            // console.log(`Completed size: ${processingFile.completed_size}`)
+            // console.log(`Time remaining: ${processingFile.time_remaining}`)
+
+            if (processingFile.status === 'in-progress') {
+              const progress = {
+                completedSize: processingFile.completed_size || 0,
+                totalSize: processingFile.extracted_size || processingFile.file_size,
+                timeRemaining: processingFile.time_remaining || 0,
+              }
+              console.log(`Setting progress for ${fileId}:`, progress)
+              this.processingFiles.set(fileId, progress)
+            } else if (processingFile.status === 'done') {
+              console.log(`Processing complete for ${fileId}`)
+              clearInterval(pollInterval)
+              this.processingFiles.delete(fileId)
+              await this.fetchFiles()
+              return
+            }
+          } catch (error) {
+            console.error('Failed to get processing status:', error)
+            clearInterval(pollInterval)
+            this.processingFiles.delete(fileId)
+          }
+        }, 1000) // Poll every 1000ms for smoother updates
+      } catch (error) {
+        console.error('Failed to process file with product:', error)
+        this.processingFiles.delete(fileId)
+        throw error
+      }
+    },
+
     async deleteFile(fileId) {
       try {
         await ApiService.deleteFile(fileId)
