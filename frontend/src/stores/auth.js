@@ -46,5 +46,30 @@ export const useAuthStore = defineStore('auth', {
       sessionStorage.removeItem('user')
       this.setAuth()
     },
+
+    // Enhanced logout for token expiration
+    forceLogout() {
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('user')
+      this.token = null
+      this.user = null
+      this.isAuthenticated = false
+      delete axios.defaults.headers.common['Authorization']
+    },
+
+    // Check if token is expired (if we have JWT decode capability)
+    isTokenExpired() {
+      if (!this.token) return true
+      
+      try {
+        // Basic JWT expiration check (payload.exp)
+        const payload = JSON.parse(atob(this.token.split('.')[1]))
+        const currentTime = Math.floor(Date.now() / 1000)
+        return payload.exp < currentTime
+      } catch (error) {
+        // If we can't decode, assume it's expired
+        return true
+      }
+    },
   },
 })

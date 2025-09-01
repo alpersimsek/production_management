@@ -52,9 +52,20 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
   const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
 
-  if (requiresAuth && !authStore.isAuthenticated) {
-    next('/login')
-    return
+  // Check if user is authenticated and token is not expired
+  if (requiresAuth) {
+    if (!authStore.isAuthenticated) {
+      next('/login')
+      return
+    }
+    
+    // Additional check for token expiration
+    if (authStore.isTokenExpired()) {
+      console.log('Token expired during navigation, logging out user')
+      authStore.forceLogout()
+      next('/login')
+      return
+    }
   }
 
   if (requiresAdmin && (!authStore.user || authStore.user.role !== 'admin')) {
@@ -62,7 +73,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  if (to.path === '/login' && authStore.isAuthenticated) {
+  if (to.path === '/login' && authStore.isAuthenticated && !authStore.isTokenExpired()) {
     next('/')
     return
   }
