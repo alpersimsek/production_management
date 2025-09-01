@@ -1,3 +1,42 @@
+"""
+GDPR Tool Rules Router - Rule Management API Endpoints
+
+This module provides REST API endpoints for managing data masking rules in the GDPR compliance tool.
+It handles rule creation, configuration, and management with comprehensive validation and admin controls.
+
+Key Endpoints:
+- GET /rules: Retrieve all rules with pagination, sorting, and filtering
+- GET /rules/{rule_id}: Get specific rule details
+- POST /rules: Create new rules with configuration validation
+- PUT /rules/{rule_id}: Update rule configuration
+- DELETE /rules/{rule_id}: Delete rules (with usage validation)
+
+Rule Features:
+- Rule Types: Support for regex, IP address, and MAC address matchers
+- Category Management: Organize rules by data categories (IP, email, phone, etc.)
+- Configuration Validation: Comprehensive validation of rule configurations
+- Usage Tracking: Prevent deletion of rules in use by presets
+- Pagination: Efficient handling of large rule sets
+
+Rule Categories:
+- ipv4_addr: IPv4 address patterns
+- username: User name and identifier patterns
+- phone_num: Phone number patterns
+- domain: Domain name and URL patterns
+- email: Email address patterns
+- mac_addr: MAC address patterns
+- And other GDPR-relevant data types
+
+Security Features:
+- Admin Access Control: All modification operations require admin privileges
+- Input Validation: Comprehensive validation of rule data and configurations
+- Usage Validation: Prevent deletion of rules with active associations
+- Error Handling: Detailed error responses with proper HTTP status codes
+
+The router integrates with RuleService for business logic and provides
+a comprehensive rule management system for GDPR data masking workflows.
+"""
+
 from fastapi import APIRouter, HTTPException, Request, status, Query
 from fastapi.responses import JSONResponse
 from api.schemas import RuleResponse, RuleCreate, RuleUpdate

@@ -1,3 +1,48 @@
+"""
+GDPR Tool Processors - Data Processing and Masking
+
+This module provides data processing capabilities for GDPR compliance, handling
+both text and binary data formats with comprehensive masking and pattern detection.
+
+Key Components:
+- BaseProcessor: Abstract base class for all processor implementations
+- TextProcessor: Text file processing with line-by-line masking
+- PcapProcessor: Network packet capture file processing with layer-specific masking
+
+Processor Features:
+- Multi-Format Support: Handles text files and PCAP network capture files
+- Pattern Detection: Uses matchers to identify sensitive data patterns
+- Overlap Handling: Intelligent handling of overlapping matches
+- Chunk Processing: Efficient processing of large files in chunks
+- Error Recovery: Graceful handling of processing errors
+- Progress Tracking: Detailed logging of processing progress
+
+TextProcessor Features:
+- Line-by-Line Processing: Processes text files line by line for efficiency
+- Chunk-Based Processing: Handles large files in manageable chunks
+- Pattern Matching: Applies all configured matchers to each line
+- Overlap Resolution: Resolves overlapping matches intelligently
+- Streaming Output: Yields processed data as it's generated
+
+PcapProcessor Features:
+- Network Packet Processing: Processes PCAP files using Scapy library
+- Layer-Specific Masking: Masks data at different network layers
+- MAC Address Masking: Masks Ethernet layer MAC addresses
+- IP Address Masking: Masks IP layer source and destination addresses
+- Payload Masking: Masks application layer payload data
+- Checksum Recalculation: Recalculates network checksums after modification
+- Error Handling: Skips malformed packets while continuing processing
+
+Network Layer Support:
+- Ethernet Layer: MAC address masking with proper formatting
+- IP Layer: IPv4 address masking with checksum recalculation
+- Transport Layer: TCP/UDP checksum recalculation
+- Application Layer: Payload text masking with pattern detection
+
+The processors provide the core data processing capabilities for the GDPR tool,
+enabling comprehensive masking of sensitive data across different file formats.
+"""
+
 import abc
 import itertools
 import os

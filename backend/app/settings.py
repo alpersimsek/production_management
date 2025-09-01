@@ -1,3 +1,38 @@
+"""
+GDPR Tool Settings - Application Configuration
+
+This module contains all application configuration settings for the GDPR compliance tool.
+It manages environment variables, database connections, security settings, and processing limits.
+
+Key Configuration Areas:
+- Database Settings: PostgreSQL connection parameters and URL construction
+- Security Settings: JWT secret keys, algorithms, and token expiration times
+- File Processing: Storage limits, processing steps, and user quotas
+- API Configuration: API prefix and endpoint settings
+- Exception Patterns: Regex patterns for excluding certain values from masking
+- Admin Settings: Default admin user credentials
+
+Environment Variables:
+- DATA_DIR: Directory for file storage (default: ~/data)
+- DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME: Database connection parameters
+- SECRET_KEY: JWT signing secret (default: development key)
+- ADMIN_USERNAME, ADMIN_PASSWORD: Admin user credentials
+- API_PREFIX: API route prefix (default: /api/v1)
+
+Processing Limits:
+- MAX_USER_FILES: Maximum files per user (200)
+- USER_STORAGE_LIMIT: Maximum storage per user (10GB)
+- REPORT_STEP: Progress reporting interval (100KB)
+- TOKEN_EXPIRE_MINUTES: JWT token expiration (12 hours)
+- SIGNED_URL_EXPIRY_MINUTES: Download URL expiration (5 minutes)
+
+Security Features:
+- JWT token-based authentication with configurable expiration
+- Signed URL system for secure file downloads
+- Exception patterns to prevent masking of system values
+- Environment-based configuration for production security
+"""
+
 import os
 import pathlib
 import secrets

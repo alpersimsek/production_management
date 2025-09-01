@@ -1,3 +1,48 @@
+"""
+GDPR Tool Matchers - Data Pattern Matching and Detection
+
+This module provides comprehensive pattern matching capabilities for GDPR data detection
+and masking. It implements various matcher types for different data categories with
+advanced regex handling and exception pattern support.
+
+Key Components:
+- BaseMatcher: Abstract base class for all matcher implementations
+- Match: Data class representing a matched pattern with position and patcher
+- RegexpMatcher: Enhanced regex matcher with group handling and validation
+- IPAddrMatcher: Specialized matcher for IPv4 addresses
+- MacAddrMatcher: Specialized matcher for MAC addresses
+
+Matcher Features:
+- Pattern Matching: Advanced regex pattern matching with group support
+- Exception Handling: Skip patterns that match exception rules
+- Group Selection: Intelligent selection of the best capturing group
+- Validation: Comprehensive match validation and filtering
+- Debugging: Built-in debugging tools for pattern testing
+- Logging: Detailed logging for match processing and validation
+
+RegexpMatcher Features:
+- Group Handling: Smart selection of capturing groups vs full matches
+- Exception Patterns: Skip matches that match category-specific exceptions
+- Validation: Length, content, and exception pattern validation
+- Debug Mode: Test patterns with sample strings and analyze results
+- Overlap Handling: Proper handling of overlapping matches
+- Error Recovery: Graceful handling of malformed patterns
+
+Specialized Matchers:
+- IPAddrMatcher: IPv4 address detection with proper validation
+- MacAddrMatcher: MAC address detection in various formats
+- Extensible: Easy to add new specialized matchers
+
+Exception Pattern Support:
+- Category-based exceptions: Different exception patterns per data category
+- Pattern matching: Regex-based exception pattern matching
+- Logging: Detailed logging of exception matches
+- Configuration: Exception patterns defined in settings
+
+The matchers provide the core pattern detection capabilities for the GDPR tool,
+enabling accurate identification of sensitive data for masking operations.
+"""
+
 import dataclasses
 import re
 import itertools

@@ -1,3 +1,46 @@
+"""
+GDPR Tool Masking Router - Data Masking Management API Endpoints
+
+This module provides REST API endpoints for managing data masking maps in the GDPR compliance tool.
+It handles searching, filtering, and exporting of masked data with comprehensive query capabilities.
+
+Key Endpoints:
+- GET /masking/categories: Retrieve all available masking categories
+- GET /masking/search: Search and filter masking maps with pagination
+- GET /masking/export: Export masking maps to CSV format
+
+Search and Filter Features:
+- Text Search: Search across original and masked values
+- Category Filtering: Filter by specific data categories (IP, email, phone, etc.)
+- Pagination: Limit and offset support for large datasets
+- Sorting: Configurable sorting by creation date (asc/desc)
+- Query Parameters: Flexible query parameter handling
+
+Export Features:
+- CSV Export: Export masking maps to CSV format for analysis
+- Bulk Export: Export large datasets without pagination limits
+- Filtered Export: Apply same filters as search for targeted exports
+- Download Headers: Proper CSV download headers with filename
+
+Data Categories:
+- ipv4_addr: IPv4 addresses
+- username: User names and identifiers
+- phone_num: Phone numbers
+- domain: Domain names and URLs
+- email: Email addresses
+- mac_addr: MAC addresses
+- And other GDPR-relevant data types
+
+Security Features:
+- JWT Authentication: All endpoints require valid authentication
+- User Context: User-specific data access and filtering
+- Input Validation: Comprehensive parameter validation
+- Error Handling: Detailed error responses with proper HTTP status codes
+
+The router integrates with MaskingMapService for business logic and provides
+a comprehensive API for managing and analyzing masked data in GDPR compliance workflows.
+"""
+
 from fastapi import APIRouter, Query, Response, Request, HTTPException, status
 from typing import List, Optional
 from services import MaskingMapService

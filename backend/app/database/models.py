@@ -1,3 +1,75 @@
+"""
+GDPR Tool Database Models - Data Models and Schema Definition
+
+This module defines the complete database schema for the GDPR compliance tool using SQLAlchemy.
+It includes all data models, relationships, and enums for the application.
+
+Key Components:
+- Base Classes: DeclarativeBase for SQLAlchemy model inheritance
+- Enums: ContentType, MimeType, Role, FileStatus, RuleCategory
+- Models: User, File, Product, Preset, Rule, PresetRule, MaskingMap
+
+Data Models:
+- User: User authentication and authorization with role-based access
+- File: File metadata, processing status, and archive relationships
+- Product: Product definitions for product-based processing
+- Preset: Preset configurations with header patterns and product associations
+- Rule: Individual data masking rules with category and configuration
+- PresetRule: Junction table linking presets to rules with actions
+- MaskingMap: Storage for original and masked value mappings
+
+Model Features:
+- Relationships: Comprehensive foreign key relationships and cascading
+- Enums: Type-safe enumeration values for consistent data
+- Indexing: Proper database indexing for performance
+- Constraints: Primary keys, foreign keys, and unique constraints
+- Timestamps: Automatic timestamp management for audit trails
+- JSON Fields: Flexible JSON storage for configuration data
+
+User Model:
+- UUID primary key for security
+- Username uniqueness and role-based access
+- Password storage with proper security
+- File relationship with cascade deletion
+
+File Model:
+- String ID for file identification
+- Processing status tracking with progress information
+- Archive support with parent-child relationships
+- Product and preset associations for processing
+- Content type and MIME type support
+
+Product Model:
+- Simple product definition with unique names
+- Preset relationships for product-based processing
+- Auto-incrementing primary key
+
+Preset Model:
+- Product association for product-based processing
+- Header patterns for automatic preset selection
+- Rule relationships through PresetRule junction table
+- File relationships for processing tracking
+
+Rule Model:
+- Category-based rule organization
+- JSON configuration for flexible rule definitions
+- Preset relationships through PresetRule junction table
+
+PresetRule Model:
+- Junction table with composite primary key
+- Action configuration for rule-specific behavior
+- Many-to-many relationship between presets and rules
+
+MaskingMap Model:
+- Original and masked value storage
+- Category-based organization
+- Unique constraints for consistency
+- Timestamp tracking for audit trails
+
+The models provide a comprehensive foundation for the GDPR compliance tool's
+data persistence and relationship management.
+"""
+
 from sqlalchemy.orm import DeclarativeBase, Relationship, Mapped, mapped_column
 from sqlalchemy import (
     String,

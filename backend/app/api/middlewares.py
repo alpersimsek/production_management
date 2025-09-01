@@ -1,3 +1,44 @@
+"""
+GDPR Tool API Middlewares - Request Processing and Authentication
+
+This module contains middleware components that handle request processing, authentication,
+and authorization for the GDPR compliance tool API.
+
+Key Components:
+- DBSessionMiddleware: Manages database session lifecycle per request
+- AuthMiddleware: Handles JWT token authentication and user validation
+- RBACMiddleware: Role-based access control for route protection
+
+DBSessionMiddleware Features:
+- Automatic database session creation and cleanup per request
+- Transaction management with automatic commit/rollback
+- Read-only operation detection (GET, OPTIONS, HEAD)
+- Exception handling with proper session cleanup
+
+AuthMiddleware Features:
+- JWT token validation and user authentication
+- Excluded routes for public access (login, docs, openapi)
+- Token-based file download access
+- User context injection into request state
+- Comprehensive error handling for authentication failures
+
+RBACMiddleware Features:
+- Role-based access control for protected routes
+- Configurable allowed roles per route
+- User role validation against required permissions
+- Flexible role checking with multiple role support
+
+Security Features:
+- Bearer token authentication
+- JWT token validation with secret key verification
+- User existence verification
+- Role-based authorization
+- Secure file download with token validation
+
+The middleware stack ensures secure, authenticated access to the GDPR tool API
+while providing proper database session management and role-based authorization.
+"""
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from fastapi import HTTPException, status, Depends

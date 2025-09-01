@@ -1,3 +1,39 @@
+"""
+GDPR Tool Database Migrations - Alembic Environment Configuration
+
+This module provides the Alembic environment configuration for database migrations
+in the GDPR compliance tool. It handles both online and offline migration modes
+with proper database connection and metadata management.
+
+Key Components:
+- Alembic Configuration: Database URL and metadata configuration
+- Migration Modes: Online and offline migration support
+- Database Connection: SQLAlchemy engine configuration for migrations
+- Metadata Management: Base model metadata for autogenerate support
+
+Migration Features:
+- Online Migrations: Live database migrations with active connections
+- Offline Migrations: Offline migrations for script generation
+- Autogenerate Support: Automatic migration generation from model changes
+- Database URL Configuration: Dynamic database URL from settings
+- Logging Configuration: Proper logging setup for migration operations
+- Connection Pooling: Null pool configuration for migration operations
+
+Configuration:
+- Database URL: Automatically configured from settings.DATABASE_URL
+- Metadata: Uses Base.metadata from database models
+- Logging: Configures logging from alembic.ini file
+- Connection: SQLAlchemy engine configuration for migrations
+
+Migration Modes:
+- Online Mode: Creates database engine and runs migrations with live connection
+- Offline Mode: Generates migration scripts without database connection
+- Context Management: Proper transaction and connection management
+
+The module ensures proper database migration execution and provides a robust
+foundation for schema evolution in the GDPR compliance tool.
+"""
+
 from logging.config import fileConfig
 from database.models import Base
 from sqlalchemy import engine_from_config

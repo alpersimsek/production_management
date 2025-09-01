@@ -1,3 +1,44 @@
+"""
+GDPR Tool Patchers - Data Masking and Replacement
+
+This module provides data patching and masking capabilities for GDPR compliance.
+It implements various patcher types for replacing sensitive data with consistent
+masked values while preserving data structure and relationships.
+
+Key Components:
+- BasePatcher: Abstract base class for all patcher implementations
+- ReplacePatcher: Main patcher for consistent data replacement and masking
+
+Patcher Features:
+- Consistent Masking: Same original values always get the same masked values
+- Category-Specific Generation: Different masking strategies for different data types
+- Database Storage: Masked values are stored for consistency across processing
+- IP Address Handling: Special handling for IP addresses with private network ranges
+- MAC Address Handling: Consistent MAC address masking with proper formatting
+- Username Generation: Systematic username generation with counters
+- Domain Generation: Consistent domain name masking
+- Phone Number Handling: Phone number masking with proper formatting
+
+ReplacePatcher Features:
+- Masking Map Integration: Uses MaskingMapService for consistent value storage
+- Category-Based Generation: Different generation strategies per data category
+- IP Range Selection: Uses private IP ranges for IP address masking
+- Counter-Based Generation: Sequential generation for consistent numbering
+- Fallback Generation: Random alphanumeric generation for unknown types
+- Database Persistence: Stores masked values for future consistency
+
+Supported Data Categories:
+- IPV4_ADDR: IPv4 addresses with private network masking
+- MAC_ADDR: MAC addresses with consistent formatting
+- USERNAME: Usernames with systematic generation
+- DOMAIN: Domain names with consistent structure
+- PHONE_NUM: Phone numbers with proper formatting
+- Generic: Random alphanumeric strings for unknown types
+
+The patchers ensure that sensitive data is consistently masked while maintaining
+data structure and relationships for GDPR compliance workflows.
+"""
+
 import string
 import random
 import ipaddress

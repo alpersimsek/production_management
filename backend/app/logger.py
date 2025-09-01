@@ -1,3 +1,50 @@
+"""
+GDPR Tool Logger - Structured Logging System
+
+This module provides a comprehensive structured logging system for the GDPR compliance tool.
+It implements JSON-formatted logging with colorized console output and automatic log rotation.
+
+Key Features:
+- Structured Logging: All log entries are formatted as JSON for easy parsing and analysis
+- Colorized Console Output: Different log levels are displayed in different colors for better readability
+- Log Rotation: Automatic rotation of log files when they reach 3MB with up to 10 backup files
+- Log Cleanup: Automatic deletion of log files older than 30 days to manage disk space
+- Context Support: Additional context information can be attached to log entries
+- Dual Output: Logs are written to both console (with colors) and file (plain JSON)
+
+Log Levels:
+- DEBUG: Detailed information for debugging (Blue)
+- INFO: General information about program execution (Green)
+- WARNING: Warning messages for potential issues (Yellow)
+- ERROR: Error messages for recoverable errors (Red)
+- CRITICAL: Critical errors that may cause program termination (Magenta)
+
+Log Structure:
+Each log entry contains:
+- timestamp: ISO format timestamp
+- level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- message: The log message
+- module: Python module name where the log was generated
+- funcName: Function name where the log was generated
+- line: Line number where the log was generated
+- context: Additional context data (if provided)
+
+Usage:
+```python
+from logger import logger
+
+# Basic logging
+logger.info("Processing started")
+logger.error("Processing failed", extra={"context": {"file_id": "123"}})
+
+# With context
+logger.debug("File processed", extra={"context": {"file_id": "123", "size": 1024}})
+```
+
+The logger is configured to write to both console and file, with automatic rotation
+and cleanup to ensure efficient log management in production environments.
+"""
+
 import logging
 import json
 from datetime import datetime, timedelta

@@ -1,3 +1,44 @@
+"""
+GDPR Tool Presets Router - Preset and Rule Management API Endpoints
+
+This module provides REST API endpoints for managing presets and preset-rule associations in the GDPR compliance tool.
+It handles preset creation, rule assignment, and configuration management with comprehensive admin controls.
+
+Key Endpoints:
+- GET /presets: Retrieve all presets
+- GET /presets/{preset_id}: Get specific preset details
+- POST /presets: Create new presets with product association
+- PUT /presets/{preset_id}: Update preset configuration
+- DELETE /presets/{preset_id}: Delete presets (with usage validation)
+
+Preset Rule Management:
+- GET /presets/{preset_id}/rules: Get all rules for a preset
+- POST /preset-rules: Associate rules with presets
+- PUT /preset-rules/{preset_id}/{rule_id}: Update rule actions
+- DELETE /preset-rules/{preset_id}/{rule_id}: Remove rule associations
+
+Debug and Maintenance:
+- GET /presets/debug/state: Check database state and sequence information
+- GET /presets/debug/all-tables: Check all auto-increment table states
+- POST /presets/debug/fix-sequence: Manually fix PostgreSQL sequences
+
+Preset Features:
+- Product Association: Link presets to specific products
+- Header Matching: Configure file header patterns for automatic preset selection
+- Rule Assignment: Associate multiple rules with presets
+- Action Configuration: Define specific actions for each rule in a preset
+- Usage Validation: Prevent deletion of presets in use
+
+Security Features:
+- Admin Access Control: All modification operations require admin privileges
+- Input Validation: Comprehensive validation of preset and rule data
+- Referential Integrity: Validation of product and rule existence
+- Cascade Protection: Prevent deletion of presets with active associations
+
+The router integrates with PresetService, RuleService, and PresetRuleService for business logic
+and provides a comprehensive preset management system for GDPR data processing workflows.
+"""
+
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session

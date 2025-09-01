@@ -1,3 +1,43 @@
+"""
+GDPR Tool Files Router - File Management API Endpoints
+
+This module provides REST API endpoints for file management operations in the GDPR compliance tool.
+It handles file upload, processing, download, and deletion with comprehensive security features.
+
+Key Endpoints:
+- GET /files/: Retrieve user's uploaded files
+- POST /files/upload: Upload new files with storage limit validation
+- POST /files/process/{file_id}: Process files with product-based or default processing
+- DELETE /files/delete/{file_id}: Delete specific files
+- DELETE /files/all_delete: Admin endpoint to delete all files
+- GET /files/download/{file_id}: Download files with token-based authentication
+- GET /files/get_download_url/{file_id}: Generate signed download URLs
+
+File Processing Features:
+- Product-Based Processing: New system for product-specific preset selection and rule application
+- Default Processing: Fallback to traditional preset-based processing
+- Archive Support: Handles ZIP, TAR, and other archive formats with recursive extraction
+- Progress Tracking: Real-time processing status and progress updates
+- Error Handling: Comprehensive error handling with detailed error messages
+
+Security Features:
+- JWT Token Authentication: All endpoints require valid authentication tokens
+- Signed URLs: Secure file download with time-limited JWT tokens
+- Admin Access Control: Admin-only endpoints for system management
+- Storage Limits: User storage quota enforcement
+- File Validation: File type and size validation
+
+File Operations:
+- Upload: Multi-format file upload with type detection
+- Processing: Intelligent preset selection based on product and file headers
+- Download: Secure file download with token validation
+- Deletion: Safe file removal with proper cleanup
+- Management: User file listing and admin bulk operations
+
+The router integrates with the FileService for business logic and FileStorage for
+file operations, providing a secure and efficient file management system.
+"""
+
 from fastapi import APIRouter, UploadFile, HTTPException, Request, status, Body
 from fastapi.responses import StreamingResponse, JSONResponse
 import urllib.parse

@@ -1,3 +1,30 @@
+"""
+GDPR Tool FastAPI Application - Main Entry Point
+
+This module serves as the main entry point for the GDPR compliance tool API.
+It initializes the FastAPI application with all necessary middleware, routers, and configurations.
+
+Key Components:
+- FastAPI Application Setup: Creates the main FastAPI app with CORS, authentication, and database middleware
+- Middleware Configuration: Sets up database sessions, authentication, CORS, and large file handling
+- Router Registration: Registers all API routers (users, files, masking, presets, products, rules)
+- Application Lifecycle: Manages application startup/shutdown with database initialization
+- Large File Support: Handles file uploads up to 8GB with custom middleware
+
+Main Functions:
+- lifespan(): Manages application lifecycle, initializes database on startup
+- init_middlewares(): Configures all middleware (DB, Auth, CORS)
+- LargeFileMiddleware: Custom middleware for handling large file uploads (up to 8GB)
+- get_app(): Factory function that creates and configures the FastAPI application
+
+The application provides a RESTful API for GDPR data masking operations with support for:
+- User authentication and authorization
+- File upload, processing, and download
+- Product-based preset selection and rule application
+- Masking map management and search
+- Preset and rule configuration
+"""
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware

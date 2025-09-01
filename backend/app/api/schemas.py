@@ -1,3 +1,63 @@
+"""
+GDPR Tool API Schemas - Data Validation and Serialization
+
+This module defines Pydantic schemas for API request/response validation and serialization
+in the GDPR compliance tool. It provides comprehensive data models for all API endpoints.
+
+Key Schema Categories:
+- User Schemas: Authentication, user management, and role handling
+- File Schemas: File upload, processing status, and metadata
+- Masking Map Schemas: Data masking results and search functionality
+- Product Schemas: Product information and management
+- Rule Schemas: Data masking rules and configuration
+- Preset Schemas: Preset configuration and management
+- Preset Rule Schemas: Preset-rule associations and actions
+
+User Schemas:
+- UserLogin: User authentication credentials
+- TokenResponse: JWT token response with role information
+- UserCreate: New user creation with role assignment
+- UserResponse: User information response
+- UpdatePassword: Password change functionality
+
+File Schemas:
+- FileResponse: Complete file information with processing status
+- File metadata: Size, type, status, and processing progress
+- Archive support: Extracted size and completion tracking
+- Product/Preset association: File processing configuration
+
+Masking Map Schemas:
+- MaskingMapResponse: Masked data results with original and masked values
+- MaskingMapSearch: Search and filter parameters for masked data
+- Category filtering: Support for different data types
+- Pagination: Limit, offset, and sorting support
+
+Product Schemas:
+- ProductResponse: Product information for preset selection
+- Product-based processing: Support for product-specific configurations
+
+Rule Schemas:
+- RuleResponse: Rule configuration and metadata
+- RuleCreate: New rule creation with validation
+- RuleUpdate: Rule modification with partial updates
+- Configuration validation: Rule type and pattern validation
+
+Preset Schemas:
+- PresetResponse: Preset configuration with product association
+- PresetCreate: New preset creation with header patterns
+- PresetUpdate: Preset modification with validation
+- Header matching: File header pattern configuration
+
+Preset Rule Schemas:
+- PresetRuleResponse: Preset-rule associations with actions
+- PresetRuleCreate: New preset-rule associations
+- PresetRuleUpdate: Action modification for preset rules
+- Action configuration: Rule-specific action parameters
+
+All schemas include comprehensive validation, type conversion, and serialization
+support for the GDPR compliance tool API endpoints.
+"""
+
 from pydantic import BaseModel, field_validator, computed_field, Field
 from fastapi import UploadFile
 from datetime import datetime

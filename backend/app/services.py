@@ -1,3 +1,39 @@
+"""
+GDPR Tool Services - Core Business Logic
+
+This module contains all the core business logic services for the GDPR compliance tool.
+It provides comprehensive file processing, user management, and data masking capabilities.
+
+Key Components:
+- BaseService: Generic base class for all database services with CRUD operations
+- ProcessingConfig: Configuration class for file processing with matchers, patchers, and processors
+- UserService: User authentication, password management, and user CRUD operations
+- FileService: File upload, processing, archive handling, and product-based preset selection
+- ProductService: Product management with auto-increment ID handling
+- PresetService: Preset management with sequence conflict resolution
+- RuleService: Rule configuration and management
+- PresetRuleService: Junction table service for preset-rule associations
+- MaskingMapService: Data masking map storage and retrieval with search capabilities
+
+Main Processing Features:
+- File Upload & Storage: Handles file uploads with type detection and storage management
+- Archive Processing: Supports ZIP/TAR archives with recursive extraction and repacking
+- Product-Based Processing: New system for product-specific preset selection and rule application
+- Header Matching: Intelligent preset selection based on file headers for text and PCAP files
+- Data Masking: Comprehensive masking with regex, IP, and MAC address matchers
+- Progress Tracking: Real-time processing progress with time estimation
+- Error Handling: Robust error handling with detailed logging and status tracking
+
+Processing Flow:
+1. File Upload → Type Detection → Storage
+2. Product Selection → Header Matching → Preset Assignment
+3. Rule Application → Data Masking → Progress Tracking
+4. Archive Repacking → Status Updates → Completion
+
+The system supports both traditional preset-based processing and new product-based processing
+with intelligent header matching and fallback strategies.
+"""
+
 import zipfile
 import tarfile
 import tempfile

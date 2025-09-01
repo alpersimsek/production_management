@@ -1,3 +1,45 @@
+"""
+GDPR Tool Users Router - User Management and Authentication API Endpoints
+
+This module provides REST API endpoints for user management and authentication in the GDPR compliance tool.
+It handles user login, creation, password management, and user administration with role-based access control.
+
+Key Endpoints:
+- POST /login: User authentication with JWT token generation
+- GET /users: Retrieve all users (admin access)
+- POST /users: Create new users with role assignment
+- PUT /users/{user_id}: Update user passwords
+- DELETE /users/{user_id}: Delete users (with admin protection)
+
+Authentication Features:
+- JWT Token Generation: Secure token-based authentication
+- Password Hashing: Bcrypt password hashing for security
+- Role-Based Access: Admin and user role management
+- Token Validation: JWT token validation with expiration
+- Session Management: Secure session handling
+
+User Management Features:
+- User Creation: Create new users with username, password, and role
+- Password Updates: Secure password change functionality
+- User Deletion: Safe user removal with admin protection
+- User Listing: Retrieve all users with admin filtering
+- Username Validation: Prevent duplicate usernames
+
+Security Features:
+- Admin Protection: Admin user cannot be deleted
+- Role Validation: Proper role assignment and validation
+- Password Security: Secure password handling and hashing
+- Authentication: JWT-based authentication with proper error handling
+- Authorization: Role-based access control for admin operations
+
+User Roles:
+- ADMIN: Full system access, user management, system administration
+- USER: Standard user access, file processing, data masking
+
+The router integrates with UserService for business logic and provides
+a secure user management system with proper authentication and authorization.
+"""
+
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from api.schemas import (

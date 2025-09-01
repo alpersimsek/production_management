@@ -1,3 +1,39 @@
+"""
+GDPR Tool Storage - File Storage and Archive Management
+
+This module provides comprehensive file storage and archive handling capabilities for the GDPR tool.
+It supports multiple archive formats, file type detection, and recursive archive extraction.
+
+Key Components:
+- FileStorage: Main storage class for file operations and archive handling
+- FileInfo: Data class for file metadata (ID, name, size, type)
+- BaseStorage: Base class for storage implementations
+
+Supported File Types:
+- Text Files: Plain text, JSON, CSV, log files
+- PCAP Files: Network packet capture files
+- Archive Files: ZIP, TAR, GZIP, BZIP2, XZ, 7Z, RAR, ZSTD, LZMA, CPIO, AR, CAB, ISO
+- Avro Files: Apache Avro data files (converted to JSON)
+
+Archive Processing Features:
+- Recursive Extraction: Supports nested archives with depth limits
+- Multiple Formats: Handles 13+ different archive formats
+- Type Detection: Uses MIME types, magic signatures, and file extensions
+- Sanitization: Prevents path traversal attacks in archive contents
+- Error Handling: Graceful handling of corrupted or unsupported archives
+- Repacking: Recreates archives after processing with original format
+
+File Operations:
+- Upload: Temporary file storage with unique ID generation
+- Type Detection: Multi-layered detection (MIME, magic, extension)
+- Size Calculation: Accurate file size tracking
+- Deletion: Safe file removal with error handling
+- Path Management: Secure file path handling and sanitization
+
+The storage system is designed to handle large files efficiently while maintaining
+security and providing comprehensive archive support for GDPR data processing.
+"""
+
 from dataclasses import dataclass
 import pathlib
 import gzip
