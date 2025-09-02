@@ -141,7 +141,7 @@ defineEmits(['update:modelValue'])
         :required="required"
         :class="[
           'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2',
-          { 'pl-7': $slots.prefix || prefix },
+          { 'pl-10': $slots.prefix || prefix },
           { 'pr-7': $slots.suffix || suffix },
           { 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:outline-none focus:ring-red-500': error },
           { 'bg-gray-50 text-gray-500': disabled || readonly },

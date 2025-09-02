@@ -733,12 +733,17 @@ class FileService(BaseService[File]):
             })
             raise ValueError("File processing is already started")
 
+        # Get product name for logging
+        product = self.session.query(Product).filter(Product.id == product_id).first()
+        product_name = product.name if product else f"Unknown Product (ID: {product_id})"
+        
         logger.info({
             "event": "product_process_started",
             "file_id": file_id,
             "filename": file.filename,
             "content_type": file.content_type.value,
             "product_id": product_id,
+            "product_name": product_name,
         })
 
         is_archive = file.content_type == ContentType.ARCHIVE
@@ -1124,10 +1129,13 @@ class FileService(BaseService[File]):
             
             # For each file, try to match headers with product presets
             file_preset_map = {}
+            any_header_match = False
+            
             for file_obj in file_objs:
                 matched_preset = self.match_file_with_product_presets(file_obj, product_presets)
                 if matched_preset:
                     file_preset_map[file_obj.id] = matched_preset
+                    any_header_match = True
                     logger.info({
                         "event": "preset_matched_for_file",
                         "file_id": file_obj.id,
@@ -1137,41 +1145,80 @@ class FileService(BaseService[File]):
                         "product_id": product_id
                     })
                 else:
-                    # If no header match, use the first preset (or could be random selection)
+                    # If no header match, use the first preset (will be updated below if no matches found)
                     file_preset_map[file_obj.id] = product_presets[0]
-                    logger.info({
-                        "event": "default_preset_assigned",
-                        "file_id": file_obj.id,
-                        "filename": file_obj.filename,
-                        "preset_id": product_presets[0].id,
-                        "preset_name": product_presets[0].name,
-                        "product_id": product_id
-                    })
+            
+            # Log header matching summary
+            if any_header_match:
+                logger.info({
+                    "event": "header_matching_summary",
+                    "product_id": product_id,
+                    "total_files": len(file_objs),
+                    "files_with_header_match": len([f for f in file_objs if self.match_file_with_product_presets(f, product_presets)]),
+                    "action": "Using matched presets for files with header matches"
+                })
+            else:
+                logger.info({
+                    "event": "header_matching_summary",
+                    "product_id": product_id,
+                    "total_files": len(file_objs),
+                    "files_with_header_match": 0,
+                    "action": "No header matches found - using ALL presets under product"
+                })
+                
+                # When no header match found, use ALL presets under the product
+                # This means each file will be processed with all presets
+                file_preset_map = {}
+                for file_obj in file_objs:
+                    # Assign all presets to each file (they will be processed with all presets)
+                    file_preset_map[file_obj.id] = product_presets
             
             # Create task configurations - use same structure as make_task_config
-            files = {}
-            presets_cfgs = {}
-            for file_obj in file_objs:
-                preset = file_preset_map[file_obj.id]
-                preset_id = str(preset.id)
-                if preset_id not in presets_cfgs:
-                    preset_rules = [self.get_rule_config(pr) for pr in preset.rules]
-                    presets_cfgs[preset_id] = preset_rules
-                files[file_obj.id] = {"preset_id": preset_id, "size": file_obj.file_size}
-
-            preset_files_map = collections.defaultdict(list)
-            files_items = sorted(files.items(), key=lambda x: -x[1]["size"])
-            for file_id, file_info in files_items:
-                preset_files_map[file_info["preset_id"]].append(file_id)
-
             tasks_configs = []
-            group_files = {}
-            group_rules = {}
-            for preset_id, file_ids in preset_files_map.items():
-                group_rules[preset_id] = presets_cfgs[preset_id]
-                for file_id in file_ids:
-                    group_files[file_id] = preset_id
-            tasks_configs.append({"files": group_files, "rules_configs": group_rules})
+            
+            # Handle the case where no header match was found (all presets for each file)
+            if not any_header_match:
+                # Create separate task config for each preset
+                for preset in product_presets:
+                    preset_id = str(preset.id)
+                    preset_rules = [self.get_rule_config(pr) for pr in preset.rules]
+                    
+                    # All files will be processed with this preset
+                    group_files = {}
+                    for file_obj in file_objs:
+                        group_files[file_obj.id] = preset_id
+                    
+                    tasks_configs.append({
+                        "files": group_files, 
+                        "rules_configs": {preset_id: preset_rules}
+                    })
+            else:
+                # Normal processing - files have specific preset assignments
+                files = {}
+                presets_cfgs = {}
+                
+                for file_obj in file_objs:
+                    preset = file_preset_map[file_obj.id]
+                    preset_id = str(preset.id)
+                    if preset_id not in presets_cfgs:
+                        preset_rules = [self.get_rule_config(pr) for pr in preset.rules]
+                        presets_cfgs[preset_id] = preset_rules
+                    files[file_obj.id] = {"preset_id": preset_id, "size": file_obj.file_size}
+
+                # Group files by preset
+                preset_files_map = collections.defaultdict(list)
+                files_items = sorted(files.items(), key=lambda x: -x[1]["size"])
+                for file_id, file_info in files_items:
+                    preset_files_map[file_info["preset_id"]].append(file_id)
+
+                # Create single task configuration
+                group_files = {}
+                group_rules = {}
+                for preset_id, file_ids in preset_files_map.items():
+                    group_rules[preset_id] = presets_cfgs[preset_id]
+                    for file_id in file_ids:
+                        group_files[file_id] = preset_id
+                tasks_configs.append({"files": group_files, "rules_configs": group_rules})
             
             logger.info({
                 "event": "product_task_config_created",

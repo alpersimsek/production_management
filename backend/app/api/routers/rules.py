@@ -43,7 +43,7 @@ from api.schemas import RuleResponse, RuleCreate, RuleUpdate
 from services import RuleService
 from database.models import Role, Rule, RuleCategory
 from typing import List, Dict, Any
-from sqlalchemy import or_
+from sqlalchemy import or_, cast, String
 
 class RulesRouter(APIRouter):
     def __init__(self):
@@ -57,7 +57,7 @@ class RulesRouter(APIRouter):
         self.delete("/rules/{rule_id}")(self.delete_rule)
 
     def get_rules(self, req: Request, limit: int = Query(10, ge=1, le=100), offset: int = Query(0, ge=0),
-                  sort: str = Query('name:asc'), category: str = Query(None)):
+                  sort: str = Query('name:asc'), category: str = Query(None), search: str = Query(None)):
         """Get all rules with pagination, sorting, and filtering."""
         rule_service = RuleService(req.state.db)
         try:
@@ -76,6 +76,18 @@ class RulesRouter(APIRouter):
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"Invalid category. Must be one of: {', '.join([c.value for c in RuleCategory])}",
                     )
+            
+            # Add search functionality
+            if search and search.strip():
+                search_term = f"%{search.strip()}%"
+                # Use cast to text for JSON field searching
+                query = query.filter(
+                    or_(
+                        Rule.name.ilike(search_term),
+                        cast(Rule.config['pattern'], String).ilike(search_term),
+                        cast(Rule.config['type'], String).ilike(search_term)
+                    )
+                )
 
             # Apply sorting
             sort_column = getattr(Rule, sort_field)

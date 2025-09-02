@@ -42,7 +42,8 @@ import { ref, computed, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import AppButton from './AppButton.vue'
 import SelectField from './SelectField.vue'
-import { XMarkIcon, PencilIcon, TrashIcon, ExclamationCircleIcon, PlusIcon, ChevronUpIcon, ChevronDownIcon, ChevronUpDownIcon } from '@heroicons/vue/24/outline'
+import InputField from './InputField.vue'
+import { XMarkIcon, PencilIcon, TrashIcon, ExclamationCircleIcon, PlusIcon, ChevronUpIcon, ChevronDownIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 import ConfirmDeleteDialog from './ConfirmDeleteDialog.vue'
 
@@ -59,6 +60,7 @@ const itemsPerPage = ref(10)
 const sortColumn = ref('name')
 const sortDirection = ref('asc')
 const filterCategory = ref('All Categories')
+const searchQuery = ref('')
 const totalItems = ref(0)
 
 // Rule categories from RuleCategory enum (lowercase to match backend)
@@ -83,6 +85,10 @@ const fetchRules = async () => {
     // Only include category if valid (not 'All Categories' or empty)
     if (filterCategory.value && filterCategory.value !== 'All Categories') {
       params.category = filterCategory.value.toLowerCase()
+    }
+    // Add search query if provided
+    if (searchQuery.value && searchQuery.value.trim()) {
+      params.search = searchQuery.value.trim()
     }
     const response = await ApiService.getRules(params)
     rules.value = response.data || []
@@ -126,6 +132,18 @@ const changePage = (page) => {
 watch(filterCategory, () => {
   currentPage.value = 1
   fetchRules()
+})
+
+// Watch search query changes with debounce
+let searchTimeout = null
+watch(searchQuery, () => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    fetchRules()
+  }, 300) // 300ms debounce
 })
 
 // Initial fetch
@@ -180,16 +198,31 @@ const handleDeleteConfirm = async () => {
           <div class="mt-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
               <p class="text-sm text-gray-500">Create and manage custom rules for your presets.</p>
-              <SelectField id="category-filter" v-model="filterCategory" label="Filter by Category"
-                class="w-48" aria-label="Filter rules by category">
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-              </SelectField>
             </div>
             <AppButton @click="$emit('open-rule-form')" variant="primary"
               class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <PlusIcon class="h-5 w-5 mr-2" />
               Add Rule
             </AppButton>
+          </div>
+          <div class="mt-4 flex items-end space-x-4">
+            <div class="flex-1">
+              <SelectField id="category-filter" v-model="filterCategory" label="Filter by Category"
+                class="w-full" aria-label="Filter rules by category">
+                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+              </SelectField>
+            </div>
+            <div class="flex-[2]">
+              <InputField
+                v-model="searchQuery"
+                placeholder="Search rules by name or pattern..."
+                class="w-full"
+              >
+                <template #prefix>
+                  <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
+                </template>
+              </InputField>
+            </div>
           </div>
           <div v-if="loading" class="flex justify-center py-6">
             <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-600"></div>
@@ -224,8 +257,10 @@ const handleDeleteConfirm = async () => {
                     {{ rule.name }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" role="cell">{{ rule.category }}</td>
-                  <td class="px-3 py-4 text-sm text-gray-500 max-w-xs truncate" role="cell">
-                    {{ getPatternFromConfig(rule.config) }}
+                  <td class="px-3 py-4 text-sm text-gray-500 max-w-md" role="cell">
+                    <div class="break-all whitespace-normal">
+                      {{ getPatternFromConfig(rule.config) }}
+                    </div>
                   </td>
                   <td class="px-3 py-4 text-sm text-gray-500" role="cell">{{ getPatcherFromConfig(rule.config) }}</td>
                   <td class="whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium" role="cell">
