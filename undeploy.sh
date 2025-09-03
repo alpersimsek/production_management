@@ -6,7 +6,7 @@ set -e
 ENV="prod"
 FULL_CLEAN=false
 PROJECT=gdpr
-BASE_DIR=~/workspace/gdpr-tool
+BASE_DIR="$(dirname "$(realpath "$0")")"
 DOCKER_NETWORK=gdpr-network
 
 # Parse arguments

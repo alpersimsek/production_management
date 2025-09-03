@@ -8,7 +8,7 @@ services:
     environment:
       - DATA_DIR=/data
       - DB_USERNAME=postgres
-      - DB_PASSWORD=${POSTGRESS_PASSWORD}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=db
       - DB_NAME=gdpr
     volumes:
@@ -22,7 +22,7 @@ services:
     container_name: db
     image: postgres:17
     environment:
-      - POSTGRES_PASSWORD=${POSTGRESS_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=gdpr
     ports:
       - 5432:5432

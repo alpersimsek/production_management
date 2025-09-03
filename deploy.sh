@@ -4,7 +4,7 @@ set -e
 
 ENV=${1:-prod}  # default to production
 TAG=${2:-latest}
-BASE_DIR=~/workspace/gdpr-tool
+BASE_DIR="$(dirname "$(realpath "$0")")"
 DOCKER_NETWORK=gdpr-network
 
 # Paths

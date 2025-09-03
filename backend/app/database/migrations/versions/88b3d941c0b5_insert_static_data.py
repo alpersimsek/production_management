@@ -35,6 +35,10 @@ def upgrade() -> None:
             {"id": 5, "name": "SBC 7000"},
             {"id": 6, "name": "C20 Call Controller"},
             {"id": 7, "name": "Application Server"},
+            {"id": 8, "name": "EMS"},
+            {"id": 9, "name": "RAMP"},
+            {"id": 10, "name": "PSX"},
+            {"id": 11, "name": "RA"},
         ],
     )
     logger.info("Product insertion completed")
