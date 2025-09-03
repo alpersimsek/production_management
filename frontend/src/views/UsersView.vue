@@ -199,7 +199,7 @@ onMounted(() => {
 
       <!-- User List -->
       <div v-if="!isLoading || users.length" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <ListView title="Users" :items="formattedUsers" :empty-message="'No users found'" :empty-icon="UserIcon"
+        <ListView title="Users" :items="formattedUsers" :empty-message="'No users found'" :empty-icon="null"
           :get-item-title="item => item.username" :get-item-subtitle="() => ''"
           :get-item-metadata="item => item.formattedRole"
           :get-item-icon="item => item.role === 'admin' ? ShieldCheckIcon : UserIcon"

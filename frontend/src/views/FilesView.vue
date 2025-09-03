@@ -342,7 +342,7 @@ const handleDownload = async (fileId) => {
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Uploads</h2>
             <ListView title="" :items="paginatedUploads" empty-message="No files uploaded yet"
               :get-item-title="item => item.filename" :get-item-subtitle="item => item.formattedSize"
-              :get-item-metadata="item => item.formattedDate" :get-item-icon="() => DocumentIcon">
+              :get-item-metadata="item => item.formattedDate" :get-item-icon="() => null">
               <template #empty>
                 <div class="text-center py-4">
                   <DocumentIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
@@ -411,7 +411,7 @@ const handleDownload = async (fileId) => {
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
           <ListView title="Processed Files" :items="paginatedProcessed" empty-message="No processed files yet"
             :get-item-title="item => item.filename" :get-item-subtitle="item => item.formattedSize"
-            :get-item-metadata="item => item.formattedDate" :get-item-icon="() => DocumentCheckIcon">
+            :get-item-metadata="item => item.formattedDate" :get-item-icon="() => null">
             <template #empty>
               <div class="text-center py-4">
                 <DocumentCheckIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
@@ -480,6 +480,7 @@ const handleDownload = async (fileId) => {
 
       <!-- Product Selection Modal -->
       <ProductSelectionForm
+        v-if="selectedFileForProcessing"
         :is-open="showProductModal"
         :file="selectedFileForProcessing"
         @close="handleProductModalClose"
