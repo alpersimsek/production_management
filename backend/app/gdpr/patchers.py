@@ -45,6 +45,7 @@ import ipaddress
 from database.models import RuleCategory
 # from services import MaskingMapService
 from typing import Optional, Iterable, Mapping
+from logger import logger
 
 class BasePatcher:
     """Base patcher class."""
@@ -73,23 +74,66 @@ class ReplacePatcher(BasePatcher):
 
         if self.category == RuleCategory.IPV4_ADDR:
             network = random.choice(self._ip_ranges)
-            return str(ipaddress.IPv4Address(network.network_address + count))
+            masked_value = str(ipaddress.IPv4Address(network.network_address + count))
+            logger.debug({
+                "event": "ip_generation",
+                "original": original,
+                "network": str(network),
+                "count": count,
+                "generated": masked_value
+            })
+            return masked_value
 
         if self.category == RuleCategory.MAC_ADDR:
-            return f"00:00:00:00:{count//256:02x}:{count%256:02x}"
+            masked_value = f"00:00:00:00:{count//256:02x}:{count%256:02x}"
+            logger.debug({
+                "event": "mac_generation",
+                "original": original,
+                "count": count,
+                "generated": masked_value
+            })
+            return masked_value
 
         if self.category == RuleCategory.USERNAME:
-            return f"user{count}"
+            masked_value = f"user{count}"
+            logger.debug({
+                "event": "username_generation",
+                "original": original,
+                "count": count,
+                "generated": masked_value
+            })
+            return masked_value
 
         if self.category == RuleCategory.DOMAIN:
-            return f"domain{count}.com"
+            masked_value = f"domain{count}.com"
+            logger.debug({
+                "event": "domain_generation",
+                "original": original,
+                "count": count,
+                "generated": masked_value
+            })
+            return masked_value
 
         if self.category == RuleCategory.PHONE_NUM:
-            return f"+0{count:010d}"
+            masked_value = f"+0{count:010d}"
+            logger.debug({
+                "event": "phone_generation",
+                "original": original,
+                "count": count,
+                "generated": masked_value
+            })
+            return masked_value
 
         # Default fallback: Generate a random alphanumeric string of same length
         chars = string.ascii_lowercase + string.digits
-        return ''.join(random.choices(chars, k=len(original)))
+        masked_value = ''.join(random.choices(chars, k=len(original)))
+        logger.debug({
+            "event": "fallback_generation",
+            "original": original,
+            "length": len(original),
+            "generated": masked_value
+        })
+        return masked_value
 
     def _patch(self, match: str) -> str:
         """Replace a matched string."""
@@ -101,5 +145,21 @@ class ReplacePatcher(BasePatcher):
             replacement = self._generate_masked_value(match)
             # Store it in the database for future consistency
             self.maskingMapService.store_mask(match, replacement, self.category)
+            
+            logger.info({
+                "event": "data_masked_new",
+                "category": self.category.value if self.category else "unknown",
+                "original": match,
+                "masked": replacement,
+                "action": "Generated new masked value"
+            })
+        else:
+            logger.info({
+                "event": "data_masked_existing",
+                "category": self.category.value if self.category else "unknown",
+                "original": match,
+                "masked": replacement,
+                "action": "Used existing masked value"
+            })
 
         return replacement
