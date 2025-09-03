@@ -20,6 +20,7 @@
  * - /users: User management (auth required)
  * - /search: Search masking records (auth required)
  * - /presets: Preset management (auth + admin required)
+ * - /privacy: Privacy policy page (no auth required)
  * 
  * Navigation Guards:
  * - beforeEach: Checks authentication, token expiration, and admin privileges
@@ -73,6 +74,12 @@ const router = createRouter({
       name: 'presets',
       component: () => import('../views/PresetsView.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('../views/Privacy.vue'),
+      meta: { requiresAuth: false },
     },
   ],
 })
