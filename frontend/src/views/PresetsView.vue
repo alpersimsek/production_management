@@ -302,7 +302,7 @@ const closeCustomRuleForm = () => {
 
 <template>
   <MainLayout>
-    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
       <div class="sm:flex sm:items-center mb-8">
         <div class="sm:flex-auto">
           <div class="flex items-center gap-3">
