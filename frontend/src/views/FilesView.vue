@@ -35,6 +35,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'
 import { useAuthStore } from '../stores/auth'
 import { useFormatters } from '../composables/useFormatters'
+import { useErrorHandler } from '../composables/useErrorHandler'
+import ApiService from '../services/api'
 import MainLayout from '../components/MainLayout.vue'
 import ListView from '../components/ListView.vue'
 import FileUploader from '../components/FileUploader.vue'
@@ -52,7 +54,7 @@ import {
 const filesStore = useFilesStore()
 const authStore = useAuthStore()
 const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
-const uploadError = ref('')
+const { handleError } = useErrorHandler()
 const showDeleteModal = ref(false)
 const deleteFileId = ref(false)
 const isLoading = ref(false)
@@ -177,13 +179,12 @@ onMounted(async () => {
 // Event handlers
 const handleFileUpload = async (files) => {
   try {
-    uploadError.value = ''
     for (const file of files) {
       await filesStore.uploadFile(file)
     }
   } catch (error) {
     console.error('Upload error:', error)
-    uploadError.value = error.message || 'Failed to upload file(s). Please try again.'
+    handleError(error, { type: 'file' })
   }
 }
 
@@ -196,13 +197,12 @@ const handleProcess = async (fileId) => {
     }
   } catch (error) {
     console.error('Failed to open product selection:', error)
-    uploadError.value = `Failed to open product selection: ${error.message || 'Unknown error'}`
+    handleError(error, { type: 'file' })
   }
 }
 
 const handleProductProcess = async (processOptions) => {
   try {
-    uploadError.value = ''
     // Send product ID to backend for product-based processing
     await filesStore.processFileWithProduct(selectedFileForProcessing.value.id, processOptions.productId)
     await filesStore.fetchFiles()
@@ -210,13 +210,49 @@ const handleProductProcess = async (processOptions) => {
     selectedFileForProcessing.value = null
   } catch (error) {
     console.error('Failed to process file:', error)
-    uploadError.value = `Failed to process file: ${error.message || 'Unknown error'}`
+    // Use global error handler for better error display
+    handleError(error, { 
+      type: 'file',
+      retryAction: () => handleProductProcess(processOptions),
+      cancelAction: () => cancelFileProcessing(selectedFileForProcessing.value.id)
+    })
+  }
+}
+
+const cancelFileProcessing = async (fileId) => {
+  try {
+    // Stop polling immediately
+    filesStore.stopPolling(fileId)
+    
+    // Cancel processing on backend
+    await ApiService.cancelFileProcessing(fileId)
+    
+    // Refresh files list
+    await filesStore.fetchFiles()
+    
+    // Close modal
+    showProductModal.value = false
+    selectedFileForProcessing.value = null
+  } catch (error) {
+    console.error('Failed to cancel file processing:', error)
+    handleError(error, { type: 'file' })
   }
 }
 
 const handleProductModalClose = () => {
   showProductModal.value = false
   selectedFileForProcessing.value = null
+}
+
+// Debug method to check polling status
+const debugPollingStatus = () => {
+  filesStore.getPollingStatus()
+}
+
+// Emergency stop all polling
+const stopAllPolling = () => {
+  filesStore.stopAllPolling()
+  console.log('All polling stopped')
 }
 
 const handleDelete = (fileId) => {
@@ -226,12 +262,11 @@ const handleDelete = (fileId) => {
 
 const confirmDelete = async () => {
   try {
-    uploadError.value = ''
     await filesStore.deleteFile(deleteFileId.value)
     await filesStore.fetchFiles()
   } catch (error) {
     console.error('Failed to delete file:', error)
-    uploadError.value = `Failed to delete file: ${error.message || 'Unknown error'}`
+    handleError(error, { type: 'file' })
   } finally {
     showDeleteModal.value = false
     deleteFileId.value = null
@@ -244,12 +279,11 @@ const handleDeleteAll = () => {
 
 const confirmDeleteAll = async () => {
   try {
-    uploadError.value = ''
     await filesStore.deleteAllFiles()
     await filesStore.fetchFiles()
   } catch (error) {
     console.error('Failed to delete all files:', error)
-    uploadError.value = `Failed to delete all files: ${error.message || 'Unknown error'}`
+    handleError(error, { type: 'file' })
   } finally {
     showDeleteAllModal.value = false
   }
@@ -257,11 +291,10 @@ const confirmDeleteAll = async () => {
 
 const handleDownload = async (fileId) => {
   try {
-    uploadError.value = ''
     await filesStore.downloadFile(fileId)
   } catch (error) {
     console.error('Failed to download file:', error)
-    uploadError.value = `Download failed: ${error.message || 'The file may no longer exist or you may not have permission to access it.'}`
+    handleError(error, { type: 'file' })
   }
 }
 </script>
@@ -302,27 +335,6 @@ const handleDownload = async (fileId) => {
         <p class="ml-4 text-sm font-medium text-gray-600">Loading files...</p>
       </div>
 
-      <!-- Error State -->
-      <div v-if="uploadError && !isLoading"
-        class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in flex items-center justify-between" role="alert">
-        <div class="flex items-center">
-          <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd" />
-          </svg>
-          <span class="text-sm font-medium text-red-800">{{ uploadError }}</span>
-        </div>
-        <div class="ml-auto pl-3">
-          <div class="-mx-1.5 -my-1.5">
-            <button type="button" @click="uploadError = ''"
-              class="inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
-              aria-label="Dismiss error">
-              <TrashIcon class="h-5 w-5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- File Lists -->
       <div v-if="!isLoading" class="space-y-8">
@@ -332,12 +344,8 @@ const handleDownload = async (fileId) => {
           <div
             class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in flex items-center justify-center hover:shadow-md hover:scale-105 transition-all duration-200">
             <div class="w-full max-w-md">
-              <FileUploader :upload-progress="filesStore.uploadProgress" :error="uploadError" :show-icon="true"
+              <FileUploader :upload-progress="filesStore.uploadProgress" :error="null" :show-icon="true"
                 @file-upload="handleFileUpload" class="w-full" />
-              <p v-if="uploadError"
-                class="mt-2 text-sm text-red-500 text-center bg-red-50 p-2 rounded-md animate-fade-in" role="alert">
-                {{ uploadError }}
-              </p>
             </div>
           </div>
           <!-- Uploads List -->

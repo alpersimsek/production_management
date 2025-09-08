@@ -32,6 +32,7 @@ tool users with role-based functionality and efficient file management.
 import { ref, onMounted, computed } from 'vue'
 import { useFilesStore } from '../stores/files'
 import { useAuthStore } from '../stores/auth'
+import { useErrorHandler } from '../composables/useErrorHandler'
 import MainLayout from '../components/MainLayout.vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import ActionCard from '../components/ActionCard.vue'
@@ -49,10 +50,10 @@ import {
 
 const filesStore = useFilesStore()
 const authStore = useAuthStore()
+const { handleError } = useErrorHandler()
 const isLoading = ref(false)
 const showDeleteModal = ref(false)
 const deleteFileId = ref(null)
-const uploadError = ref('')
 
 // Global admin check boolean: checks if role contains "admin" (case-insensitive)
 const adminCheck = computed(() => {
@@ -95,12 +96,11 @@ const getPercent = (fileId) => {
 
 const handleProcess = async (fileId) => {
   try {
-    uploadError.value = ''
     await filesStore.processFile(fileId)
     await filesStore.fetchFiles()
   } catch (error) {
     console.error('Failed to process file:', error)
-    uploadError.value = `Failed to process file: ${error.message || 'Unknown error'}`
+    handleError(error, { type: 'file' })
   }
 }
 
@@ -111,12 +111,11 @@ const handleDelete = (fileId) => {
 
 const confirmDelete = async () => {
   try {
-    uploadError.value = ''
     await filesStore.deleteFile(deleteFileId.value)
     await filesStore.fetchFiles()
   } catch (error) {
     console.error('Failed to delete file:', error)
-    uploadError.value = `Failed to delete file: ${error.message || 'Unknown error'}`
+    handleError(error, { type: 'file' })
   } finally {
     showDeleteModal.value = false
     deleteFileId.value = null
@@ -125,23 +124,21 @@ const confirmDelete = async () => {
 
 const handleDownload = async (fileId) => {
   try {
-    uploadError.value = ''
     await filesStore.downloadFile(fileId)
   } catch (error) {
     console.error('Failed to download file:', error)
-    uploadError.value = `Download failed: ${error.message || 'The file may no longer exist or you may not have permission to access it.'}`
+    handleError(error, { type: 'file' })
   }
 }
 
 const handleFileUpload = async (files) => {
   try {
-    uploadError.value = ''
     for (const file of files) {
       await filesStore.uploadFile(file)
     }
   } catch (error) {
     console.error('Upload error:', error)
-    uploadError.value = error.message || 'Failed to upload file(s). Please try again.'
+    handleError(error, { type: 'file' })
   }
 }
 </script>
@@ -173,27 +170,6 @@ const handleFileUpload = async (files) => {
         <p class="ml-4 text-sm font-medium text-gray-600">Loading dashboard...</p>
       </div>
 
-      <!-- Error State -->
-      <div v-if="uploadError && !isLoading"
-        class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in flex items-center justify-between" role="alert">
-        <div class="flex items-center">
-          <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd" />
-          </svg>
-          <span class="text-sm font-medium text-red-800">{{ uploadError }}</span>
-        </div>
-        <div class="ml-auto pl-3">
-          <div class="-mx-1.5 -my-1.5">
-            <button type="button" @click="uploadError = ''"
-              class="inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
-              aria-label="Dismiss error">
-              <TrashIcon class="h-5 w-5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- Main Content -->
       <div v-if="!isLoading" class="space-y-8">

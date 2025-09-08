@@ -62,6 +62,7 @@ class FilesRouter(APIRouter):
         self.get("/", response_model=list[FileResponse])(self.get_user_files)
         self.post("/upload", response_model=FileResponse)(self.upload_file)
         self.post("/process/{file_id}")(self.process_file)
+        self.post("/cancel/{file_id}")(self.cancel_file_processing)
         self.delete("/delete/{file_id}")(self.delete_file)
         self.get("/download/{file_id}")(self.download_file)
         self.delete("/all_delete")(self.delete_all_files)  # New endpoint
@@ -239,6 +240,22 @@ class FilesRouter(APIRouter):
                 file = file_service.process_file(file_id)
                 
             return {"detail": f"Processing {file.filename} completed"}
+        except Exception as ex:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
+            )
+
+    def cancel_file_processing(self, file_id: str, req: Request):
+        """Cancel file processing and set status to CANCELLED."""
+        try:
+            user = req.state.user
+            session = req.state.db
+            file_service = FileService(session)
+            
+            # Cancel the file processing
+            file = file_service.cancel_file_processing(file_id)
+            
+            return {"detail": f"Processing of {file.filename} cancelled"}
         except Exception as ex:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)

@@ -116,6 +116,7 @@ class FileStatus(enum.Enum):
     IN_PROGRESS = "in-progress"
     DONE = "done"
     ERROR = "error"
+    CANCELLED = "cancelled"
 
 
 class RuleCategory(enum.Enum):
@@ -223,7 +224,7 @@ class Rule(Base):
     category: Mapped[RuleCategory] = mapped_column(Enum(RuleCategory), nullable=False)
     config: Mapped[dict] = mapped_column(JSON, nullable=False)
 
-    # Relationship back to PresetRules
+    # Relationships
     presets: Mapped[list["PresetRule"]] = Relationship(back_populates="rule")
 
 

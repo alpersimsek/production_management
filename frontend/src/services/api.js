@@ -47,6 +47,7 @@
  */
 
 import axios from 'axios'
+import { globalErrorHandler } from '../composables/useErrorHandler'
 
 const endpoints = {
   auth: { login: '/login' },
@@ -60,6 +61,7 @@ const endpoints = {
     list: '/files',
     upload: '/files/upload',
     process: (fileId) => `/files/process/${fileId}`,
+    cancel: (fileId) => `/files/cancel/${fileId}`,
     delete: (fileId) => `/files/delete/${fileId}`,
     deleteAll: '/files/all_delete',
     download: (fileId) => `/files/download/${fileId}`,
@@ -77,7 +79,10 @@ const endpoints = {
     delete: (presetId) => `/presets/${presetId}`,
     rules: (presetId) => `/presets/${presetId}/rules`,
   },
-  products: { list: '/products' },
+  products: {
+    list: '/products',
+    create: '/products'
+  },
   rules: {
     list: '/rules',
     get: (ruleId) => `/rules/${ruleId}`,
@@ -101,6 +106,9 @@ class ApiError extends Error {
 }
 
 const handleApiError = (error) => {
+  // Use global error handler for better error management
+  globalErrorHandler.handleError(error, { type: 'api' })
+  
   if (error.response) {
     switch (error.response.status) {
       case 401:
@@ -246,6 +254,15 @@ class ApiService {
     }
   }
 
+  static async cancelFileProcessing(fileId) {
+    try {
+      const response = await axios.post(endpoints.files.cancel(fileId))
+      return response.data
+    } catch (error) {
+      handleApiError(error)
+    }
+  }
+
   static async deleteFile(fileId) {
     try {
       const response = await axios.delete(endpoints.files.delete(fileId))
@@ -323,6 +340,15 @@ class ApiService {
   static async getProducts() {
     try {
       const response = await axios.get(endpoints.products.list)
+      return response.data
+    } catch (error) {
+      handleApiError(error)
+    }
+  }
+
+  static async createProduct(productData) {
+    try {
+      const response = await axios.post(endpoints.products.create, productData)
       return response.data
     } catch (error) {
       handleApiError(error)

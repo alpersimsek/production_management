@@ -200,6 +200,15 @@ class MaskingMapSearch(BaseModel):
 
 
 # Product Schemas
+class ProductCreate(BaseModel):
+    """Schema for creating a new product."""
+
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
 class ProductResponse(BaseModel):
     """Schema for returning product information."""
 
@@ -301,3 +310,5 @@ class PresetRuleUpdate(BaseModel):
     """Schema for updating an existing preset rule association."""
 
     action: Dict[str, Any]
+
+

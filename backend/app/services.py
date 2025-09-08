@@ -836,6 +836,29 @@ class FileService(BaseService[File]):
             })
             raise ValueError(f"Processing failed: {str(e)}")
 
+    def cancel_file_processing(self, file_id: str):
+        """Cancel file processing and set status to CANCELLED."""
+        file = self.get_by_id(file_id)
+        if not file:
+            raise ValueError("File not found")
+
+        if file.status not in [FileStatus.CREATED, FileStatus.IN_PROGRESS]:
+            raise ValueError("File processing cannot be cancelled in current status")
+
+        # Set status to cancelled
+        file.status = FileStatus.CANCELLED
+        file.completed_size = 0
+        file.time_remaining = 0
+        self.session.commit()
+
+        logger.info({
+            "event": "processing_cancelled",
+            "file_id": file_id,
+            "filename": file.filename,
+        })
+
+        return file
+
     def preprocess_file(self, files: Dict[str, str], rules_configs: Dict[str, List]):
         """Preprocess a list of files with the given rules configurations."""
         try:
@@ -1665,3 +1688,4 @@ class MaskingMapService(BaseService[MaskingMap]):
         """Get all available categories that have masked values."""
         categories = self.session.query(MaskingMap.category).distinct().all()
         return [cat[0].value for cat in categories]
+

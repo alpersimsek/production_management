@@ -65,6 +65,7 @@ export const useFilesStore = defineStore('files', {
     processed: [],
     processingFiles: new Map(), // Tracks files being processed: { id: { completedSize, totalSize, timeRemaining } }
     uploadProgress: new Map(), // Tracks upload progress: { fileName: { loaded, total, percent } }
+    pollingIntervals: new Map(), // Store polling intervals for cancellation
   }),
 
   getters: {
@@ -173,13 +174,14 @@ export const useFilesStore = defineStore('files', {
             if (!processingFile) {
               console.log(`File ${fileId} not found in poll response`)
               clearInterval(pollInterval)
+              this.pollingIntervals.delete(fileId)
               this.processingFiles.delete(fileId)
               return
             }
 
-            // console.log(`File status: ${processingFile.status}`)
-            // console.log(`Completed size: ${processingFile.completed_size}`)
-            // console.log(`Time remaining: ${processingFile.time_remaining}`)
+            console.log(`File status: ${processingFile.status}`)
+            console.log(`Completed size: ${processingFile.completed_size}`)
+            console.log(`Time remaining: ${processingFile.time_remaining}`)
 
             if (processingFile.status === 'in-progress') {
               const progress = {
@@ -192,6 +194,29 @@ export const useFilesStore = defineStore('files', {
             } else if (processingFile.status === 'done') {
               console.log(`Processing complete for ${fileId}`)
               clearInterval(pollInterval)
+              this.pollingIntervals.delete(fileId)
+              this.processingFiles.delete(fileId)
+              await this.fetchFiles()
+              return
+            } else if (processingFile.status === 'cancelled') {
+              console.log(`Processing cancelled for ${fileId}`)
+              clearInterval(pollInterval)
+              this.pollingIntervals.delete(fileId)
+              this.processingFiles.delete(fileId)
+              await this.fetchFiles()
+              return
+            } else if (processingFile.status === 'error') {
+              console.log(`Processing failed for ${fileId}`)
+              clearInterval(pollInterval)
+              this.pollingIntervals.delete(fileId)
+              this.processingFiles.delete(fileId)
+              await this.fetchFiles()
+              return
+            } else {
+              // Handle any other status (created, etc.)
+              console.log(`File ${fileId} has status: ${processingFile.status}, stopping polling`)
+              clearInterval(pollInterval)
+              this.pollingIntervals.delete(fileId)
               this.processingFiles.delete(fileId)
               await this.fetchFiles()
               return
@@ -199,9 +224,21 @@ export const useFilesStore = defineStore('files', {
           } catch (error) {
             console.error('Failed to get processing status:', error)
             clearInterval(pollInterval)
+            this.pollingIntervals.delete(fileId)
             this.processingFiles.delete(fileId)
           }
-        }, 1000) // Poll every 2000ms for smoother updates
+        }, 1000) // Poll every 1000ms for smoother updates
+        
+        // Store the polling interval for potential cancellation
+        this.pollingIntervals.set(fileId, pollInterval)
+        
+        // Set a timeout to stop polling after 5 minutes to prevent infinite polling
+        setTimeout(() => {
+          if (this.pollingIntervals.has(fileId)) {
+            console.log(`Polling timeout reached for file ${fileId}, stopping...`)
+            this.stopPolling(fileId)
+          }
+        }, 5 * 60 * 1000) // 5 minutes
       } catch (error) {
         console.error('Failed to process file:', error)
         this.processingFiles.delete(fileId)
@@ -248,9 +285,9 @@ export const useFilesStore = defineStore('files', {
               return
             }
 
-            // console.log(`File status: ${processingFile.status}`)
-            // console.log(`Completed size: ${processingFile.completed_size}`)
-            // console.log(`Time remaining: ${processingFile.time_remaining}`)
+            console.log(`File status: ${processingFile.status}`)
+            console.log(`Completed size: ${processingFile.completed_size}`)
+            console.log(`Time remaining: ${processingFile.time_remaining}`)
 
             if (processingFile.status === 'in-progress') {
               const progress = {
@@ -262,6 +299,18 @@ export const useFilesStore = defineStore('files', {
               this.processingFiles.set(fileId, progress)
             } else if (processingFile.status === 'done') {
               console.log(`Processing complete for ${fileId}`)
+              clearInterval(pollInterval)
+              this.processingFiles.delete(fileId)
+              await this.fetchFiles()
+              return
+            } else if (processingFile.status === 'cancelled') {
+              console.log(`Processing cancelled for ${fileId}`)
+              clearInterval(pollInterval)
+              this.processingFiles.delete(fileId)
+              await this.fetchFiles()
+              return
+            } else if (processingFile.status === 'error') {
+              console.log(`Processing failed for ${fileId}`)
               clearInterval(pollInterval)
               this.processingFiles.delete(fileId)
               await this.fetchFiles()
@@ -310,6 +359,37 @@ export const useFilesStore = defineStore('files', {
       } catch (error) {
         console.error('Failed to download file:', error)
         throw error
+      }
+    },
+
+    stopPolling(fileId) {
+      // Stop polling for a specific file
+      const pollInterval = this.pollingIntervals.get(fileId)
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        this.pollingIntervals.delete(fileId)
+        this.processingFiles.delete(fileId)
+        console.log(`Stopped polling for file ${fileId}`)
+      }
+    },
+
+    stopAllPolling() {
+      // Stop all polling intervals
+      this.pollingIntervals.forEach((interval, fileId) => {
+        clearInterval(interval)
+        console.log(`Stopped polling for file ${fileId}`)
+      })
+      this.pollingIntervals.clear()
+      this.processingFiles.clear()
+    },
+
+    // Debug method to check current polling status
+    getPollingStatus() {
+      console.log('Active polling intervals:', Array.from(this.pollingIntervals.keys()))
+      console.log('Processing files:', Array.from(this.processingFiles.keys()))
+      return {
+        pollingFiles: Array.from(this.pollingIntervals.keys()),
+        processingFiles: Array.from(this.processingFiles.keys())
       }
     },
   },

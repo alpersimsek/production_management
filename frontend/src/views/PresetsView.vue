@@ -41,10 +41,13 @@ import PresetRuleForm from '../components/PresetRuleForm.vue'
 import RuleManagement from '../components/RuleManagement.vue'
 import CustomRuleForm from '../components/CustomRuleForm.vue'
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog.vue'
+import ProductForm from '../components/ProductForm.vue'
 import { XMarkIcon, PlusIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
+import { useErrorHandler } from '../composables/useErrorHandler'
 
 const router = useRouter()
+const { handleError } = useErrorHandler()
 const presets = ref([])
 const products = ref([])
 const rules = ref([])
@@ -55,6 +58,7 @@ const showRuleModal = ref(false)
 const showDeleteModal = ref(false)
 const showRuleListModal = ref(false)
 const showCustomRuleForm = ref(false)
+const showProductModal = ref(false)
 const editingPreset = ref(null)
 const editingRule = ref(null)
 const selectedRule = ref(null)
@@ -89,6 +93,7 @@ onMounted(async () => {
     loading.value = true
     await Promise.all([loadPresets(), loadProducts(), loadRules()])
   } catch (err) {
+    handleError(err, { type: 'server' })
     error.value = `Failed to load data: ${err.message || err.data?.detail || 'Unknown error'}`
   } finally {
     loading.value = false
@@ -298,6 +303,24 @@ const closeCustomRuleForm = () => {
   }
   console.log('Closed CustomRuleForm modal')
 }
+
+const openProductModal = () => {
+  showProductModal.value = true
+}
+
+const handleProductSaved = async () => {
+  try {
+    await loadProducts()
+    showProductModal.value = false
+  } catch (err) {
+    error.value = `Failed to refresh products list: ${err.message || err.data?.detail || 'Unknown error'}`
+  }
+}
+
+const handleProductError = (err) => {
+  handleError(err, { type: 'server' })
+  error.value = `Failed to create product: ${typeof err === 'string' ? err : (err.message || err.data?.detail || 'Unknown error')}`
+}
 </script>
 
 <template>
@@ -333,6 +356,12 @@ const closeCustomRuleForm = () => {
             aria-label="Add preset">
             <PlusIcon class="h-5 w-5 mr-2" />
             Add Preset
+          </button>
+          <button type="button" @click="openProductModal"
+            class="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            aria-label="Add product">
+            <PlusIcon class="h-5 w-5 mr-2" />
+            Add Product
           </button>
         </div>
       </div>
@@ -375,6 +404,8 @@ const closeCustomRuleForm = () => {
         @delete="confirmDelete('customRule', $event)" />
       <CustomRuleForm v-if="showCustomRuleForm" :open="showCustomRuleForm" :rule="selectedRule"
         @close="closeCustomRuleForm" @saved="handleRuleListSaved" @error="error = $event" />
+      <ProductForm v-if="showProductModal" :open="showProductModal"
+        @close="showProductModal = false" @saved="handleProductSaved" @error="handleProductError" />
     </div>
   </MainLayout>
 </template>

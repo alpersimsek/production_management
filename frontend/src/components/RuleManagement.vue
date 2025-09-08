@@ -38,7 +38,7 @@ GDPR compliance tool with proper data handling and user feedback.
 -->
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import AppButton from './AppButton.vue'
 import SelectField from './SelectField.vue'
@@ -47,7 +47,7 @@ import { XMarkIcon, PencilIcon, TrashIcon, ExclamationCircleIcon, PlusIcon, Chev
 import ApiService from '../services/api'
 import ConfirmDeleteDialog from './ConfirmDeleteDialog.vue'
 
-defineProps({ open: { type: Boolean, required: true } })
+const props = defineProps({ open: { type: Boolean, required: true } })
 const emit = defineEmits(['close', 'saved', 'open-rule-form', 'delete'])
 
 const rules = ref([])
@@ -56,22 +56,14 @@ const loading = ref(false)
 const showDeleteConfirm = ref(false)
 const ruleToDelete = ref(null)
 const currentPage = ref(1)
-const itemsPerPage = ref(10)
+const itemsPerPage = ref(5)
 const sortColumn = ref('name')
 const sortDirection = ref('asc')
+const categories = ref(['All Categories', 'IPV4_ADDR', 'MAC_ADDR', 'USERNAME', 'DOMAIN', 'PHONE_NUM'])
 const filterCategory = ref('All Categories')
 const searchQuery = ref('')
 const totalItems = ref(0)
 
-// Rule categories from RuleCategory enum (lowercase to match backend)
-const categories = [
-  'All Categories',
-  'ipv4_addr',
-  'mac_addr',
-  'username',
-  'domain',
-  'phone_num'
-]
 
 // Fetch rules with pagination, sorting, and filtering
 const fetchRules = async () => {
@@ -84,6 +76,7 @@ const fetchRules = async () => {
     }
     // Only include category if valid (not 'All Categories' or empty)
     if (filterCategory.value && filterCategory.value !== 'All Categories') {
+      // Convert uppercase category to lowercase enum value
       params.category = filterCategory.value.toLowerCase()
     }
     // Add search query if provided
@@ -128,7 +121,14 @@ const changePage = (page) => {
   }
 }
 
-// Watch filter changes
+// Watch for modal opening to fetch rules
+watch(() => props.open, (isOpen) => {
+  if (isOpen) {
+    fetchRules()
+  }
+})
+
+// Watch category filter changes
 watch(filterCategory, () => {
   currentPage.value = 1
   fetchRules()
@@ -146,8 +146,12 @@ watch(searchQuery, () => {
   }, 300) // 300ms debounce
 })
 
-// Initial fetch
-fetchRules()
+// Fetch rules on component mount
+onMounted(() => {
+  if (props.open) {
+    fetchRules()
+  }
+})
 
 const getPatternFromConfig = (config) => config?.pattern || config?.type || 'N/A'
 const getPatcherFromConfig = (config) => config?.patcher_cfg?.type || 'replace'
@@ -172,6 +176,7 @@ const handleDeleteConfirm = async () => {
     loading.value = false
   }
 }
+
 </script>
 
 <template>
@@ -199,11 +204,13 @@ const handleDeleteConfirm = async () => {
             <div class="flex items-center space-x-4">
               <p class="text-sm text-gray-500">Create and manage custom rules for your presets.</p>
             </div>
-            <AppButton @click="$emit('open-rule-form')" variant="primary"
-              class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <PlusIcon class="h-5 w-5 mr-2" />
-              Add Rule
-            </AppButton>
+            <div class="flex space-x-3">
+              <AppButton @click="$emit('open-rule-form')" variant="primary"
+                class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <PlusIcon class="h-5 w-5 mr-2" />
+                Add Rule
+              </AppButton>
+            </div>
           </div>
           <div class="mt-4 flex items-end space-x-4">
             <div class="flex-1">
@@ -306,6 +313,7 @@ const handleDeleteConfirm = async () => {
         </DialogPanel>
       </div>
     </div>
+    
   </Dialog>
 </template>
 

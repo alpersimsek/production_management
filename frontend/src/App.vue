@@ -21,12 +21,15 @@ global authentication state and routing for the GDPR compliance tool.
 -->
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
+import { globalErrorHandler } from './composables/useErrorHandler'
+import ErrorModal from './components/ErrorModal.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const { error, showErrorModal, handleRetry, handleDismiss, handleCancel } = globalErrorHandler
 
 let tokenCheckInterval = null
 
@@ -54,6 +57,20 @@ onUnmounted(() => {
 
 <template>
   <RouterView />
+  
+  <!-- Global Error Modal -->
+  <ErrorModal 
+    :open="showErrorModal" 
+    :error="error"
+    :show-retry="!!error.retryAction"
+    :retry-action="error.retryAction"
+    :show-cancel="!!error.cancelAction"
+    :cancel-action="error.cancelAction"
+    @close="globalErrorHandler.clearError"
+    @retry="handleRetry"
+    @dismiss="handleDismiss"
+    @cancel="handleCancel"
+  />
 </template>
 
 <style></style>
