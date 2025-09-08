@@ -1186,35 +1186,46 @@ class FileService(BaseService[File]):
                     "product_id": product_id,
                     "total_files": len(file_objs),
                     "files_with_header_match": 0,
-                    "action": "No header matches found - using ALL presets under product"
+                    "action": "No header matches found - combining all preset rules into single processing task"
                 })
                 
-                # When no header match found, use ALL presets under the product
-                # This means each file will be processed with all presets
-                file_preset_map = {}
-                for file_obj in file_objs:
-                    # Assign all presets to each file (they will be processed with all presets)
-                    file_preset_map[file_obj.id] = product_presets
             
             # Create task configurations - use same structure as make_task_config
             tasks_configs = []
             
-            # Handle the case where no header match was found (all presets for each file)
+            # Handle the case where no header match was found (combine all preset rules)
             if not any_header_match:
-                # Create separate task config for each preset
+                # Combine all rules from all presets into a single task configuration
+                # This prevents duplicate file processing
+                combined_rules = []
+                preset_id = "combined"  # Use a single preset ID for combined rules
+                
                 for preset in product_presets:
-                    preset_id = str(preset.id)
                     preset_rules = [self.get_rule_config(pr) for pr in preset.rules]
-                    
-                    # All files will be processed with this preset
-                    group_files = {}
-                    for file_obj in file_objs:
-                        group_files[file_obj.id] = preset_id
-                    
-                    tasks_configs.append({
-                        "files": group_files, 
-                        "rules_configs": {preset_id: preset_rules}
+                    combined_rules.extend(preset_rules)
+                    logger.info({
+                        "event": "preset_rules_combined",
+                        "preset_id": preset.id,
+                        "preset_name": preset.name,
+                        "rules_count": len(preset_rules)
                     })
+                
+                # Create single task configuration with all files and combined rules
+                group_files = {}
+                for file_obj in file_objs:
+                    group_files[file_obj.id] = preset_id
+                
+                tasks_configs.append({
+                    "files": group_files, 
+                    "rules_configs": {preset_id: combined_rules}
+                })
+                
+                logger.info({
+                    "event": "combined_rules_created",
+                    "total_presets": len(product_presets),
+                    "total_combined_rules": len(combined_rules),
+                    "files_count": len(file_objs)
+                })
             else:
                 # Normal processing - files have specific preset assignments
                 files = {}

@@ -61,8 +61,7 @@ const currentPage = ref(1)
 const resultsPerPage = ref(20)
 const sortOptions = ref([
   { value: 'created_at:desc', label: 'Newest first' },
-  { value: 'created_at:asc', label: 'Oldest first' },
-  { value: 'relevance:desc', label: 'Most relevant' }
+  { value: 'created_at:asc', label: 'Oldest first' }
 ])
 const currentSort = ref('created_at:desc')
 
@@ -166,9 +165,8 @@ const sortTable = (column) => {
     tableSortDirection.value = 'desc'
   }
 
-  // Update current sort parameter for API
+  // Update current sort parameter for API (this will trigger the watcher)
   currentSort.value = `${column}:${tableSortDirection.value}`
-  loadData(true)
 }
 
 // Get sort icon for a column
@@ -194,6 +192,15 @@ watch(searchQuery, () => {
 
 // Watch for filter or sort changes
 watch(selectedCategory, () => {
+  loadData(true)
+})
+
+// Watch for sort changes
+watch(currentSort, (newSort) => {
+  // Sync table sort state with dropdown sort
+  const [column, direction] = newSort.split(':')
+  tableSortColumn.value = column
+  tableSortDirection.value = direction
   loadData(true)
 })
 
