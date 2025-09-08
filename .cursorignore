@@ -1,10 +1,3 @@
-**/.cursor
-**/settings.json
-frontend/package-lock.json
-frontend/package-lock.json
-.gitignore
-backend/app/logs/gdpr.log.*
-
 # Python cache files
 __pycache__/
 *.py[cod]
@@ -26,3 +19,27 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Virtual environment
+backend/.venv/
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Node modules (if any)
+node_modules/
