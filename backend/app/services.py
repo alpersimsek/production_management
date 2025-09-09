@@ -1196,18 +1196,27 @@ class FileService(BaseService[File]):
             # Handle the case where no header match was found (combine all preset rules)
             if not any_header_match:
                 # Combine all rules from all presets into a single task configuration
-                # This prevents duplicate file processing
+                # This prevents duplicate file processing and duplicate rules
                 combined_rules = []
+                seen_rule_ids = set()  # Track rule IDs to avoid duplicates
                 preset_id = "combined"  # Use a single preset ID for combined rules
                 
                 for preset in product_presets:
-                    preset_rules = [self.get_rule_config(pr) for pr in preset.rules]
-                    combined_rules.extend(preset_rules)
+                    preset_rules = []
+                    for pr in preset.rules:
+                        rule_id = pr.rule.id
+                        if rule_id not in seen_rule_ids:
+                            rule_config = self.get_rule_config(pr)
+                            combined_rules.append(rule_config)
+                            preset_rules.append(rule_config)
+                            seen_rule_ids.add(rule_id)
+                    
                     logger.info({
                         "event": "preset_rules_combined",
                         "preset_id": preset.id,
                         "preset_name": preset.name,
-                        "rules_count": len(preset_rules)
+                        "rules_count": len(preset_rules),
+                        "unique_rules_added": len(preset_rules)
                     })
                 
                 # Create single task configuration with all files and combined rules
@@ -1224,6 +1233,7 @@ class FileService(BaseService[File]):
                     "event": "combined_rules_created",
                     "total_presets": len(product_presets),
                     "total_combined_rules": len(combined_rules),
+                    "unique_rule_ids": len(seen_rule_ids),
                     "files_count": len(file_objs)
                 })
             else:
