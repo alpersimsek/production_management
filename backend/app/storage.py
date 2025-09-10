@@ -194,13 +194,6 @@ class FileStorage(BaseStorage):
         try:
             mime = magic.from_file(str(path), mime=True)
             magic_sig = magic.from_file(str(path))
-            logger.debug({
-                "event": "get_type",
-                "file_id": file_id,
-                "path": str(path),
-                "mime_type": mime,
-                "magic_signature": magic_sig
-            })
         except Exception as e:
             logger.error({
                 "event": "get_type_failed",
@@ -735,13 +728,6 @@ class FileStorage(BaseStorage):
                         )
                         archive_info.append(info)
                     reader.close()
-                logger.debug({
-                    "event": "avro_unpack_success",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "record_count": len(archive_info),
-                    "nesting_level": nesting_level
-                })
             except Exception as e:
                 logger.warning({
                     "event": "avro_unpack_error",
@@ -775,13 +761,6 @@ class FileStorage(BaseStorage):
                     try:
                         new_files = self._unpack_file(f_info.fid, f_type, f_info.fname, nesting_level)
                         if new_files:
-                            logger.debug({
-                                "event": "archive_extracted",
-                                "file_id": f_info.fid,
-                                "filename": f_info.fname,
-                                "extracted_count": len(new_files),
-                                "nesting_level": nesting_level
-                            })
                             # Recursively unpack nested archives
                             for new_file in new_files:
                                 if self.get_type(new_file.fid) in self.ARCHIVE_TYPES:
@@ -798,20 +777,8 @@ class FileStorage(BaseStorage):
                         })
                         continue
         except GeneratorExit:
-            logger.debug({
-                "event": "unpack_cleanup",
-                "file_id": file_id,
-                "remaining_files": [f.fname for f in files],
-                "nesting_level": nesting_level
-            })
             for f_info in files:
                 self.delete(f_info.fid)
-                logger.debug({
-                    "event": "file_deleted",
-                    "file_id": f_info.fid,
-                    "filename": f_info.fname,
-                    "nesting_level": nesting_level
-                })
 
     def repack(self, file: File):
         if not file.archive_files:
@@ -932,8 +899,4 @@ class FileStorage(BaseStorage):
         try:
             file_path.unlink()
         except FileNotFoundError:
-            logger.debug({
-                "event": "delete_skipped",
-                "file_id": file_id,
-                "error": f"File already deleted: {file_path}"
-            })
+            pass  # File already deleted

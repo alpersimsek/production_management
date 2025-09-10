@@ -74,13 +74,6 @@ class BaseProcessor(abc.ABC):
         for matcher in self.matchers:
             try:
                 matches = list(matcher.search_iter(data))
-                logger.debug(
-                    {
-                        "event": "matcher_processed",
-                        "matcher": matcher.__class__.__name__,
-                        "match_count": sum(len(line_matches) for line_matches in matches),
-                    }
-                )
                 result.append(matches)
             except Exception as e:
                 logger.warning(
@@ -103,15 +96,6 @@ class BaseProcessor(abc.ABC):
                         match_interval = (match.start, match.end)
                         for detected_interval in detected_intervals:
                             if self.get_overlap(match_interval, detected_interval) > 0:
-                                logger.debug(
-                                    {
-                                        "event": "match_overlapped",
-                                        "matcher": rule_matches.__class__.__name__ if rule_matches else "unknown",
-                                        "word": match.word,
-                                        "start": match.start,
-                                        "end": match.end,
-                                    }
-                                )
                                 break
                         else:
                             detected_intervals.append(match_interval)
@@ -223,21 +207,15 @@ class PcapProcessor(BaseProcessor):
             for pkt in packets:
                 try:
                     packet_count += 1
-                    # Outline packet layers
-                    layers = []
-                    current = pkt
-                    while current:
-                        layers.append(current.name)
-                        current = current.payload
-                    logger.debug(
-                        {
-                            "event": "packet_layers",
+                    
+                    # Log progress every 1000 packets
+                    if packet_count % 1000 == 0:
+                        logger.info({
+                            "event": "pcap_progress",
                             "packet_count": packet_count,
-                            "layers": layers,
-                            "timestamp": pkt.time,
-                        },
-                        extra={"context": {"packet_count": packet_count}}
-                    )
+                            "total_packets": len(packets),
+                            "progress_percent": round((packet_count / len(packets)) * 100, 1)
+                        })
 
                     # Mask Ethernet layer MAC addresses
                     if pkt.haslayer(Ether):
@@ -245,25 +223,8 @@ class PcapProcessor(BaseProcessor):
                         src_mac = ether.src
                         dst_mac = ether.dst
                         mac_matches = []
-                        mac_matcher_configs = []
                         for matcher in self.matchers:
                             if isinstance(matcher, RegexpMatcher):
-                                matcher_config = {
-                                    "type": matcher.__class__.__name__,
-                                    "pattern": matcher.pattern.pattern,
-                                    "patcher_category": matcher.patcher.category.value if hasattr(matcher.patcher, 'category') else None
-                                }
-                                mac_matcher_configs.append(matcher_config)
-                                logger.debug(
-                                    {
-                                        "event": "mac_matcher_check",
-                                        "packet_count": packet_count,
-                                        "src_mac": src_mac,
-                                        "dst_mac": dst_mac,
-                                        "matcher_config": matcher_config,
-                                    },
-                                    extra={"context": {"packet_count": packet_count}}
-                                )
                                 if matcher.pattern.match(src_mac):
                                     mac_matches.append(Match(
                                         start=0, end=len(src_mac), word=src_mac,
@@ -274,17 +235,6 @@ class PcapProcessor(BaseProcessor):
                                         start=0, end=len(dst_mac), word=dst_mac,
                                         patcher=matcher.patcher
                                     ))
-                        if not mac_matches:
-                            logger.debug(
-                                {
-                                    "event": "no_mac_matches",
-                                    "packet_count": packet_count,
-                                    "src_mac": src_mac,
-                                    "dst_mac": dst_mac,
-                                    "matcher_configs": mac_matcher_configs,
-                                },
-                                extra={"context": {"packet_count": packet_count}}
-                            )
                         for match in mac_matches:
                             masked_mac = match.process()
                             if match.word == src_mac:
@@ -311,14 +261,6 @@ class PcapProcessor(BaseProcessor):
                                     },
                                     extra={"context": {"packet_count": packet_count}}
                                 )
-                    else:
-                        logger.debug(
-                            {
-                                "event": "no_ether_layer",
-                                "packet_count": packet_count,
-                            },
-                            extra={"context": {"packet_count": packet_count}}
-                        )
 
                     # Mask IP layer addresses
                     if pkt.haslayer(IP):
@@ -326,25 +268,8 @@ class PcapProcessor(BaseProcessor):
                         src_ip = ip.src
                         dst_ip = ip.dst
                         ip_matches = []
-                        ip_matcher_configs = []
                         for matcher in self.matchers:
                             if isinstance(matcher, RegexpMatcher):
-                                matcher_config = {
-                                    "type": matcher.__class__.__name__,
-                                    "pattern": matcher.pattern.pattern,
-                                    "patcher_category": matcher.patcher.category.value if hasattr(matcher.patcher, 'category') else None
-                                }
-                                ip_matcher_configs.append(matcher_config)
-                                logger.debug(
-                                    {
-                                        "event": "ip_matcher_check",
-                                        "packet_count": packet_count,
-                                        "src_ip": src_ip,
-                                        "dst_ip": dst_ip,
-                                        "matcher_config": matcher_config,
-                                    },
-                                    extra={"context": {"packet_count": packet_count}}
-                                )
                                 if matcher.pattern.match(src_ip):
                                     ip_matches.append(Match(
                                         start=0, end=len(src_ip), word=src_ip,
@@ -355,17 +280,6 @@ class PcapProcessor(BaseProcessor):
                                         start=0, end=len(dst_ip), word=dst_ip,
                                         patcher=matcher.patcher
                                     ))
-                        if not ip_matches:
-                            logger.debug(
-                                {
-                                    "event": "no_ip_matches",
-                                    "packet_count": packet_count,
-                                    "src_ip": src_ip,
-                                    "dst_ip": dst_ip,
-                                    "matcher_configs": ip_matcher_configs,
-                                },
-                                extra={"context": {"packet_count": packet_count}}
-                            )
                         for match in ip_matches:
                             masked_ip = match.process()
                             if match.word == src_ip:
@@ -392,38 +306,18 @@ class PcapProcessor(BaseProcessor):
                                     },
                                     extra={"context": {"packet_count": packet_count}}
                                 )
-                    else:
-                        logger.debug(
-                            {
-                                "event": "no_ip_layer",
-                                "packet_count": packet_count,
-                            },
-                            extra={"context": {"packet_count": packet_count}}
-                        )
 
                     # Extract and mask payload as text
                     payload = None
                     if pkt.haslayer(Raw):
                         try:
                             payload = pkt[Raw].load.decode('utf-8', errors='ignore')
-                            logger.debug(
-                                {
-                                    "event": "payload_extracted",
-                                    "packet_count": packet_count,
-                                    "payload_length": len(payload),
-                                    "payload_preview": payload[:50],
-                                },
-                                extra={"context": {"packet_count": packet_count}}
-                            )
                         except Exception as ex:
-                            logger.warning(
-                                {
-                                    "event": "payload_decode_warning",
-                                    "packet_count": packet_count,
-                                    "error": f"Cannot decode payload: {str(ex)}",
-                                },
-                                extra={"context": {"packet_count": packet_count}}
-                            )
+                            logger.warning({
+                                "event": "payload_decode_warning",
+                                "packet_count": packet_count,
+                                "error": f"Cannot decode payload: {str(ex)}",
+                            })
                             payload = None
 
                     if payload:
@@ -431,15 +325,6 @@ class PcapProcessor(BaseProcessor):
                         if chunk_matches[0]:
                             masked_payload = self.process(payload, chunk_matches[0])
                             pkt[Raw].load = masked_payload.encode('utf-8')
-                            logger.debug(
-                                {
-                                    "event": "payload_masked",
-                                    "packet_count": packet_count,
-                                    "original_length": len(payload),
-                                    "masked_length": len(masked_payload),
-                                },
-                                extra={"context": {"packet_count": packet_count}}
-                            )
 
                     # Recalculate checksums if modified
                     if pkt.haslayer(IP):
@@ -451,14 +336,6 @@ class PcapProcessor(BaseProcessor):
                         pkt = pkt.__class__(bytes(pkt))
 
                     modified_packets.append(pkt)
-                    logger.debug(
-                        {
-                            "event": "packet_processed",
-                            "packet_count": packet_count,
-                            "packet_length": len(pkt),
-                        },
-                        extra={"context": {"packet_count": packet_count}}
-                    )
                 except Exception as ex:
                     skipped_packets += 1
                     logger.warning(
@@ -478,6 +355,7 @@ class PcapProcessor(BaseProcessor):
                     "event": "pcap_processing_summary",
                     "total_packets": packet_count,
                     "skipped_packets": skipped_packets,
+                    "success_rate": round(((packet_count - skipped_packets) / packet_count) * 100, 1) if packet_count > 0 else 0,
                     "output_file": output_path,
                 },
                 extra={"context": {"file": str(data)}}

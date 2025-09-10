@@ -111,15 +111,6 @@ class RegexpMatcher(BaseMatcher):
         exception_patterns = settings.EXCEPTION_PATTERNS[category_name]
         for exception_pattern in exception_patterns:
             if re.match(exception_pattern, word, re.IGNORECASE):
-                logger.debug(
-                    {
-                        "event": "exception_match_found",
-                        "matcher": self.__class__.__name__,
-                        "category": category_name,
-                        "word": word,
-                        "exception_pattern": exception_pattern,
-                    }
-                )
                 return True
         
         return False
@@ -205,16 +196,6 @@ class RegexpMatcher(BaseMatcher):
                     
                     # Validate the match
                     if not self._validate_match(match, group_index, word):
-                        logger.debug(
-                            {
-                                "event": "match_skipped",
-                                "matcher": self.__class__.__name__,
-                                "reason": "invalid_match",
-                                "word": word,
-                                "start": match.start(),
-                                "end": match.end(),
-                            }
-                        )
                         continue
                     
                     # Get the span for the specific group
@@ -227,19 +208,6 @@ class RegexpMatcher(BaseMatcher):
                     match_obj = self.make_match(start=start, end=end, word=word)
                     matches.append(match_obj)
                     
-                    logger.debug(
-                        {
-                            "event": "match_found",
-                            "matcher": self.__class__.__name__,
-                            "line_preview": line[:50],
-                            "word": word,
-                            "start": start,
-                            "end": end,
-                            "group_index": group_index,
-                            "full_match": match.group(0),
-                            "all_groups": [match.group(i) for i in range(match.lastindex + 1)] if match.lastindex else [match.group(0)],
-                        }
-                    )
                     
                 except Exception as e:
                     logger.warning(

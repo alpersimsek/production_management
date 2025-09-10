@@ -75,64 +75,27 @@ class ReplacePatcher(BasePatcher):
         if self.category == RuleCategory.IPV4_ADDR:
             network = random.choice(self._ip_ranges)
             masked_value = str(ipaddress.IPv4Address(network.network_address + count))
-            logger.debug({
-                "event": "ip_generation",
-                "original": original,
-                "network": str(network),
-                "count": count,
-                "generated": masked_value
-            })
             return masked_value
 
         if self.category == RuleCategory.MAC_ADDR:
             masked_value = f"00:00:00:00:{count//256:02x}:{count%256:02x}"
-            logger.debug({
-                "event": "mac_generation",
-                "original": original,
-                "count": count,
-                "generated": masked_value
-            })
             return masked_value
 
         if self.category == RuleCategory.USERNAME:
             masked_value = f"user{count}"
-            logger.debug({
-                "event": "username_generation",
-                "original": original,
-                "count": count,
-                "generated": masked_value
-            })
             return masked_value
 
         if self.category == RuleCategory.DOMAIN:
             masked_value = f"domain{count}.com"
-            logger.debug({
-                "event": "domain_generation",
-                "original": original,
-                "count": count,
-                "generated": masked_value
-            })
             return masked_value
 
         if self.category == RuleCategory.PHONE_NUM:
             masked_value = f"+0{count:010d}"
-            logger.debug({
-                "event": "phone_generation",
-                "original": original,
-                "count": count,
-                "generated": masked_value
-            })
             return masked_value
 
         # Default fallback: Generate a random alphanumeric string of same length
         chars = string.ascii_lowercase + string.digits
         masked_value = ''.join(random.choices(chars, k=len(original)))
-        logger.debug({
-            "event": "fallback_generation",
-            "original": original,
-            "length": len(original),
-            "generated": masked_value
-        })
         return masked_value
 
     def _patch(self, match: str) -> str:

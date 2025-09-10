@@ -75,8 +75,11 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
 TOKEN_EXPIRE_MINUTES = 720  # 12 hours
 SIGNED_URL_EXPIRY_MINUTES = 5  # 5 minutes
 MAX_USER_FILES = 200
-REPORT_STEP = 100_000  # 100 KB
+REPORT_STEP = 1_000_000  # 1 MB (reduced logging frequency)
 USER_STORAGE_LIMIT = 10 * 1204**3  # 10 GB
+
+# Logging Configuration
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 '''

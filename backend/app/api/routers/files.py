@@ -47,6 +47,7 @@ from api.schemas import FileResponse
 import settings
 from typing import Dict, Optional
 from database.models import Role
+from logger import logger
 
 router = APIRouter()
 
@@ -80,10 +81,25 @@ class FilesRouter(APIRouter):
                 )
 
             file_obj = file_service.save_file(file)
+            
+            # Log successful upload
+            logger.info({
+                "event": "file_uploaded",
+                "filename": file.filename,
+                "file_size": file_obj.file_size,
+                "file_type": file_obj.content_type.value,
+                "username": user.username
+            })
+            
             return FileResponse.model_validate(file_obj)
         except HTTPException as ex:
             raise ex
         except Exception as ex:
+            logger.error({
+                "event": "file_upload_failed",
+                "filename": file.filename if file else "unknown",
+                "error": str(ex)
+            })
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )
@@ -104,8 +120,41 @@ class FilesRouter(APIRouter):
             user = req.state.user
             session = req.state.db
             file_service = FileService(session, user, self.storage)
+            
+            # Get file info before deletion for logging
+            file_obj = file_service.get_by_id(file_id)
+            if not file_obj:
+                logger.warning({
+                    "event": "file_delete_failed",
+                    "filename": f"file_id_{file_id}",
+                    "username": user.username,
+                    "reason": "file_not_found"
+                })
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, 
+                    detail="File not found"
+                )
+            
             file_service.delete_file(file_id)
+            
+            # Log successful deletion
+            logger.info({
+                "event": "file_deleted",
+                "filename": file_obj.filename,
+                "file_size": file_obj.file_size,
+                "file_type": file_obj.content_type.value,
+                "username": user.username
+            })
+            
+        except HTTPException as ex:
+            raise ex
         except Exception as ex:
+            logger.error({
+                "event": "file_delete_failed",
+                "filename": f"file_id_{file_id}",
+                "username": user.username,
+                "error": str(ex)
+            })
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )
@@ -176,6 +225,15 @@ class FilesRouter(APIRouter):
 
             # Encode filename properly for download
             filename = urllib.parse.quote(file_obj.filename)
+            
+            # Log successful download
+            logger.info({
+                "event": "file_downloaded",
+                "filename": file_obj.filename,
+                "file_size": file_obj.file_size,
+                "file_type": file_obj.content_type.value,
+                "username": payload.get("username", "unknown")
+            })
 
             return StreamingResponse(
                 file_stream,
@@ -188,6 +246,11 @@ class FilesRouter(APIRouter):
         except HTTPException as ex:
             raise ex
         except Exception as ex:
+            logger.error({
+                "event": "file_download_failed",
+                "filename": f"file_id_{file_id}",
+                "error": str(ex)
+            })
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )
@@ -208,19 +271,35 @@ class FilesRouter(APIRouter):
                 )
 
             token = file_service.create_token(
-                data={"file_id": file_id, "sub": "file_download"},
+                data={"file_id": file_id, "sub": "file_download", "username": user.username},
                 expires_delta=settings.SIGNED_URL_EXPIRY_MINUTES,
             )
 
             # Build the signed URL with JWT token
             base_url = str(req.base_url).rstrip("/")
             signed_url = f"{base_url}/api/v1/files/download/{file_id}?token={token}"
+            
+            # Log download URL generation
+            logger.info({
+                "event": "download_url_generated",
+                "filename": file_obj.filename,
+                "file_size": file_obj.file_size,
+                "file_type": file_obj.content_type.value,
+                "username": user.username,
+                "expires_in_minutes": settings.SIGNED_URL_EXPIRY_MINUTES
+            })
 
             return {"signedUrl": signed_url}
 
         except HTTPException as ex:
             raise ex
         except Exception as ex:
+            logger.error({
+                "event": "download_url_generation_failed",
+                "filename": f"file_id_{file_id}",
+                "username": user.username if user else "unknown",
+                "error": str(ex)
+            })
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )
@@ -241,6 +320,11 @@ class FilesRouter(APIRouter):
                 
             return {"detail": f"Processing {file.filename} completed"}
         except Exception as ex:
+            logger.error({
+                "event": "file_processing_failed",
+                "file_id": file_id,
+                "error": str(ex)
+            })
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )

@@ -61,7 +61,6 @@ def run_migrations():
 
 def init_db():
     db_session = Session()
-    logger.debug("Database session opened")
     try:
         # Run migrations
         run_migrations()
@@ -81,5 +80,4 @@ def init_db():
         raise e
     finally:
         db_session.close()
-        logger.debug("Database connection closed")
 

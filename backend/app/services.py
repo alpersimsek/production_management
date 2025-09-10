@@ -316,9 +316,12 @@ class FileService(BaseService[File]):
                 src = self.storage.get(file_id)
                 encoding_res = from_path(src).best()
                 if not encoding_res:
+                    # Get file object for filename
+                    file_obj = self.get_by_id(file_id)
+                    filename = file_obj.filename if file_obj else file_id
                     logger.error({
                         "event": "encoding_detection_failed",
-                        "file_id": file_id,
+                        "filename": filename,
                         "error": "Cannot detect file encoding",
                     })
                     return None
@@ -327,12 +330,7 @@ class FileService(BaseService[File]):
                 with src.open("r", encoding=encoding) as file:
                     header = file.readline().strip()
                 
-                logger.debug({
-                    "event": "file_header_read",
-                    "file_id": file_id,
-                    "file_type": file_type,
-                    "header": header,
-                })
+                # File header read - removed verbose logging
 
                 if file_type not in self.preset_cache:
                     presets = self.session.query(Preset).filter(
@@ -351,17 +349,23 @@ class FileService(BaseService[File]):
                     default_preset = self.preset_cache[file_type]['default']
 
                 if not presets:
+                    # Get file object for filename
+                    file_obj = self.get_by_id(file_id)
+                    filename = file_obj.filename if file_obj else file_id
                     logger.warning({
                         "event": "no_presets_available",
-                        "file_id": file_id,
+                        "filename": filename,
                         "file_type": file_type,
                     })
                     return None
 
                 if not default_preset:
+                    # Get file object for filename
+                    file_obj = self.get_by_id(file_id)
+                    filename = file_obj.filename if file_obj else file_id
                     logger.warning({
                         "event": "no_default_preset",
-                        "file_id": file_id,
+                        "filename": filename,
                         "file_type": file_type,
                     })
                     return None
@@ -370,9 +374,12 @@ class FileService(BaseService[File]):
                     if preset.header == "":
                         continue
                     if self.header_matcher.match_header(header, preset.header):
+                        # Get file object for filename
+                        file_obj = self.get_by_id(file_id)
+                        filename = file_obj.filename if file_obj else file_id
                         logger.info({
                             "event": "preset_matched",
-                            "file_id": file_id,
+                            "filename": filename,
                             "file_type": file_type,
                             "file_header": header,
                             "preset_id": str(preset.id),
@@ -381,9 +388,12 @@ class FileService(BaseService[File]):
                         })
                         return preset
 
+                # Get file object for filename
+                file_obj = self.get_by_id(file_id)
+                filename = file_obj.filename if file_obj else file_id
                 logger.info({
                     "event": "default_preset_assigned",
-                    "file_id": file_id,
+                    "filename": filename,
                     "file_type": file_type,
                     "file_header": header,
                     "preset_id": str(default_preset.id),
@@ -393,9 +403,12 @@ class FileService(BaseService[File]):
                 return default_preset
 
             except Exception as ex:
+                # Get file object for filename
+                file_obj = self.get_by_id(file_id)
+                filename = file_obj.filename if file_obj else file_id
                 logger.error({
                     "event": "preset_assignment_failed",
-                    "file_id": file_id,
+                    "filename": filename,
                     "file_type": file_type,
                     "error": str(ex),
                 })
@@ -409,12 +422,7 @@ class FileService(BaseService[File]):
                     magic_bytes = file.read(4)
                     magic_hex = magic_bytes.hex()
                 
-                logger.debug({
-                    "event": "pcap_header_read",
-                    "file_id": file_id,
-                    "file_type": file_type,
-                    "magic_hex": magic_hex,
-                })
+                # PCAP header read - removed verbose logging
                 
                 # Check if it's a valid PCAP file (multiple formats supported)
                 valid_pcap_magics = [
@@ -427,9 +435,12 @@ class FileService(BaseService[File]):
                     # Valid PCAP file - find PCAP preset
                     preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
                     if preset:
+                        # Get file object for filename
+                        file_obj = self.get_by_id(file_id)
+                        filename = file_obj.filename if file_obj else file_id
                         logger.info({
                             "event": "pcap_preset_assigned",
-                            "file_id": file_id,
+                            "filename": filename,
                             "file_type": file_type,
                             "preset_id": str(preset.id),
                             "preset_name": preset.name,
@@ -438,17 +449,23 @@ class FileService(BaseService[File]):
                         })
                         return preset
                     else:
+                        # Get file object for filename
+                        file_obj = self.get_by_id(file_id)
+                        filename = file_obj.filename if file_obj else file_id
                         logger.warning({
                             "event": "pcap_preset_not_found",
-                            "file_id": file_id,
+                            "filename": filename,
                             "file_type": file_type,
                         })
                         return None
                 else:
                     # Not a valid PCAP file
+                    # Get file object for filename
+                    file_obj = self.get_by_id(file_id)
+                    filename = file_obj.filename if file_obj else file_id
                     logger.warning({
                         "event": "invalid_pcap_file",
-                        "file_id": file_id,
+                        "filename": filename,
                         "file_type": file_type,
                         "magic_hex": magic_hex,
                         "expected": valid_pcap_magics,
@@ -456,20 +473,19 @@ class FileService(BaseService[File]):
                     return None
                     
             except Exception as ex:
+                # Get file object for filename
+                file_obj = self.get_by_id(file_id)
+                filename = file_obj.filename if file_obj else file_id
                 logger.error({
                     "event": "pcap_header_read_failed",
-                    "file_id": file_id,
+                    "filename": filename,
                     "file_type": file_type,
                     "error": str(ex),
                 })
                 return None
 
         else:
-            logger.debug({
-                "event": "preset_assignment_skipped",
-                "file_id": file_id,
-                "file_type": file_type,
-            })
+            # Skip preset assignment for unsupported file types
             return None
 
     def save_file(self, file: UploadFile) -> File:
@@ -620,7 +636,6 @@ class FileService(BaseService[File]):
 
         logger.info({
             "event": "process_started",
-            "file_id": file_id,
             "filename": file.filename,
             "content_type": file.content_type.value,
         })
@@ -637,13 +652,6 @@ class FileService(BaseService[File]):
                     file.completed_size = 0
                     file.time_remaining = 0
                     self.session.commit()
-                    logger.debug({
-                        "event": "archive_unpacked",
-                        "file_id": file_id,
-                        "filename": file.filename,
-                        "extracted_size": file.extracted_size,
-                        "file_count": len(files),
-                    })
                 else:
                     logger.info({
                         "event": "archive_empty",
@@ -758,13 +766,6 @@ class FileService(BaseService[File]):
                     file.completed_size = 0
                     file.time_remaining = 0
                     self.session.commit()
-                    logger.debug({
-                        "event": "archive_unpacked",
-                        "file_id": file_id,
-                        "filename": file.filename,
-                        "extracted_size": file.extracted_size,
-                        "file_count": len(files),
-                    })
                 else:
                     logger.info({
                         "event": "archive_empty",
@@ -893,13 +894,6 @@ class FileService(BaseService[File]):
                                     int(remaining / rate) if rate > 0 else 0
                                 )
                         self.session.commit()
-                        logger.debug({
-                            "event": "archive_progress_updated",
-                            "file_id": file_id,
-                            "parent_id": parent.id,
-                            "completed_size": parent.completed_size,
-                            "time_remaining": parent.time_remaining,
-                        })
 
         except Exception as e:
             file_ids = list(files.keys())
@@ -945,7 +939,6 @@ class FileService(BaseService[File]):
         is_capture_file = mime == "application/vnd.tcpdump.pcap"
         logger.info({
             "event": "file_processing_started",
-            "file_id": file_id,
             "filename": file_obj.filename,
             "content_type": file_type_description,
             "mime_type": mime,
@@ -1000,12 +993,6 @@ class FileService(BaseService[File]):
                                     file_obj.completed_size = done_size
                                     file_obj.time_remaining = time_remain
                                     self.session.commit()
-                                    logger.debug({
-                                        "event": "progress_update",
-                                        "file_id": file_id,
-                                        "completed_size": done_size,
-                                        "time_remaining": time_remain,
-                                    })
                                     report_count += 1
                                     unreported = 0
 
@@ -1017,7 +1004,6 @@ class FileService(BaseService[File]):
                         if len(item) != 3:
                             logger.error({
                                 "event": "invalid_packet_tuple",
-                                "file_id": file_id,
                                 "filename": file_obj.filename,
                                 "tuple": str(item),
                                 "expected": "(ts, output_path, linktype)",
@@ -1301,12 +1287,7 @@ class FileService(BaseService[File]):
                 with src.open("r", encoding=encoding) as file:
                     header = file.readline().strip()
                 
-                logger.debug({
-                    "event": "file_header_read",
-                    "file_id": file_obj.id,
-                    "filename": file_obj.filename,
-                    "header": header,
-                })
+                # File header read - removed verbose logging
 
                 # Try to match header with product presets
                 for preset in product_presets:
@@ -1322,13 +1303,6 @@ class FileService(BaseService[File]):
                         return preset
                 
                 # No header match found
-                logger.debug({
-                    "event": "no_header_match",
-                    "file_id": file_obj.id,
-                    "filename": file_obj.filename,
-                    "header": header,
-                    "available_headers": [p.header for p in product_presets if p.header]
-                })
                 return None
 
             elif file_obj.content_type == ContentType.PCAP:
@@ -1346,11 +1320,6 @@ class FileService(BaseService[File]):
 
             else:
                 # For other file types, return the first preset
-                logger.debug({
-                    "event": "default_preset_for_file_type",
-                    "file_id": file_obj.id,
-                    "content_type": file_obj.content_type.value
-                })
                 return product_presets[0] if product_presets else None
 
         except Exception as e:

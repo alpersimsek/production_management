@@ -43,6 +43,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from fastapi import HTTPException, status, Depends
 from sqlalchemy.orm import Session
+from logger import logger
 from services import UserService
 from database.session import Session
 from database.models import User, Role
@@ -66,6 +67,11 @@ class DBSessionMiddleware(BaseHTTPMiddleware):
 
         except Exception as e:
             # Rollback the session if an error occurs
+            logger.error({
+                "event": "database_rollback",
+                "error": str(e),
+                "path": request.url.path
+            })
             request.state.db.rollback()
             raise e
         finally:
@@ -94,6 +100,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         header = req.headers.get("Authorization")
         if header is None or not header.startswith("Bearer "):
+            logger.warning({
+                "event": "auth_failed",
+                "reason": "missing_or_invalid_header",
+                "path": req.url.path,
+                "ip": req.client.host if req.client else "unknown"
+            })
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Not Authenticated"
             )
@@ -104,6 +116,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         payload = user_service.validate_token(token)
 
         if not payload:
+            logger.warning({
+                "event": "auth_failed",
+                "reason": "invalid_token",
+                "path": req.url.path,
+                "ip": req.client.host if req.client else "unknown"
+            })
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )

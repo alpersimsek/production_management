@@ -35,10 +35,10 @@ from logger import logger
 
 # Basic logging
 logger.info("Processing started")
-logger.error("Processing failed", extra={"context": {"file_id": "123"}})
+logger.error("Processing failed", extra={"context": {"filename": "data.csv"}})
 
 # With context
-logger.debug("File processed", extra={"context": {"file_id": "123", "size": 1024}})
+logger.debug("File processed", extra={"context": {"filename": "data.csv", "size": 1024}})
 ```
 
 The logger is configured to write to both console and file, with automatic rotation
@@ -47,7 +47,7 @@ and cleanup to ensure efficient log management in production environments.
 
 import logging
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 import glob
 import time
@@ -65,16 +65,16 @@ COLORS = {
 
 class StructuredFormatter(logging.Formatter):
     def format(self, record):
+        # Improved timestamp format: YYYY-MM-DD HH:MM:SS.mmm
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "level": record.levelname,
-            "message": record.getMessage(),
-            "module": record.module,
-            "funcName": record.funcName,
-            "line": record.lineno,
+            timestamp: {
+                record.levelname: record.getMessage(),
+            }
         }
         if hasattr(record, "context"):
-            log_entry.update(record.context)
+            log_entry[timestamp].update(record.context)
         log_message = json.dumps(log_entry)
         color = COLORS.get(record.levelname, '')
         reset = COLORS['RESET']
@@ -82,17 +82,43 @@ class StructuredFormatter(logging.Formatter):
 
 class PlainStructuredFormatter(logging.Formatter):
     def format(self, record):
+        # Improved timestamp format: YYYY-MM-DD HH:MM:SS.mmm
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "level": record.levelname,
-            "message": record.getMessage(),
-            "module": record.module,
-            "funcName": record.funcName,
-            "line": record.lineno,
+            timestamp: {
+                record.levelname: record.getMessage(),
+            }
         }
         if hasattr(record, "context"):
-            log_entry.update(record.context)
+            log_entry[timestamp].update(record.context)
         return json.dumps(log_entry)
+
+class LogFilter(logging.Filter):
+    """Filter to reduce verbose logging during file processing."""
+    
+    def filter(self, record):
+        if not ENABLE_LOG_FILTERING:
+            return True
+            
+        # Always allow ERROR and CRITICAL logs
+        if record.levelno >= logging.ERROR:
+            return True
+            
+        # Check if this is a structured log with event information
+        if hasattr(record, 'context') and isinstance(record.context, dict):
+            event = record.context.get('event')
+            if event in FILTERED_EVENTS:
+                return False
+                
+        # Check if message contains event information (for non-structured logs)
+        message = record.getMessage()
+        if isinstance(message, dict) and 'event' in message:
+            event = message.get('event')
+            if event in FILTERED_EVENTS:
+                return False
+                
+        return True
 
 def cleanup_old_logs(log_dir: str, max_age_days: int = 30):
     """Delete log files older than max_age_days in log_dir."""
@@ -117,12 +143,31 @@ def cleanup_old_logs(log_dir: str, max_age_days: int = 30):
                 "error": str(e),
             })
 
+# Environment-based log level configuration
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_LEVELS = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL
+}
+
+# Log filtering configuration
+ENABLE_LOG_FILTERING = os.getenv("ENABLE_LOG_FILTERING", "true").lower() == "true"
+FILTERED_EVENTS = {
+    "match_found", "match_overlapped", "no_mac_matches", "no_ip_matches",
+    "packet_layers", "mac_matcher_check", "ip_matcher_check", "payload_extracted",
+    "payload_masked", "packet_processed", "matcher_processed"
+}
+
 logger = logging.getLogger("gdpr")
-logger.setLevel(logging.DEBUG)  # Set to DEBUG for detailed logging
+logger.setLevel(LOG_LEVELS.get(LOG_LEVEL, logging.INFO))
 
 # Console handler with colored output
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(StructuredFormatter())
+console_handler.addFilter(LogFilter())
 logger.addHandler(console_handler)
 
 # File handler with rotation at 3MB
@@ -134,6 +179,7 @@ file_handler = RotatingFileHandler(
     backupCount=10,  # Keep up to 10 rotated files
 )
 file_handler.setFormatter(PlainStructuredFormatter())
+file_handler.addFilter(LogFilter())
 logger.addHandler(file_handler)
 
 # Cleanup old logs during initialization
