@@ -34,11 +34,13 @@ GDPR compliance tool administrators with proper security and validation.
 import { ref, onMounted, computed } from 'vue'
 import MainLayout from '../components/MainLayout.vue'
 import ListView from '../components/ListView.vue'
+import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog.vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import AppButton from '../components/AppButton.vue'
 import InputField from '../components/InputField.vue'
 import SelectField from '../components/SelectField.vue'
 import ApiService from '../services/api'
+import { useNotifications } from '../composables/useNotifications'
 import {
   PlusIcon,
   UserIcon,
@@ -59,6 +61,11 @@ const newUser = ref({
   password: '',
   role: 'user'
 })
+const { showUserCreated, showUserDeleted, showSuccess, showError } = useNotifications()
+
+// Delete modal state
+const showDeleteModal = ref(false)
+const deleteUserId = ref(null)
 
 // Load users from the API
 const loadUsers = async () => {
@@ -103,18 +110,29 @@ const handleEditUser = (user) => {
   showAddUserForm.value = true
 }
 
-const handleDeleteUser = async (userId) => {
-  if (confirm('Are you sure you want to delete this user?')) {
-    try {
-      isLoading.value = true
-      await ApiService.deleteUser(userId)
-      await loadUsers() // Refresh the list
-    } catch (err) {
-      console.error('Failed to delete user:', err)
-      error.value = err.message || 'Failed to delete user'
-    } finally {
-      isLoading.value = false
-    }
+const handleDeleteUser = (userId) => {
+  deleteUserId.value = userId
+  showDeleteModal.value = true
+}
+
+const confirmDeleteUser = async () => {
+  try {
+    isLoading.value = true
+    const user = users.value.find(u => u.id === deleteUserId.value)
+    const userName = user?.username || 'Unknown user'
+    
+    await ApiService.deleteUser(deleteUserId.value)
+    await loadUsers() // Refresh the list
+    
+    showUserDeleted(userName)
+  } catch (err) {
+    console.error('Failed to delete user:', err)
+    showError(err.message || 'Failed to delete user', { title: 'Delete Failed' })
+    error.value = err.message || 'Failed to delete user'
+  } finally {
+    isLoading.value = false
+    showDeleteModal.value = false
+    deleteUserId.value = null
   }
 }
 
@@ -125,14 +143,17 @@ const saveUser = async () => {
 
     if (editUser.value) {
       await ApiService.updateUser(editUser.value.id, newUser.value)
+      showSuccess(`User "${newUser.value.username}" updated successfully!`, { title: 'User Updated' })
     } else {
       await ApiService.createUser(newUser.value)
+      showUserCreated(newUser.value.username)
     }
 
     showAddUserForm.value = false
     await loadUsers() // Refresh the list
   } catch (err) {
     console.error('Failed to save user:', err)
+    showError(err.message || 'Failed to save user', { title: 'Save Failed' })
     error.value = err.message || 'Failed to save user'
   } finally {
     isLoading.value = false
@@ -270,6 +291,14 @@ onMounted(() => {
           Policy</a>
       </footer>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmDeleteDialog
+      :open="showDeleteModal"
+      item-type="user"
+      @close="showDeleteModal = false"
+      @confirm="confirmDeleteUser"
+    />
   </MainLayout>
 </template>
 

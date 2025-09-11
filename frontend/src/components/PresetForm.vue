@@ -40,6 +40,7 @@ import { ref, computed, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
+import { useNotifications } from '../composables/useNotifications'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -53,6 +54,7 @@ const emit = defineEmits(['close', 'saved', 'error'])
 const form = ref({ name: '', header: '', productId: null })
 const saving = ref(false)
 const successMessage = ref('')
+const { showPresetCreated, showSuccess } = useNotifications()
 const editing = computed(() => {
   const isEditing = !!props.editPreset && typeof props.editPreset === 'object'
   console.log('PresetForm - editPreset prop:', props.editPreset)
@@ -102,6 +104,14 @@ const savePreset = async () => {
     const response = editing.value
       ? await ApiService.updatePreset(props.editPreset.id, presetData)
       : await ApiService.createPreset(presetData)
+    
+    // Show appropriate notification
+    if (editing.value) {
+      showSuccess(`Preset "${form.value.name}" updated successfully!`, { title: 'Preset Updated' })
+    } else {
+      showPresetCreated(form.value.name)
+    }
+    
     successMessage.value = editing.value ? 'Preset updated successfully' : 'Preset created successfully'
     setTimeout(() => {
       emit('saved', response)

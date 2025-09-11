@@ -54,6 +54,7 @@ from api.schemas import (
 from services import PresetService, RuleService, PresetRuleService
 from database.models import Role
 from typing import List
+from logger import logger
 
 
 class PresetsRouter(APIRouter):
@@ -144,6 +145,16 @@ class PresetsRouter(APIRouter):
                 header=preset_data.header,
             )
             preset = preset_service.create(preset)
+            
+            # Log successful preset creation
+            logger.info({
+                "event": "preset_created",
+                "preset_name": preset.name,
+                "product_name": product.name,
+                "header": preset.header,
+                "username": req.state.user.username
+            })
+            
             return PresetResponse.model_validate(preset)
         except HTTPException:
             raise
@@ -191,6 +202,15 @@ class PresetsRouter(APIRouter):
 
             # Update preset
             preset = preset_service.update(preset, update_data)
+            
+            # Log successful preset update
+            logger.info({
+                "event": "preset_updated",
+                "preset_name": preset.name,
+                "updated_fields": list(update_data.keys()),
+                "username": req.state.user.username
+            })
+            
             return PresetResponse.model_validate(preset)
         except HTTPException:
             raise
@@ -225,6 +245,15 @@ class PresetsRouter(APIRouter):
 
             # Delete preset (this will cascade delete preset rules)
             preset_service.delete(preset_id)
+            
+            # Log successful preset deletion
+            logger.info({
+                "event": "preset_deleted",
+                "preset_name": preset.name,
+                "product_name": preset.product.name if preset.product else "unknown",
+                "username": req.state.user.username
+            })
+            
             return JSONResponse({"detail": "Preset deleted successfully"})
         except HTTPException:
             raise
@@ -301,6 +330,15 @@ class PresetsRouter(APIRouter):
             )
             preset_rule = preset_rule_service.create(preset_rule)
 
+            # Log successful preset rule creation
+            logger.info({
+                "event": "preset_rule_created",
+                "preset_name": preset.name,
+                "rule_name": rule.name,
+                "rule_category": rule.category,
+                "username": req.state.user.username
+            })
+
             # Set rule info in response
             response = PresetRuleResponse.model_validate(preset_rule)
             response.rule = RuleResponse.model_validate(rule)
@@ -349,10 +387,20 @@ class PresetsRouter(APIRouter):
             update_data = {"action": rule_data.action}
             preset_rule = preset_rule_service.update(preset_rule, update_data)
 
-            # Set rule info in response
+            # Get rule info for logging
             rule_service = RuleService(req.state.db)
             rule = rule_service.get_by_id(rule_id)
 
+            # Log successful preset rule update
+            logger.info({
+                "event": "preset_rule_updated",
+                "preset_name": preset.name,
+                "rule_name": rule.name,
+                "rule_category": rule.category,
+                "username": req.state.user.username
+            })
+
+            # Set rule info in response
             response = PresetRuleResponse.model_validate(preset_rule)
             response.rule = RuleResponse.model_validate(rule)
             return response
@@ -393,6 +441,10 @@ class PresetsRouter(APIRouter):
                     detail="Rule is not associated with this preset",
                 )
 
+            # Get rule info for logging before deletion
+            rule_service = RuleService(req.state.db)
+            rule = rule_service.get_by_id(rule_id)
+
             # Delete the preset rule
             # We need to construct a composite key for deletion
             from sqlalchemy import delete
@@ -403,6 +455,15 @@ class PresetsRouter(APIRouter):
             )
             req.state.db.execute(stmt)
             req.state.db.commit()
+
+            # Log successful preset rule deletion
+            logger.info({
+                "event": "preset_rule_deleted",
+                "preset_name": preset.name,
+                "rule_name": rule.name if rule else f"rule_id_{rule_id}",
+                "rule_category": rule.category if rule else "unknown",
+                "username": req.state.user.username
+            })
 
             return JSONResponse({"detail": "Rule removed from preset successfully"})
         except HTTPException:

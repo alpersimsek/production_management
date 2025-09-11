@@ -56,16 +56,9 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear auth and redirect to login
-      // Clear session storage and redirect
-      sessionStorage.removeItem('token')
-      sessionStorage.removeItem('user')
-      
-      // Show user-friendly message
-      if (window.location.pathname !== '/login') {
-        alert('Your session has expired. Please log in again.')
-        window.location.href = '/login'
-      }
+      // Token expired or invalid - let the App.vue handle this with the session expired modal
+      // Don't automatically logout here to avoid conflicts with the new notification system
+      // The App.vue token check will handle showing the session expired modal
     }
     return Promise.reject(error)
   }

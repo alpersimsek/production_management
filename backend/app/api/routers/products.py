@@ -32,6 +32,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from api.schemas import ProductResponse, ProductCreate
 from services import ProductService
 from typing import List
+from logger import logger
 
 
 class ProductsRouter(APIRouter):
@@ -61,6 +62,14 @@ class ProductsRouter(APIRouter):
             from database.models import Product
             new_product = Product(name=product_data.name)
             created_product = product_service.create(new_product)
+            
+            # Log successful product creation
+            logger.info({
+                "event": "product_created",
+                "product_name": created_product.name,
+                "username": req.state.user.username if hasattr(req.state, 'user') and req.state.user else "unknown"
+            })
+            
             return ProductResponse.model_validate(created_product)
         except Exception as e:
             raise HTTPException(

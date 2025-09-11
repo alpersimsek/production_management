@@ -151,6 +151,7 @@ const saveRule = async () => {
     const response = editing.value
       ? await ApiService.updateRule(props.rule.id, ruleData)
       : await ApiService.createRule(ruleData)
+    
     successMessage.value = editing.value ? 'Rule updated successfully' : 'Rule created successfully'
     if (stayOpen.value && !editing.value) {
       form.value = { name: '', category: '', pattern: '' }
@@ -167,8 +168,9 @@ const saveRule = async () => {
       }, 2000)
     }
   } catch (err) {
-    error.value = `Failed to ${editing.value ? 'update' : 'create'} rule: ${err.message || err.data?.detail || 'Unknown error'}`
-    emit('error', error.value)
+    const errorMessage = `Failed to ${editing.value ? 'update' : 'create'} rule: ${err.message || err.data?.detail || 'Unknown error'}`
+    error.value = errorMessage
+    emit('error', errorMessage)
   } finally {
     saving.value = false
   }

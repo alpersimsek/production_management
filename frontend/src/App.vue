@@ -21,15 +21,21 @@ global authentication state and routing for the GDPR compliance tool.
 -->
 
 <script setup>
-import { onMounted, onUnmounted, computed } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
 import { globalErrorHandler } from './composables/useErrorHandler'
+import { globalNotifications } from './composables/useNotifications'
 import ErrorModal from './components/ErrorModal.vue'
+import SessionExpiredModal from './components/SessionExpiredModal.vue'
+import NotificationContainer from './components/NotificationContainer.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const { error, showErrorModal, handleRetry, handleDismiss, handleCancel } = globalErrorHandler
+const { showLoginExpired } = globalNotifications
+
+const showSessionExpiredModal = ref(false)
 
 let tokenCheckInterval = null
 
@@ -40,10 +46,8 @@ onMounted(() => {
   tokenCheckInterval = setInterval(() => {
     if (authStore.isAuthenticated && authStore.isTokenExpired()) {
       console.log('Token expired, logging out user')
-      // Show user-friendly message
-      alert('Your session has expired. Please log in again.')
-      authStore.forceLogout()
-      router.push('/login')
+      // Show styled session expired modal instead of basic alert
+      showSessionExpiredModal.value = true
     }
   }, 60000) // Check every minute
 })
@@ -53,6 +57,19 @@ onUnmounted(() => {
     clearInterval(tokenCheckInterval)
   }
 })
+
+const handleSessionExpiredLogin = () => {
+  authStore.forceLogout()
+  router.push('/login')
+  showSessionExpiredModal.value = false
+}
+
+const handleSessionExpiredClose = () => {
+  showSessionExpiredModal.value = false
+  // Force logout since user cannot communicate with backend
+  authStore.forceLogout()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -71,6 +88,16 @@ onUnmounted(() => {
     @dismiss="handleDismiss"
     @cancel="handleCancel"
   />
+
+  <!-- Session Expired Modal -->
+  <SessionExpiredModal
+    :open="showSessionExpiredModal"
+    @close="handleSessionExpiredClose"
+    @login="handleSessionExpiredLogin"
+  />
+
+  <!-- Notification Container -->
+  <NotificationContainer />
 </template>
 
 <style></style>

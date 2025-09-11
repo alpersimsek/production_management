@@ -51,6 +51,7 @@ from api.schemas import (
     UserDelete,
 )
 from services import UserService
+from logger import logger
 
 
 class UserRouter(APIRouter):
@@ -76,10 +77,25 @@ class UserRouter(APIRouter):
                     "role": user.role.value,
                 }
             )
+            
+            # Log successful login
+            logger.info({
+                "event": "user_login",
+                "username": user.username,
+                "role": user.role.value
+            })
+            
             return TokenResponse(
                 access_token=token, token_type="bearer", role=user.role
             )
         else:
+            # Log failed login attempt
+            logger.warning({
+                "event": "login_failed",
+                "username": data.username,
+                "reason": "invalid_credentials"
+            })
+            
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -91,12 +107,27 @@ class UserRouter(APIRouter):
 
         existing_user = user_service.get_user_by_username(user.username)
         if existing_user:
+            # Log failed user creation
+            logger.warning({
+                "event": "user_creation_failed",
+                "username": user.username,
+                "reason": "username_already_exists"
+            })
+            
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already exists",
             )
 
         new_user = user_service.create_user(user.username, user.password, user.role)
+        
+        # Log successful user creation
+        logger.info({
+            "event": "user_created",
+            "username": new_user.username,
+            "role": new_user.role.value
+        })
+        
         return UserResponse.model_validate(new_user)
 
     def get_users(self, req: Request):
@@ -118,8 +149,21 @@ class UserRouter(APIRouter):
         user_service = UserService(req.state.db)
         user = user_service.update_password(user_id, data.password)
         if user:
+            # Log successful password update
+            logger.info({
+                "event": "password_updated",
+                "username": user.username
+            })
+            
             return JSONResponse({"detail": "Password updated successfully"})
         else:
+            # Log failed password update
+            logger.warning({
+                "event": "password_update_failed",
+                "username": f"user_id_{user_id}",
+                "reason": "user_not_found"
+            })
+            
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
@@ -127,11 +171,44 @@ class UserRouter(APIRouter):
     def delete_user(self, user_id: str, req: Request):
         user_service = UserService(req.state.db)
         try:
+            # Get user info before deletion for logging
+            user = user_service.get_by_id(user_id)
+            if not user:
+                logger.warning({
+                    "event": "user_deletion_failed",
+                    "username": f"user_id_{user_id}",
+                    "reason": "user_not_found"
+                })
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, 
+                    detail="User not found"
+                )
+            
             user_service.delete_user(user_id)
+            
+            # Log successful user deletion
+            logger.info({
+                "event": "user_deleted",
+                "username": user.username,
+                "role": user.role.value
+            })
+            
             return JSONResponse({"detail": "User deleted successfully"})
+        except HTTPException as ex:
+            raise ex
         except ValueError as ex:
+            logger.warning({
+                "event": "user_deletion_failed",
+                "username": f"user_id_{user_id}",
+                "reason": str(ex)
+            })
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ex))
         except Exception as ex:
+            logger.error({
+                "event": "user_deletion_failed",
+                "username": f"user_id_{user_id}",
+                "error": str(ex)
+            })
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex)
             )

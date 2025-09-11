@@ -44,6 +44,7 @@ from services import RuleService
 from database.models import Role, Rule, RuleCategory
 from typing import List, Dict, Any
 from sqlalchemy import or_, cast, String
+from logger import logger
 
 class RulesRouter(APIRouter):
     def __init__(self):
@@ -154,6 +155,16 @@ class RulesRouter(APIRouter):
 
             rule = Rule(name=rule_data.name, category=category, config=rule_data.config)
             rule = rule_service.create(rule)
+            
+            # Log successful rule creation
+            logger.info({
+                "event": "rule_created",
+                "rule_name": rule.name,
+                "rule_category": rule.category.value,
+                "rule_type": rule.config.get('type', 'unknown'),
+                "username": req.state.user.username
+            })
+            
             return RuleResponse.model_validate(rule)
         except HTTPException:
             raise
@@ -199,6 +210,16 @@ class RulesRouter(APIRouter):
                     )
 
             rule = rule_service.update(rule, update_data)
+            
+            # Log successful rule update
+            logger.info({
+                "event": "rule_updated",
+                "rule_name": rule.name,
+                "rule_category": rule.category.value,
+                "updated_fields": list(update_data.keys()),
+                "username": req.state.user.username
+            })
+            
             return RuleResponse.model_validate(rule)
         except HTTPException:
             raise
@@ -229,6 +250,14 @@ class RulesRouter(APIRouter):
                     detail=f"Cannot delete rule '{rule.name}' as it is used by presets: {', '.join(preset_names)}"
                 )
 
+            # Log successful rule deletion
+            logger.info({
+                "event": "rule_deleted",
+                "rule_name": rule.name,
+                "rule_category": rule.category.value,
+                "username": req.state.user.username
+            })
+            
             rule_service.delete(rule_id)
             return JSONResponse({"detail": "Rule deleted successfully"})
         except HTTPException:

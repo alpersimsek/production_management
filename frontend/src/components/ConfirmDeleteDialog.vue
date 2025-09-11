@@ -54,29 +54,56 @@ const handleConfirm = () => {
     <div class="fixed inset-0 overflow-y-auto">
       <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
         <DialogPanel
-          class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl transition-all duration-300 sm:w-full sm:max-w-lg">
-          <div class="flex items-center">
-            <ExclamationTriangleIcon class="h-6 w-6 text-red-600" />
-            <DialogTitle as="h3" class="ml-2 text-lg font-semibold text-gray-900">Confirm Delete</DialogTitle>
+          class="relative transform overflow-hidden rounded-2xl bg-white px-8 py-10 shadow-2xl transition-all duration-300 sm:w-full sm:max-w-lg">
+          <!-- Header with Icon -->
+          <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full">
+              <ExclamationTriangleIcon class="h-8 w-8 text-red-600" />
+            </div>
           </div>
-          <div class="mt-4">
-            <p class="text-sm text-gray-500">Are you sure you want to delete this {{ itemType }}? This action cannot be
-              undone.</p>
+
+          <!-- Title -->
+          <DialogTitle as="h3" class="text-center text-2xl font-bold text-gray-900 mb-4">
+            Confirm Delete
+          </DialogTitle>
+
+          <!-- Message -->
+          <div class="text-center mb-8">
+            <p class="text-gray-600 text-lg leading-relaxed">
+              Are you sure you want to delete this <span class="font-semibold text-gray-900">{{ itemType }}</span>? 
+              This action cannot be undone.
+            </p>
           </div>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button"
-              class="inline-flex rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
-              @click="$emit('close')" :disabled="loading">Cancel</button>
-            <button type="button"
-              class="inline-flex rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-red-400 hover:animate-shake"
-              @click="handleConfirm" :disabled="loading">
-              <svg v-if="loading" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z">
-                </path>
-              </svg>
-              Delete
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button 
+              type="button"
+              class="flex-1 inline-flex items-center justify-center rounded-lg bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="$emit('close')" 
+              :disabled="loading"
+            >
+              Cancel
             </button>
+            <button 
+              type="button"
+              class="flex-1 inline-flex items-center justify-center rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:bg-red-400 disabled:cursor-not-allowed hover:animate-shake"
+              @click="handleConfirm" 
+              :disabled="loading"
+            >
+              <svg v-if="loading" class="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
+              </svg>
+              {{ loading ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
+
+          <!-- Warning Footer -->
+          <div class="mt-6 text-center">
+            <p class="text-xs text-red-500 font-medium">
+              ⚠️ This action is permanent and cannot be reversed
+            </p>
           </div>
         </DialogPanel>
       </div>

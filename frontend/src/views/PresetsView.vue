@@ -45,9 +45,11 @@ import ProductForm from '../components/ProductForm.vue'
 import { XMarkIcon, PlusIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 import { useErrorHandler } from '../composables/useErrorHandler'
+import { useNotifications } from '../composables/useNotifications'
 
 const router = useRouter()
 const { handleError } = useErrorHandler()
+const { showPresetCreated, showPresetDeleted, showSuccess, showError } = useNotifications()
 const presets = ref([])
 const products = ref([])
 const rules = ref([])
@@ -201,7 +203,9 @@ const handlePresetSaved = async () => {
   try {
     await loadPresets()
     showPresetModal.value = false
+    // Note: The actual creation/update success notification is handled in PresetForm component
   } catch (err) {
+    showError(`Failed to refresh preset list: ${err.message || err.data?.detail || 'Unknown error'}`, { title: 'Refresh Failed' })
     error.value = `Failed to refresh preset list: ${err.message || err.data?.detail || 'Unknown error'}`
   }
 }
@@ -248,19 +252,25 @@ const handleDelete = async () => {
   try {
     loading.value = true
     if (deleteType.value === 'preset') {
+      const presetName = deleteTarget.value.name
       await ApiService.deletePreset(deleteTarget.value.id)
       await loadPresets()
+      showPresetDeleted(presetName)
     } else if (deleteType.value === 'rule') {
       await ApiService.deletePresetRule(deleteTarget.value.preset_id, deleteTarget.value.rule_id)
       await loadPresetRules(deleteTarget.value.preset_id)
+      showSuccess('Rule removed from preset successfully!', { title: 'Rule Removed' })
     } else if (deleteType.value === 'customRule') {
+      const ruleName = deleteTarget.value.name
       await ApiService.deleteRule(deleteTarget.value.id)
       await loadRules()
+      showSuccess(`Custom rule "${ruleName}" deleted successfully!`, { title: 'Rule Deleted' })
     }
     showDeleteModal.value = false
     deleteTarget.value = null
     deleteType.value = ''
   } catch (err) {
+    showError(`Failed to delete ${deleteType.value}: ${err.message || err.data?.detail || 'Unknown error'}`, { title: 'Delete Failed' })
     error.value = `Failed to delete ${deleteType.value}: ${err.message || err.data?.detail || 'Unknown error'}`
   } finally {
     loading.value = false

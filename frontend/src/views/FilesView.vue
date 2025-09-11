@@ -36,6 +36,7 @@ import { useFilesStore } from '../stores/files'
 import { useAuthStore } from '../stores/auth'
 import { useFormatters } from '../composables/useFormatters'
 import { useErrorHandler } from '../composables/useErrorHandler'
+import { useNotifications } from '../composables/useNotifications'
 import ApiService from '../services/api'
 import MainLayout from '../components/MainLayout.vue'
 import ListView from '../components/ListView.vue'
@@ -55,6 +56,7 @@ const filesStore = useFilesStore()
 const authStore = useAuthStore()
 const { formatFileSize, formatDate, formatTimeRemaining } = useFormatters()
 const { handleError } = useErrorHandler()
+const { showFileUploaded, showFileDeleted, showFileProcessingStarted, showFileProcessingComplete, showFileProcessingError } = useNotifications()
 const showDeleteModal = ref(false)
 const deleteFileId = ref(false)
 const isLoading = ref(false)
@@ -181,6 +183,7 @@ const handleFileUpload = async (files) => {
   try {
     for (const file of files) {
       await filesStore.uploadFile(file)
+      showFileUploaded(file.name)
     }
   } catch (error) {
     console.error('Upload error:', error)
@@ -203,13 +206,19 @@ const handleProcess = async (fileId) => {
 
 const handleProductProcess = async (processOptions) => {
   try {
+    const fileName = selectedFileForProcessing.value.filename
+    showFileProcessingStarted(fileName)
+    
     // Send product ID to backend for product-based processing
     await filesStore.processFileWithProduct(selectedFileForProcessing.value.id, processOptions.productId)
     await filesStore.fetchFiles()
+    
+    showFileProcessingComplete(fileName)
     showProductModal.value = false
     selectedFileForProcessing.value = null
   } catch (error) {
     console.error('Failed to process file:', error)
+    showFileProcessingError(selectedFileForProcessing.value.filename, error.message)
     // Use global error handler for better error display
     handleError(error, { 
       type: 'file',
@@ -262,8 +271,14 @@ const handleDelete = (fileId) => {
 
 const confirmDelete = async () => {
   try {
+    const file = filesStore.uploads.find(f => f.id === deleteFileId.value) || 
+                 filesStore.processed.find(f => f.id === deleteFileId.value)
+    const fileName = file?.filename || 'Unknown file'
+    
     await filesStore.deleteFile(deleteFileId.value)
     await filesStore.fetchFiles()
+    
+    showFileDeleted(fileName)
   } catch (error) {
     console.error('Failed to delete file:', error)
     handleError(error, { type: 'file' })
@@ -279,8 +294,11 @@ const handleDeleteAll = () => {
 
 const confirmDeleteAll = async () => {
   try {
+    const fileCount = filesStore.uploads.length + filesStore.processed.length
     await filesStore.deleteAllFiles()
     await filesStore.fetchFiles()
+    
+    showFileDeleted(`${fileCount} files`)
   } catch (error) {
     console.error('Failed to delete all files:', error)
     handleError(error, { type: 'file' })
