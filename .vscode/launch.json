@@ -33,12 +33,33 @@
       "jinja": false
     },
     {
-      "name": "Frontend: npm run dev",
+      "name": "Backend: Celery",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "celery",
+      "args": [
+        "-A",
+        "tasks",
+        "worker",
+        "--loglevel=DEBUG",
+        "--pool=solo",
+        "--concurrency=1"
+      ],
+      "cwd": "${workspaceFolder}/backend/app",
+      "preLaunchTask": "wait-mq-db",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Frontend: npm",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "console": "integratedTerminal"
     },
     {
@@ -57,7 +78,8 @@
       "name": "Full Stack: Backend + Frontend",
       "configurations": [
         "Backend: Uvicorn",
-        "Frontend: npm run dev",
+        "Backend: Celery",
+        "Frontend: npm",
         "Frontend: Chrome"
       ],
       "presentation": {

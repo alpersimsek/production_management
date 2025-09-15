@@ -66,7 +66,7 @@ def upgrade() -> None:
     sa.Column('completed_size', sa.BigInteger(), nullable=False),
     sa.Column('time_remaining', sa.Integer(), nullable=True),
     sa.Column('content_type', sa.Enum('TEXT', 'PCAP', 'ARCHIVE', 'JSON', 'UNKNOWN', name='contenttype'), nullable=False),
-    sa.Column('status', sa.Enum('CREATED', 'IN_PROGRESS', 'DONE', 'ERROR', name='filestatus'), nullable=False),
+    sa.Column('status', sa.Enum('CREATED', 'QUEUED', 'IN_PROGRESS', 'DONE', 'ERROR', name='filestatus'), nullable=False),
     sa.Column('create_date', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('product_id', sa.Integer(), nullable=True),

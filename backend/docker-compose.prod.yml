@@ -31,6 +31,51 @@ services:
     networks:
       - gdpr-network
 
+  celery:
+    container_name: celery
+    build: .
+    volumes:
+      - data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DATA_DIR=/data
+      - CELERY_BROKER=${CELERY_BROKER_URL}
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=gdpr
+    depends_on:
+      - mq
+      - db
+    command: bash -c 'while !</dev/tcp/web/8000; do sleep 1; done; celery -A tasks worker --loglevel=info --autoscale=4,1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+    networks:
+      - gdpr-network
+
+  mq:
+    container_name: rabbitMQ
+    image: rabbitmq:alpine
+    networks:
+      - gdpr-network
+
+  flower:
+    container_name: flower
+    image: mher/flower:2.0
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+    ports:
+      - 5555:5555
+    volumes:
+      - ./app/flower/flowerconfig.py:/tmp/flowerconfig.py:ro
+    depends_on:
+      - mq
+    command: sh -c 'celery flower --conf=/tmp/flowerconfig.py'
+    networks:
+      - gdpr-network
+
 networks:
   gdpr-network:
     external: true

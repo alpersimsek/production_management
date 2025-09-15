@@ -48,6 +48,7 @@ import settings
 from typing import Dict, Optional
 from database.models import Role
 from logger import logger
+import tasks
 
 router = APIRouter()
 
@@ -309,16 +310,16 @@ class FilesRouter(APIRouter):
         try:
             user = req.state.user
             session = req.state.db
-            file_service = FileService(session, user, self.storage)
+            product_id = process_options.get('productId')
+            file_service = FileService(session, user, self.storage, product_id)
+
+            tasks_configs = file_service.make_task_config(file_id)
             
-            if process_options and process_options.get('productId'):
-                # Product-based processing
-                file = file_service.process_file_with_product(file_id, process_options['productId'])
-            else:
-                # Default processing (fallback)
-                file = file_service.process_file(file_id)
-                
-            return {"detail": f"Processing {file.filename} completed"}
+            # Send to processing
+            for task_config in tasks_configs:
+                # print(task_config.keys())
+                tasks.process_file.delay(**task_config)
+
         except Exception as ex:
             logger.error({
                 "event": "file_processing_failed",

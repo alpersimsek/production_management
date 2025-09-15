@@ -4,16 +4,26 @@
     {
       "label": "Start PostgreSQL Service",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml up -d db",
+      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml up -d db mq flower",
       "problemMatcher": []
       // "isBackground": true
     },
     {
       "label": "Stop PostgreSQL Service",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml down db",
+      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml down db mq flower",
       "problemMatcher": []
       // "isBackground": true
+    },
+    {
+      "label": "wait-mq-db",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "until nc -z 127.0.0.1 5672; do echo waiting for mq; sleep 1; done; until nc -z 127.0.0.1 5432; do echo waiting for db; sleep 1; done"
+      ],
+      "problemMatcher": []
     }
   ]
 }

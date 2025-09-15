@@ -78,7 +78,7 @@ export const useFilesStore = defineStore('files', {
     async fetchFiles() {
       try {
         const files = await ApiService.getFiles()
-        this.uploads = files.filter((file) => file.status === 'created' || file.status === 'in-progress')
+        this.uploads = files.filter((file) => file.status === 'created' || file.status === 'in-progress' || file.status === 'queued')
         this.processed = files.filter((file) => file.status === 'done')
 
         // Track files in progress
@@ -228,10 +228,10 @@ export const useFilesStore = defineStore('files', {
             this.processingFiles.delete(fileId)
           }
         }, 1000) // Poll every 1000ms for smoother updates
-        
+
         // Store the polling interval for potential cancellation
         this.pollingIntervals.set(fileId, pollInterval)
-        
+
         // Set a timeout to stop polling after 5 minutes to prevent infinite polling
         setTimeout(() => {
           if (this.pollingIntervals.has(fileId)) {

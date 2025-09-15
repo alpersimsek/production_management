@@ -54,6 +54,9 @@ DATABASE_URL = (
     f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
+CELERY_BROKER = os.environ.get('CELERY_BROKER', "amqp://guest:guest@localhost:5672//")
+CELERY_BACKEND = os.environ.get('CELERY_BACKEND')
+
 EXCEPTION_PATTERNS = {
     "phone_num": [
         r'^\-?\d{4}\.\d{2}\.\d{2}\-\d{6}$',  # Matches -2025.05.05-001833 or 2025.05.05-001833

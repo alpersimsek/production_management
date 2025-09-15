@@ -113,6 +113,7 @@ class Role(enum.Enum):
 
 class FileStatus(enum.Enum):
     CREATED = "created"
+    QUEUED = "queued"
     IN_PROGRESS = "in-progress"
     DONE = "done"
     ERROR = "error"
