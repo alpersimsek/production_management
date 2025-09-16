@@ -283,17 +283,16 @@ class FileService(BaseService[File]):
     
     def get_preset(self, finfo: FileInfo) -> Optional[Preset]:
         """Match preset headers as substrings in file header"""
-        if finfo.ftype == ContentType.TEXT.value:
-            try:
+        try:
+            if finfo.ftype == ContentType.TEXT.value:
                 src = self.storage.get(finfo.fid)
                 encoding_res = from_path(src).best()
                 if not encoding_res:
                     # Get file object for filename
-                    file_obj = self.get_by_id(file_id)
-                    filename = file_obj.filename if file_obj else file_id
                     logger.error({
                         "event": "encoding_detection_failed",
                         "file_id": finfo.fid,
+                        "filename": finfo.fname,
                         "error": "Cannot detect file encoding",
                     })
                     return None
@@ -314,8 +313,8 @@ class FileService(BaseService[File]):
                             "file_id": finfo.fid,
                             "preset_id": preset.id,
                             "event": "preset_matched",
-                            "filename": filename,
-                            "file_type": file_type,
+                            "filename": finfo.fname,
+                            "file_type": finfo.ftype,
                             "file_header": header,
                             "preset_id": str(preset.id),
                             "preset_name": preset.name,
@@ -335,36 +334,7 @@ class FileService(BaseService[File]):
 
                 return None
 
-                # Get file object for filename
-                file_obj = self.get_by_id(file_id)
-                filename = file_obj.filename if file_obj else file_id
-                logger.info({
-                    "event": "default_preset_assigned",
-                    "filename": filename,
-                    "file_type": file_type,
-                    "file_header": header,
-                    "preset_id": str(default_preset.id),
-                    "preset_name": default_preset.name,
-                    "preset_header": default_preset.header,
-                })
-                return default_preset
-
-            except Exception as ex:
-                # Get file object for filename
-                file_obj = self.get_by_id(file_id)
-                filename = file_obj.filename if file_obj else file_id
-                logger.error({
-                    "event": "preset_assignment_failed",
-                    "file_id": finfo.fid,
-                    "file_type": finfo.ftype,
-                    "filename": filename,
-                    "file_type": file_type,
-                    "error": str(ex),
-                })
-                return None
-
-        elif finfo.ftype == ContentType.PCAP.value:
-            try:
+            elif finfo.ftype == ContentType.PCAP.value:
                 src = self.storage.get(finfo.fid)
                 # Read first 4 bytes for PCAP magic number
                 with src.open("rb") as file:  # Note: binary mode
@@ -385,14 +355,11 @@ class FileService(BaseService[File]):
                     preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
                     if preset:
                         # Get file object for filename
-                        file_obj = self.get_by_id(file_id)
-                        filename = file_obj.filename if file_obj else file_id
                         logger.info({
                             "event": "pcap_preset_assigned",
                             "file_id": finfo.fid,
                             "file_type": finfo.ftype,
-                            "filename": filename,
-                            "file_type": file_type,
+                            "filename": finfo.fname,
                             "preset_id": str(preset.id),
                             "preset_name": preset.name,
                             "magic_hex": magic_hex,
@@ -400,44 +367,34 @@ class FileService(BaseService[File]):
                         })
                         return preset
                     else:
-                        # Get file object for filename
-                        file_obj = self.get_by_id(file_id)
-                        filename = file_obj.filename if file_obj else file_id
                         logger.warning({
                             "event": "pcap_preset_not_found",
-                            "filename": filename,
-                            "file_type": file_type,
+                            "filename": finfo.fname,
+                            "file_type": finfo.ftype,
                         })
                         return None
                 else:
                     # Not a valid PCAP file
                     # Get file object for filename
-                    file_obj = self.get_by_id(file_id)
-                    filename = file_obj.filename if file_obj else file_id
                     logger.warning({
                         "event": "invalid_pcap_file",
-                        "filename": filename,
-                        "file_type": file_type,
+                        "filename": finfo.fname,
+                        "file_type": finfo.ftype,
                         "magic_hex": magic_hex,
                         "expected": valid_pcap_magics,
                     })
                     return None
-                    
-            except Exception as ex:
-                # Get file object for filename
-                file_obj = self.get_by_id(file_id)
-                filename = file_obj.filename if file_obj else file_id
-                logger.error({
-                    "event": "pcap_header_read_failed",
-                    "filename": filename,
-                    "file_type": file_type,
-                    "error": str(ex),
-                })
+            
+            else:
                 return None
-
-        else:
-            # Skip preset assignment for unsupported file types
-            return None
+                    
+        except Exception as ex:
+            logger.error({
+                "event": "pcap_header_read_failed",
+                "filename": finfo.fname,
+                "file_type": finfo.ftype,
+                "error": str(ex),
+            })
 
     def save_file(self, file: UploadFile) -> File:
         file_id = self.storage.save_file(file.file)
