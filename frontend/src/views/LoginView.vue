@@ -76,33 +76,42 @@ const errorMessage = computed(() => {
 
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 dot-pattern opacity-40"></div>
+    
     <div
-      class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-white/95 rounded-xl shadow-lg p-8 sm:p-10 space-y-8 backdrop-blur-sm border border-gray-200">
+      class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 sm:p-10 space-y-8 border border-slate-200/60 relative z-10 hover:shadow-3xl transition-all duration-300">
       <!-- Header with Logo and Branding -->
-      <div class="flex flex-col items-center space-y-4">
-        <img :src="gdprLogo" alt="GDPR Processor Compliance"
-          class="h-32 sm:h-36 md:h-40 w-auto transition-transform duration-300 hover:scale-105" />
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-          GDPR Processor
-        </h1>
-        <p class="text-sm sm:text-base text-gray-600 text-center leading-relaxed">
-          Securely access compliance dashboard
-        </p>
+      <div class="flex flex-col items-center space-y-6">
+        <div class="relative">
+          <div class="absolute inset-0 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl blur-lg opacity-20 scale-110"></div>
+          <img :src="gdprLogo" alt="GDPR Processor Compliance"
+            class="h-32 sm:h-36 md:h-40 w-auto transition-all duration-500 relative z-10" />
+        </div>
+        <div class="text-center space-y-2">
+          <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+            GDPR Processor
+          </h1>
+          <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+            Securely access compliance dashboard
+          </p>
+        </div>
       </div>
 
       <!-- Form -->
       <form class="space-y-6" @submit.prevent="handleSubmit" aria-label="Sign in to GDPR Processor">
-        <InputField id="username" v-model="username" label="Username" type="text" required :error="''"
-          class="text-base transition-all duration-200 focus:ring-primary focus:border-primary"
-          placeholder="Enter your username" aria-describedby="username-error" />
+        <div class="space-y-5">
+          <InputField id="username" v-model="username" label="Username" type="text" required :error="''"
+            placeholder="Enter your username" aria-describedby="username-error" />
 
-        <InputField id="password" v-model="password" label="Password" type="password" required :error="errorMessage"
-          class="text-base transition-all duration-200 focus:ring-primary focus:border-primary"
-          placeholder="Enter your password" aria-describedby="password-error" />
+          <InputField id="password" v-model="password" label="Password" type="password" required :error="errorMessage"
+            placeholder="Enter your password" aria-describedby="password-error" />
+        </div>
 
         <AppButton type="submit" variant="primary" size="lg" :loading="isLoading" :disabled="isLoading"
-          class="w-full bg-primary hover:bg-primary-hover focus:ring-primary text-white" aria-label="Sign in">
+          class="w-full bg-gradient-to-r from-gray-500 to-slate-600 hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:ring-gray-400 text-white transition-all duration-300"
+          aria-label="Sign in">
           <span v-if="isLoading" class="flex items-center justify-center">
             <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -117,10 +126,17 @@ const errorMessage = computed(() => {
     </div>
 
     <!-- Footer Branding -->
-    <footer class="absolute bottom-4 text-center text-sm text-gray-500 px-4 sm:px-0">
-      © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
-      <a href="/privacy" class="text-primary hover:text-primary-hover ml-2 transition-colors duration-200">Privacy
-        Policy</a>
+    <footer class="absolute bottom-4 left-0 right-0 text-center text-sm text-slate-500 px-4 sm:px-0 z-10">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-2 inline-block border border-slate-200/60 shadow-lg">
+        © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
+        <a href="/privacy" class="text-slate-600 hover:text-slate-800 ml-2 transition-colors duration-200 font-medium">Privacy Policy</a>
+      </div>
     </footer>
   </div>
 </template>
+
+<style scoped>
+.dot-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239ca3af' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+</style>
