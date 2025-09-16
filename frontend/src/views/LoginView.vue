@@ -75,68 +75,223 @@ const errorMessage = computed(() => {
 </script>
 
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 dot-pattern opacity-40"></div>
-    
-    <div
-      class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 sm:p-10 space-y-8 border border-slate-200/60 relative z-10 hover:shadow-3xl transition-all duration-300">
-      <!-- Header with Logo and Branding -->
-      <div class="flex flex-col items-center space-y-6">
-        <div class="relative">
-          <div class="absolute inset-0 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl blur-lg opacity-20 scale-110"></div>
-          <img :src="gdprLogo" alt="GDPR Processor Compliance"
-            class="h-32 sm:h-36 md:h-40 w-auto transition-all duration-500 relative z-10" />
-        </div>
-        <div class="text-center space-y-2">
-          <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-            GDPR Processor
-          </h1>
-          <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
-            Securely access compliance dashboard
-          </p>
-        </div>
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 relative overflow-hidden">
+    <!-- Animated Background -->
+    <div class="absolute inset-0">
+      <!-- Geometric Shapes -->
+      <div class="absolute top-0 left-0 w-full h-full">
+        <div class="absolute top-20 left-20 w-72 h-72 bg-gradient-to-br from-blue-500/10 to-purple-600/10 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-full blur-3xl animate-float-delayed"></div>
+        <div class="absolute top-1/2 left-1/4 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 rounded-full blur-3xl animate-float-slow"></div>
       </div>
-
-      <!-- Form -->
-      <form class="space-y-6" @submit.prevent="handleSubmit" aria-label="Sign in to GDPR Processor">
-        <div class="space-y-5">
-          <InputField id="username" v-model="username" label="Username" type="text" required :error="''"
-            placeholder="Enter your username" aria-describedby="username-error" />
-
-          <InputField id="password" v-model="password" label="Password" type="password" required :error="errorMessage"
-            placeholder="Enter your password" aria-describedby="password-error" />
-        </div>
-
-        <AppButton type="submit" variant="primary" size="lg" :loading="isLoading" :disabled="isLoading"
-          class="w-full bg-gradient-to-r from-gray-500 to-slate-600 hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:ring-gray-400 text-white transition-all duration-300"
-          aria-label="Sign in">
-          <span v-if="isLoading" class="flex items-center justify-center">
-            <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            Signing in...
-          </span>
-          <span v-else>Sign in</span>
-        </AppButton>
-      </form>
+      
+      <!-- Grid Pattern -->
+      <div class="absolute inset-0 grid-pattern opacity-20"></div>
+      
+      <!-- Floating Particles -->
+      <div class="absolute inset-0">
+        <div class="particle absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse"></div>
+        <div class="particle absolute top-3/4 right-1/4 w-1 h-1 bg-purple-400/40 rounded-full animate-pulse"></div>
+        <div class="particle absolute top-1/2 left-3/4 w-1.5 h-1.5 bg-cyan-400/30 rounded-full animate-pulse"></div>
+        <div class="particle absolute top-1/3 right-1/3 w-1 h-1 bg-pink-400/40 rounded-full animate-pulse"></div>
+      </div>
     </div>
 
-    <!-- Footer Branding -->
-    <footer class="absolute bottom-4 left-0 right-0 text-center text-sm text-slate-500 px-4 sm:px-0 z-10">
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-2 inline-block border border-slate-200/60 shadow-lg">
-        © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
-        <a href="/privacy" class="text-slate-600 hover:text-slate-800 ml-2 transition-colors duration-200 font-medium">Privacy Policy</a>
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+      <div class="w-full max-w-7xl mx-auto">
+        <!-- Logo Section - Top Level -->
+        <div class="flex justify-center mb-12">
+          <div class="relative group">
+            <!-- Logo Container -->
+            <div class="relative bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+              <img :src="gdprLogo" alt="GDPR Processor" class="h-16 sm:h-20 lg:h-24 w-auto mx-auto" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Section - Two Columns -->
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <!-- Left Column - Hero Text and Features -->
+          <div class="text-center lg:text-left space-y-8">
+            <!-- Hero Text -->
+            <div class="space-y-6">
+              <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-tight">
+                <span class="block">GDPR</span>
+                <span class="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-gradient">
+                  Processor
+                </span>
+              </h1>
+              
+              <p class="text-xl sm:text-2xl text-gray-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Transform your compliance journey with our cutting-edge platform that makes GDPR management effortless and intelligent.
+              </p>
+            </div>
+
+            <!-- Feature Cards -->
+            <div class="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto lg:mx-0">
+              <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group">
+                <div class="flex items-center space-x-3 mb-3">
+                  <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 class="text-white font-semibold">Lightning Fast</h3>
+                </div>
+                <p class="text-gray-300 text-sm">Automated workflows that process our products data in real-time</p>
+              </div>
+
+              <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 group">
+                <div class="flex items-center space-x-3 mb-3">
+                  <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 class="text-white font-semibold">Secure</h3>
+                </div>
+                <p class="text-gray-300 text-sm">Your data is in your hands</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column - Login Form -->
+          <div class="flex justify-center lg:justify-end">
+            <div class="w-full max-w-md">
+              <!-- Login Card -->
+              <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                  <h2 class="text-3xl font-bold text-white mb-2">Welcome back</h2>
+                  <p class="text-gray-300">Sign in to continue your compliance journey</p>
+                </div>
+
+                <!-- Form -->
+                <form class="space-y-6" @submit.prevent="handleSubmit" aria-label="Sign in to GDPR Processor">
+                  <div class="space-y-5">
+                    <div>
+                      <label for="username" class="block text-sm font-semibold text-white mb-2">Username</label>
+                      <div class="relative">
+                        <input
+                          id="username"
+                          v-model="username"
+                          type="text"
+                          required
+                          class="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                          placeholder="Enter your username"
+                        />
+                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="password" class="block text-sm font-semibold text-white mb-2">Password</label>
+                      <div class="relative">
+                        <input
+                          id="password"
+                          v-model="password"
+                          type="password"
+                          required
+                          class="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                          placeholder="Enter your password"
+                        />
+                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                      <p v-if="errorMessage" class="mt-2 text-sm text-red-400 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {{ errorMessage }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    :disabled="isLoading"
+                    class="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+                  >
+                    <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <span v-if="isLoading" class="relative flex items-center justify-center">
+                      <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Signing in...
+                    </span>
+                    <span v-else class="relative">Sign in to Dashboard</span>
+                  </button>
+                </form>
+
+                <!-- Footer -->
+                <div class="mt-8 pt-6 border-t border-white/20 text-center">
+                  <p class="text-sm text-gray-400">
+                    © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
+                  </p>
+                  <a href="/privacy" class="text-blue-400 hover:text-blue-300 text-sm transition-colors duration-200 font-medium">
+                    Privacy Policy
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </footer>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.dot-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239ca3af' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+.grid-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(-5deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+.particle {
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.particle:nth-child(1) { animation-delay: 0s; }
+.particle:nth-child(2) { animation-delay: 0.5s; }
+.particle:nth-child(3) { animation-delay: 1s; }
+.particle:nth-child(4) { animation-delay: 1.5s; }
 </style>
