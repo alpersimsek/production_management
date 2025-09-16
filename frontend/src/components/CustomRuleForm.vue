@@ -192,24 +192,24 @@ const saveRule = async () => {
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel
-              class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
+              class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
               <button type="button"
-                class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
                 @click="handleClose" aria-label="Close modal">
                 <XMarkIcon class="h-6 w-6" />
               </button>
-              <DialogTitle as="h3" class="text-lg font-bold text-gray-900">
+              <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">
                 {{ editing ? 'Edit Rule' : 'Create New Rule' }}
               </DialogTitle>
-              <div v-if="error" class="mt-4 rounded-md bg-red-50 p-3 flex items-center">
+              <div v-if="error" class="mt-4 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 flex items-center">
                 <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
                 <p class="ml-2 text-sm text-red-800">{{ error }}</p>
-                <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700"
+                <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700 rounded-lg p-1 transition-all duration-200"
                   aria-label="Dismiss error">
                   <XMarkIcon class="h-6 w-6" />
                 </button>
               </div>
-              <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center">
+              <div v-if="successMessage" class="mt-4 rounded-2xl bg-green-50/80 backdrop-blur-sm border border-green-200/60 p-4 flex items-center">
                 <CheckCircleIcon class="h-5 w-5 text-green-400" />
                 <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
               </div>
@@ -229,11 +229,12 @@ const saveRule = async () => {
                   @focus="clearFieldError('pattern')" />
                 <div v-if="!editing" class="flex items-center">
                   <input id="stay-open" type="checkbox" v-model="stayOpen"
-                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                  <label for="stay-open" class="ml-2 text-sm text-gray-700">Add another rule after saving</label>
+                    class="h-4 w-4 rounded border-gray-300 text-gray-600 focus:ring-gray-400" />
+                  <label for="stay-open" class="ml-2 text-sm text-slate-700">Add another rule after saving</label>
                 </div>
                 <div class="mt-8 flex flex-row-reverse gap-3">
                   <AppButton type="submit" variant="primary" :loading="saving" :disabled="saving"
+                    class="rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                     :aria-label="editing ? 'Update rule' : 'Create rule'">
                     <span v-if="saving" class="flex items-center">
                       <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
@@ -246,6 +247,7 @@ const saveRule = async () => {
                     <span v-else>{{ editing ? 'Update' : 'Create' }}</span>
                   </AppButton>
                   <AppButton type="button" variant="secondary" @click="handleClose" :disabled="saving"
+                    class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                     aria-label="Cancel">Cancel</AppButton>
                 </div>
               </form>

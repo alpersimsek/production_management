@@ -66,35 +66,35 @@ const toastConfig = computed(() => {
     success: {
       icon: CheckCircleIcon,
       iconColor: 'text-green-500',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
+      bgColor: 'bg-green-50/90 backdrop-blur-sm',
+      borderColor: 'border-green-200/60',
       textColor: 'text-green-800',
       titleColor: 'text-green-900',
       progressColor: 'bg-green-500'
     },
     info: {
       icon: InformationCircleIcon,
-      iconColor: 'text-blue-500',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-800',
-      titleColor: 'text-blue-900',
-      progressColor: 'bg-blue-500'
+      iconColor: 'text-slate-500',
+      bgColor: 'bg-slate-50/90 backdrop-blur-sm',
+      borderColor: 'border-slate-200/60',
+      textColor: 'text-slate-800',
+      titleColor: 'text-slate-900',
+      progressColor: 'bg-slate-500'
     },
     warning: {
       icon: ExclamationTriangleIcon,
-      iconColor: 'text-yellow-500',
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      textColor: 'text-yellow-800',
-      titleColor: 'text-yellow-900',
-      progressColor: 'bg-yellow-500'
+      iconColor: 'text-amber-500',
+      bgColor: 'bg-amber-50/90 backdrop-blur-sm',
+      borderColor: 'border-amber-200/60',
+      textColor: 'text-amber-800',
+      titleColor: 'text-amber-900',
+      progressColor: 'bg-amber-500'
     },
     error: {
       icon: XCircleIcon,
       iconColor: 'text-red-500',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
+      bgColor: 'bg-red-50/90 backdrop-blur-sm',
+      borderColor: 'border-red-200/60',
       textColor: 'text-red-800',
       titleColor: 'text-red-900',
       progressColor: 'bg-red-500'
@@ -207,17 +207,17 @@ watch(() => props.open, (newValue) => {
 
 <template>
   <Transition
-    enter-active-class="transform transition-all duration-300 ease-out"
-    enter-from-class="translate-x-full opacity-0 scale-95"
-    enter-to-class="translate-x-0 opacity-100 scale-100"
+    enter-active-class="transform transition-all duration-500 ease-out"
+    enter-from-class="translate-x-full opacity-0 scale-90 blur-sm"
+    enter-to-class="translate-x-0 opacity-100 scale-100 blur-0"
     leave-active-class="transform transition-all duration-300 ease-in"
-    leave-from-class="translate-x-0 opacity-100 scale-100"
-    leave-to-class="translate-x-full opacity-0 scale-95"
+    leave-from-class="translate-x-0 opacity-100 scale-100 blur-0"
+    leave-to-class="translate-x-full opacity-0 scale-95 blur-sm"
   >
     <div
       v-if="open && isVisible && !isLeaving"
       :class="[
-        'fixed z-50 max-w-sm w-full shadow-lg rounded-lg border p-4 cursor-pointer',
+        'fixed z-50 max-w-sm w-full shadow-2xl rounded-2xl border p-4 cursor-pointer hover:shadow-3xl transition-all duration-300',
         positionClasses,
         toastConfig.bgColor,
         toastConfig.borderColor
@@ -231,7 +231,7 @@ watch(() => props.open, (newValue) => {
       <!-- Progress Bar -->
       <div
         v-if="duration > 0"
-        class="absolute top-0 left-0 h-1 rounded-t-lg transition-all duration-75 ease-linear"
+        class="absolute top-0 left-0 h-1 rounded-t-2xl transition-all duration-75 ease-linear"
         :class="toastConfig.progressColor"
         :style="{ width: `${progress}%` }"
       ></div>
@@ -262,9 +262,9 @@ watch(() => props.open, (newValue) => {
             type="button"
             @click.stop="handleClose"
             :class="[
-              'inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200',
+              'inline-flex rounded-lg p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:scale-110',
               toastConfig.iconColor,
-              'hover:bg-black hover:bg-opacity-5 focus:ring-gray-500'
+              'hover:bg-slate-100/60 focus:ring-gray-400'
             ]"
             aria-label="Close notification"
           >

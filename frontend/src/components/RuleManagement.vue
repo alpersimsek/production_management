@@ -185,28 +185,28 @@ const handleDeleteConfirm = async () => {
     <div class="fixed inset-0 overflow-y-auto">
       <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
         <DialogPanel
-          class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl transition-all duration-300 sm:my-8 sm:w-full sm:max-w-5xl">
+          class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl transition-all duration-300 sm:my-8 sm:w-full sm:max-w-5xl">
           <button type="button"
-            class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
             @click="$emit('close')" aria-label="Close modal">
             <XMarkIcon class="h-6 w-6" />
           </button>
-          <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">Manage Rules</DialogTitle>
-          <div v-if="error" class="mt-4 rounded-md bg-red-50 p-3 flex items-center">
+          <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">Manage Rules</DialogTitle>
+          <div v-if="error" class="mt-4 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 flex items-center">
             <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
             <p class="ml-2 text-sm text-red-800">{{ error }}</p>
-            <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700"
+            <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700 rounded-lg p-1 transition-all duration-200"
               aria-label="Dismiss error">
               <XMarkIcon class="h-6 w-6" />
             </button>
           </div>
           <div class="mt-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-              <p class="text-sm text-gray-500">Create and manage custom rules for your presets.</p>
+              <p class="text-sm text-slate-600">Create and manage custom rules for your presets.</p>
             </div>
             <div class="flex space-x-3">
               <AppButton @click="$emit('open-rule-form')" variant="primary"
-                class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                class="inline-flex items-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200">
                 <PlusIcon class="h-5 w-5 mr-2" />
                 Add Rule
               </AppButton>
@@ -232,51 +232,52 @@ const handleDeleteConfirm = async () => {
             </div>
           </div>
           <div v-if="loading" class="flex justify-center py-6">
-            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-600"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-400/60 border-t-transparent"></div>
+            <p class="ml-4 text-sm font-medium text-slate-600">Loading rules...</p>
           </div>
-          <div v-else class="mt-6 overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-300" role="grid" aria-label="Rules table">
-              <thead class="bg-gray-50 sticky top-0">
+          <div v-else class="mt-6 overflow-x-auto rounded-2xl border border-slate-200/60">
+            <table class="min-w-full divide-y divide-slate-200/60" role="grid" aria-label="Rules table">
+              <thead class="bg-slate-50/60 backdrop-blur-sm sticky top-0">
                 <tr>
-                  <th scope="col" class="py-3.5 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">
-                    <button @click="toggleSort('name')" class="flex items-center space-x-1"
+                  <th scope="col" class="py-3.5 pl-6 pr-3 text-left text-sm font-semibold text-slate-900">
+                    <button @click="toggleSort('name')" class="flex items-center space-x-1 hover:bg-slate-100/60 rounded-lg p-1 -m-1 transition-colors duration-200"
                       :aria-sort="sortColumn === 'name' ? sortDirection : 'none'">
                       <span>Name</span>
                       <component :is="getSortIcon('name')" class="h-4 w-4" />
                     </button>
                   </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    <button @click="toggleSort('category')" class="flex items-center space-x-1"
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">
+                    <button @click="toggleSort('category')" class="flex items-center space-x-1 hover:bg-slate-100/60 rounded-lg p-1 -m-1 transition-colors duration-200"
                       :aria-sort="sortColumn === 'category' ? sortDirection : 'none'">
                       <span>Category</span>
                       <component :is="getSortIcon('category')" class="h-4 w-4" />
                     </button>
                   </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type/Pattern</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Patcher</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Type/Pattern</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Patcher</th>
                   <th scope="col" class="relative py-3.5 pl-3 pr-6"><span class="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 bg-white">
-                <tr v-for="rule in sortedRules" :key="rule.id" class="hover:bg-gray-50 transition-all duration-200"
+              <tbody class="divide-y divide-slate-200/60 bg-white/80 backdrop-blur-sm">
+                <tr v-for="rule in sortedRules" :key="rule.id" class="hover:bg-slate-50/60 transition-all duration-200"
                   role="row">
-                  <td class="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-gray-900" role="cell">
+                  <td class="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-slate-900" role="cell">
                     {{ rule.name }}
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" role="cell">{{ rule.category }}</td>
-                  <td class="px-3 py-4 text-sm text-gray-500 max-w-md" role="cell">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600" role="cell">{{ rule.category }}</td>
+                  <td class="px-3 py-4 text-sm text-slate-600 max-w-md" role="cell">
                     <div class="break-all whitespace-normal">
                       {{ getPatternFromConfig(rule.config) }}
                     </div>
                   </td>
-                  <td class="px-3 py-4 text-sm text-gray-500" role="cell">{{ getPatcherFromConfig(rule.config) }}</td>
+                  <td class="px-3 py-4 text-sm text-slate-600" role="cell">{{ getPatcherFromConfig(rule.config) }}</td>
                   <td class="whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium" role="cell">
-                    <div class="flex space-x-3 justify-end">
+                    <div class="flex space-x-2 justify-end">
                       <AppButton @click="$emit('open-rule-form', rule)" variant="text"
-                        class="text-indigo-600 hover:text-indigo-900" title="Edit rule" aria-label="Edit rule">
+                        class="text-gray-600 hover:text-gray-800 hover:scale-105 transition-all duration-200" title="Edit rule" aria-label="Edit rule">
                         <PencilIcon class="h-5 w-5" />
                       </AppButton>
-                      <AppButton @click="confirmDelete(rule)" variant="text" class="text-red-600 hover:text-red-900"
+                      <AppButton @click="confirmDelete(rule)" variant="text" class="text-red-600 hover:text-red-800 hover:scale-105 transition-all duration-200"
                         title="Delete rule" aria-label="Delete rule">
                         <TrashIcon class="h-5 w-5" />
                       </AppButton>
@@ -284,24 +285,29 @@ const handleDeleteConfirm = async () => {
                   </td>
                 </tr>
                 <tr v-if="sortedRules.length === 0">
-                  <td colspan="5" class="py-6 text-center text-sm text-gray-500" role="cell">
+                  <td colspan="5" class="py-8 text-center text-sm text-slate-600" role="cell">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                      <MagnifyingGlassIcon class="h-8 w-8 text-slate-400" />
+                    </div>
                     No rules available. Add your first rule to get started.
                   </td>
                 </tr>
               </tbody>
             </table>
             <!-- Pagination -->
-            <div class="mt-4 flex justify-between items-center">
-              <div class="text-sm text-gray-500">
+            <div class="mt-4 flex justify-between items-center px-6 py-4 bg-slate-50/60 backdrop-blur-sm">
+              <div class="text-sm text-slate-600">
                 Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
                 {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} rules
               </div>
               <div class="flex space-x-2">
                 <AppButton @click="changePage(currentPage - 1)" :disabled="currentPage === 1" variant="secondary"
+                  class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                   aria-label="Previous page">
                   Previous
                 </AppButton>
                 <AppButton @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" variant="secondary"
+                  class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                   aria-label="Next page">
                   Next
                 </AppButton>

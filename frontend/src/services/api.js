@@ -81,7 +81,8 @@ const endpoints = {
   },
   products: {
     list: '/products',
-    create: '/products'
+    create: '/products',
+    delete: (productId) => `/products/${productId}`
   },
   rules: {
     list: '/rules',
@@ -349,6 +350,15 @@ class ApiService {
   static async createProduct(productData) {
     try {
       const response = await axios.post(endpoints.products.create, productData)
+      return response.data
+    } catch (error) {
+      handleApiError(error)
+    }
+  }
+
+  static async deleteProduct(productId) {
+    try {
+      const response = await axios.delete(endpoints.products.delete(productId))
       return response.data
     } catch (error) {
       handleApiError(error)

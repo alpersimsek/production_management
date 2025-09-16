@@ -115,17 +115,17 @@ defineEmits(['update:modelValue'])
 <template>
   <div class="w-full">
     <!-- Label -->
-    <label v-if="label" :for="inputId" class="block text-sm font-medium text-gray-700 mb-1">
+    <label v-if="label" :for="inputId" class="block text-sm font-semibold text-slate-900 mb-2">
       {{ label }}
       <span v-if="required" class="text-red-500">*</span>
     </label>
 
     <!-- Input wrapper for prefix/suffix -->
-    <div class="relative rounded-md shadow-sm">
+    <div class="relative rounded-2xl shadow-sm">
       <!-- Prefix icon or text -->
-      <div v-if="$slots.prefix || prefix" class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <div v-if="$slots.prefix || prefix" class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         <slot name="prefix">
-          <span class="text-gray-500 sm:text-sm">{{ prefix }}</span>
+          <span class="text-slate-500 sm:text-sm">{{ prefix }}</span>
         </slot>
       </div>
 
@@ -140,11 +140,11 @@ defineEmits(['update:modelValue'])
         :readonly="readonly"
         :required="required"
         :class="[
-          'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2',
-          { 'pl-10': $slots.prefix || prefix },
-          { 'pr-7': $slots.suffix || suffix },
+          'block w-full rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 shadow-sm focus:border-gray-400 focus:ring-gray-400 focus:ring-offset-2 sm:text-sm py-3 px-4 transition-all duration-200 hover:border-slate-300/80',
+          { 'pl-12': $slots.prefix || prefix },
+          { 'pr-12': $slots.suffix || suffix },
           { 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:outline-none focus:ring-red-500': error },
-          { 'bg-gray-50 text-gray-500': disabled || readonly },
+          { 'bg-slate-50/80 text-slate-500': disabled || readonly },
           customClass
         ]"
         @input="$emit('update:modelValue', $event.target.value)"
@@ -152,15 +152,15 @@ defineEmits(['update:modelValue'])
       />
 
       <!-- Suffix icon or text -->
-      <div v-if="$slots.suffix || suffix" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+      <div v-if="$slots.suffix || suffix" class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
         <slot name="suffix">
-          <span class="text-gray-500 sm:text-sm">{{ suffix }}</span>
+          <span class="text-slate-500 sm:text-sm">{{ suffix }}</span>
         </slot>
       </div>
     </div>
 
     <!-- Helper text or error message -->
-    <p v-if="error || helperText" class="mt-1 text-sm" :class="error ? 'text-red-600' : 'text-gray-500'">
+    <p v-if="error || helperText" class="mt-2 text-sm" :class="error ? 'text-red-600' : 'text-slate-600'">
       {{ error || helperText }}
     </p>
   </div>

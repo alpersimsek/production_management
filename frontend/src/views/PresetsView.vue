@@ -61,11 +61,13 @@ const showDeleteModal = ref(false)
 const showRuleListModal = ref(false)
 const showCustomRuleForm = ref(false)
 const showProductModal = ref(false)
+const showProductDeleteModal = ref(false)
 const editingPreset = ref(null)
 const editingRule = ref(null)
 const selectedRule = ref(null)
 const deleteTarget = ref(null)
 const deleteType = ref('')
+const productToDelete = ref(null)
 const currentPresetId = ref(null)
 const defaultProductId = ref(null)
 
@@ -331,6 +333,44 @@ const handleProductError = (err) => {
   handleError(err, { type: 'server' })
   error.value = `Failed to create product: ${typeof err === 'string' ? err : (err.message || err.data?.detail || 'Unknown error')}`
 }
+
+const handleDeleteProduct = (productId) => {
+  // Convert productId to number for comparison
+  const numericProductId = Number(productId)
+  
+  // Find the product to get its name and preset count
+  const product = products.value.find(p => p.id === numericProductId)
+  
+  if (product) {
+    // Count presets for this product
+    const presetCount = presets.value.filter(p => p.product_id === numericProductId).length
+    productToDelete.value = {
+      ...product,
+      presetCount: presetCount,
+      hasPresets: presetCount > 0
+    }
+    showProductDeleteModal.value = true
+  }
+}
+
+const confirmDeleteProduct = async () => {
+  if (!productToDelete.value) return
+  
+  try {
+    loading.value = true
+    await ApiService.deleteProduct(productToDelete.value.id)
+    await loadProducts()
+    showSuccess('Product deleted successfully!', { title: 'Product Deleted' })
+    showProductDeleteModal.value = false
+    productToDelete.value = null
+  } catch (err) {
+    const errorMessage = err.data?.detail || err.message || 'Failed to delete product'
+    showError(errorMessage, { title: 'Delete Failed' })
+    error.value = errorMessage
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -339,21 +379,25 @@ const handleProductError = (err) => {
       <div class="sm:flex sm:items-center mb-8">
         <div class="sm:flex-auto">
           <div class="flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg"
-              class="h-8 w-8 text-indigo-600 transition-transform duration-300 hover:scale-110" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Preset Management</h1>
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-white transition-transform duration-300 hover:scale-110" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Preset Management</h1>
+              <p class="mt-1 text-sm text-slate-600 font-medium">Seamlessly manage product presets and their associated rules</p>
+            </div>
           </div>
-          <p class="mt-2 text-sm text-gray-600 font-medium">Seamlessly manage product presets and their associated rules</p>
         </div>
         <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-4">
           <button type="button" @click="openRuleListModal"
-            class="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
             aria-label="Manage rules">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
@@ -362,20 +406,20 @@ const handleProductError = (err) => {
             Manage Rules
           </button>
           <button type="button" @click="openPresetModal()"
-            class="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
             aria-label="Add preset">
             <PlusIcon class="h-5 w-5 mr-2" />
             Add Preset
           </button>
           <button type="button" @click="openProductModal"
-            class="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
             aria-label="Add product">
             <PlusIcon class="h-5 w-5 mr-2" />
             Add Product
           </button>
         </div>
       </div>
-      <div v-if="error" class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in">
+      <div v-if="error" class="mt-6 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 shadow-sm animate-fade-in">
         <div class="flex items-center">
           <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
           <p class="ml-3 text-sm font-medium text-red-800">{{ error }}</p>
@@ -387,14 +431,14 @@ const handleProductError = (err) => {
         </div>
       </div>
       <div v-if="loading" class="mt-8 flex justify-center items-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-600"></div>
-        <p class="ml-4 text-sm font-medium text-gray-600">Loading presets...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-2 border-gray-400/60 border-t-transparent"></div>
+        <p class="ml-4 text-sm font-medium text-slate-600">Loading presets...</p>
       </div>
-      <div v-else class="mt-8 bg-white rounded-xl shadow-md p-6">
+      <div v-else class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
         <PresetsList :presets="presets" :products="products" :rules="rules" :loading="loading"
           @add-preset="handleAddPreset" @edit-preset="handleEditPreset" @delete-preset="handleDeletePreset"
           @add-rule-to-preset="handleAddRuleToPreset" @edit-preset-rule="handleEditPresetRule"
-          @delete-preset-rule="handleDeletePresetRule" @load-preset-rules="loadPresetRules" class="animate-fade-in" />
+          @delete-preset-rule="handleDeletePresetRule" @load-preset-rules="loadPresetRules" @delete-product="handleDeleteProduct" class="animate-fade-in" />
       </div>
       <PresetForm v-if="showPresetModal" :open="showPresetModal" :products="products" :editPreset="editingPreset"
         :defaultProductId="defaultProductId" @close="showPresetModal = false" @saved="handlePresetSaved"
@@ -416,6 +460,12 @@ const handleProductError = (err) => {
         @close="closeCustomRuleForm" @saved="handleRuleListSaved" @error="error = $event" />
       <ProductForm v-if="showProductModal" :open="showProductModal"
         @close="showProductModal = false" @saved="handleProductSaved" @error="handleProductError" />
+      <ConfirmDeleteDialog v-if="showProductDeleteModal" :open="showProductDeleteModal" 
+        :item-type="productToDelete ? `product '${productToDelete.name}'` : 'product'"
+        :preset-count="productToDelete?.presetCount || 0"
+        :has-presets="productToDelete?.hasPresets || false"
+        @close="showProductDeleteModal = false; productToDelete = null" 
+        @confirm="confirmDeleteProduct" />
     </div>
   </MainLayout>
 </template>

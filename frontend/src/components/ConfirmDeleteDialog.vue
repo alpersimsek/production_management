@@ -37,7 +37,12 @@ import { ref } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
-defineProps({ open: { type: Boolean, required: true }, itemType: { type: String, default: 'item' } })
+defineProps({ 
+  open: { type: Boolean, required: true }, 
+  itemType: { type: String, default: 'item' },
+  presetCount: { type: Number, default: 0 },
+  hasPresets: { type: Boolean, default: false }
+})
 const emit = defineEmits(['close', 'confirm'])
 const loading = ref(false)
 
@@ -73,6 +78,18 @@ const handleConfirm = () => {
               Are you sure you want to delete this <span class="font-semibold text-gray-900">{{ itemType }}</span>? 
               This action cannot be undone.
             </p>
+            
+            <!-- Preset/Rule Warning -->
+            <div v-if="hasPresets" class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div class="flex items-center justify-center mb-2">
+                <ExclamationTriangleIcon class="h-5 w-5 text-amber-600 mr-2" />
+                <span class="text-amber-800 font-semibold">Cannot Delete</span>
+              </div>
+              <p class="text-amber-700 text-sm">
+                This product has <span class="font-semibold">{{ presetCount }} preset{{ presetCount !== 1 ? 's' : '' }}</span> 
+                associated with it. Please delete all presets first before deleting the product.
+              </p>
+            </div>
           </div>
 
           <!-- Action Buttons -->
@@ -87,9 +104,12 @@ const handleConfirm = () => {
             </button>
             <button 
               type="button"
-              class="flex-1 inline-flex items-center justify-center rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:bg-red-400 disabled:cursor-not-allowed hover:animate-shake"
+              class="flex-1 inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:cursor-not-allowed"
+              :class="hasPresets 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-red-600 hover:bg-red-700 focus:ring-red-500 hover:animate-shake disabled:bg-red-400'"
               @click="handleConfirm" 
-              :disabled="loading"
+              :disabled="loading || hasPresets"
             >
               <svg v-if="loading" class="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

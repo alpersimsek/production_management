@@ -308,32 +308,36 @@ onMounted(() => {
 <template>
   <MainLayout>
     <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
-      <!-- Header (Matching PresetManagement.vue and UserManagement.vue) -->
+      <!-- Header -->
       <div class="sm:flex sm:items-center mb-8">
         <div class="sm:flex-auto">
           <div class="flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg"
-              class="h-7 w-7 text-indigo-500 transition-transform duration-300 hover:scale-110" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">GDPR Data Search</h1>
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-white transition-transform duration-300 hover:scale-110" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900 tracking-tight">GDPR Data Search</h1>
+              <p class="mt-1 text-sm text-slate-600 font-medium">
+                Search and manage GDPR-compliant data masking records
+              </p>
+            </div>
           </div>
-          <p class="mt-2 text-sm text-gray-600 font-medium">
-            Search and manage GDPR-compliant data masking records
-          </p>
         </div>
         <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-4">
           <AppButton v-if="searchResults.length > 0" type="button" variant="secondary" @click="exportSearchResults"
-            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
             :preserveOriginalStyle="false" title="Export search results to CSV"
             aria-label="Export search results to CSV">
-            <ArrowDownTrayIcon class="h-5 w-5 mr-2 text-gray-500" aria-hidden="true" />
+            <ArrowDownTrayIcon class="h-5 w-5 mr-2 text-gray-600" aria-hidden="true" />
             Export
           </AppButton>
           <AppButton type="button" variant="primary" @click="performSearch" :loading="searchLoading"
-            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:bg-indigo-400"
+            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 disabled:from-gray-400 disabled:to-slate-500"
             :preserveOriginalStyle="false" title="Perform search" aria-label="Perform search">
             <CheckCircleIcon v-if="!searchLoading" class="h-5 w-5 mr-2" aria-hidden="true" />
             {{ searchLoading ? 'Updating...' : 'Update' }}
@@ -342,21 +346,21 @@ onMounted(() => {
       </div>
 
       <!-- Search Form -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate-fade-in">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6 mb-8 animate-fade-in">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <InputField id="search-query" v-model="searchQuery" label="Search Query" type="text"
             placeholder="Enter search terms or patterns" :disabled="searchLoading" ref="searchInputRef"
-            custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg" />
+            custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4" />
           <SelectField id="categories" v-model="selectedCategory" label="Data Category"
             :disabled="searchLoading || categoriesLoading"
-            custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg">
-            <option v-for="category in categories" :key="category.value" :value="category.value">
+            custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4">
+            <option v-for="category in categories" :key="category.value" :value="category.value" class="py-2 px-4">
               {{ category.label }}
             </option>
           </SelectField>
           <SelectField id="sort" v-model="currentSort" label="Sort By" :disabled="searchLoading"
-            custom-class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg">
-            <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+            custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4">
+            <option v-for="option in sortOptions" :key="option.value" :value="option.value" class="py-2 px-4">
               {{ option.label }}
             </option>
           </SelectField>
@@ -365,7 +369,7 @@ onMounted(() => {
 
       <!-- Error State -->
       <div v-if="searchError"
-        class="mt-6 rounded-xl bg-red-50 p-4 shadow-sm animate-fade-in flex items-center justify-between">
+        class="mt-6 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 shadow-sm animate-fade-in flex items-center justify-between">
         <div class="flex items-center">
           <svg class="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd"
@@ -386,50 +390,50 @@ onMounted(() => {
         <!-- Loading State -->
         <div v-if="searchLoading && !searchResults.length" class="py-8 flex justify-center items-center"
           aria-live="polite">
-          <div class="animate-spin rounded-full h-12 W-12 border-t-4 border-indigo-600"></div>
-          <p class="ml-4 text-sm font-medium text-gray-600">Loading data...</p>
+          <div class="animate-spin rounded-full h-12 w-12 border-2 border-gray-400/60 border-t-transparent"></div>
+          <p class="ml-4 text-sm font-medium text-slate-600">Loading data...</p>
         </div>
 
         <!-- Empty State -->
-        <div v-if="!searchResults.length && !searchLoading" class="py-8 text-center text-gray-600 font-medium"
+        <div v-if="!searchResults.length && !searchLoading" class="py-8 text-center text-slate-600 font-medium"
           aria-live="polite">
           No masking data found. Try adjusting your search or filters.
         </div>
 
         <!-- Results Table -->
         <div v-if="searchResults.length > 0"
-          class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
+          class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6 animate-fade-in">
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-slate-200/60">
+              <thead class="bg-slate-50/60 backdrop-blur-sm">
                 <tr>
                   <th scope="col"
-                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 cursor-pointer"
+                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-6 cursor-pointer hover:bg-slate-100/60 transition-colors duration-200"
                     @click="sortTable('category')">
                     <div class="flex items-center gap-1">
                       Category
-                      <component :is="getSortIcon('category')" class="h-4 w-4 text-gray-500"></component>
+                      <component :is="getSortIcon('category')" class="h-4 w-4 text-slate-500"></component>
                     </div>
                   </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900 cursor-pointer hover:bg-slate-100/60 transition-colors duration-200"
                     @click="sortTable('original_value')">
                     <div class="flex items-center gap-1">
                       Original Value
-                      <component :is="getSortIcon('original_value')" class="h-4 w-4 text-gray-500"></component>
+                      <component :is="getSortIcon('original_value')" class="h-4 w-4 text-slate-500"></component>
                     </div>
                   </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900 cursor-pointer hover:bg-slate-100/60 transition-colors duration-200"
                     @click="sortTable('masked_value')">
                     <div class="flex items-center gap-1">
                       Masked Value
-                      <component :is="getSortIcon('masked_value')" class="h-4 w-4 text-gray-500"></component>
+                      <component :is="getSortIcon('masked_value')" class="h-4 w-4 text-slate-500"></component>
                     </div>
                   </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900 cursor-pointer hover:bg-slate-100/60 transition-colors duration-200"
                     @click="sortTable('created_at')">
                     <div class="flex items-center gap-1">
                       Created Date
-                      <component :is="getSortIcon('created_at')" class="h-4 w-4 text-gray-500"></component>
+                      <component :is="getSortIcon('created_at')" class="h-4 w-4 text-slate-500"></component>
                     </div>
                   </th>
                   <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"
@@ -438,26 +442,26 @@ onMounted(() => {
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200">
+              <tbody class="divide-y divide-slate-200/60">
                 <tr v-for="item in searchResults" :key="item.id"
-                  class="hover:bg-gray-50 transition-colors duration-200">
-                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                  class="hover:bg-slate-50/60 transition-colors duration-200">
+                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
                     {{ item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Unknown' }}
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600">
                     {{ item.original_value || 'N/A' }}
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600">
                     {{ item.masked_value || 'Not masked' }}
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600">
                     {{ formatDate(item.created_at) }}
                   </td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
                     v-if="searchResults.some(item => item.processed)">
                     <div class="flex justify-end gap-2">
                       <AppButton v-if="item.processed" @click="exportData(item)" variant="text"
-                        class="text-indigo-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        class="text-gray-600 hover:text-gray-700 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                         :preserveOriginalStyle="false" title="Export processed file" aria-label="Export processed file">
                         <DocumentDuplicateIcon class="h-5 w-5" aria-hidden="true" />
                       </AppButton>
@@ -472,7 +476,7 @@ onMounted(() => {
         <!-- Load More Button -->
         <div v-if="hasMoreResults && searchResults.length > 0" class="mt-6 text-center">
           <AppButton variant="secondary" @click="loadMore" :loading="searchLoading" :disabled="searchLoading"
-            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
             :preserveOriginalStyle="false" aria-label="Load more results">
             Load More Results
           </AppButton>
@@ -480,9 +484,9 @@ onMounted(() => {
       </div>
 
       <!-- Footer Branding -->
-      <footer class="mt-12 text-center text-sm text-gray-500 px-4 sm:px-16">
+      <footer class="mt-12 text-center text-sm text-slate-500 px-4 sm:px-16">
         © {{ new Date().getFullYear() }} GDPR Processor. All rights reserved.
-        <a href="/privacy" class="text-indigo-600 hover:text-indigo-700 ml-2 transition-colors duration-200">Privacy
+        <a href="/privacy" class="text-gray-600 hover:text-gray-700 ml-2 transition-colors duration-200">Privacy
           Policy</a>
       </footer>
     </div>

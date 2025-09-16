@@ -96,7 +96,7 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <nav class="bg-white shadow-lg sticky top-0 z-50">
+  <nav class="bg-gray-100/80 backdrop-blur-sm border-b border-gray-200/60 sticky top-0 z-50">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 justify-between items-center">
         <!-- Logo and brand -->
@@ -119,9 +119,9 @@ const handleLogout = () => {
           <div class="flex space-x-1">
             <router-link v-for="item in navigationItems" :key="item.name" :to="item.href" :class="[
               isActive(item.href)
-                ? 'bg-indigo-100 text-indigo-700'
-                : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700',
-              'px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200',
+                ? 'bg-gray-200/80 text-gray-800'
+                : 'text-gray-600 hover:bg-gray-200/60 hover:text-gray-800',
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-md',
             ]" v-show="shouldShowItem(item)">
               {{ item.name }}
             </router-link>
@@ -132,7 +132,7 @@ const handleLogout = () => {
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           <div class="relative">
             <button @click="toggleUserMenu" type="button"
-              class="flex items-center rounded-full bg-indigo-100 text-indigo-800 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              class="flex items-center rounded-lg bg-gray-200/80 text-gray-800 hover:bg-gray-300/80 hover:scale-105 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
               id="user-menu-button" :aria-expanded="showUserMenu" aria-haspopup="true">
               <span class="sr-only">Open user menu</span>
               <div class="h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold">
@@ -142,10 +142,10 @@ const handleLogout = () => {
 
             <!-- Dropdown menu -->
             <div v-if="showUserMenu"
-              class="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-xl bg-white py-2 shadow-xl ring-1 ring-black ring-opacity-5 transform transition-all duration-300"
+              class="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-xl bg-gray-100/90 backdrop-blur-sm py-2 shadow-xl border border-gray-200/60 transform transition-all duration-300"
               :class="showUserMenu ? 'opacity-100 scale-100' : 'opacity-0 scale-95'" role="menu"
               aria-orientation="vertical" aria-labelledby="user-menu-button">
-              <div class="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+              <div class="px-4 py-2 text-sm text-gray-500 border-b border-gray-200/60">
                 Signed in as <span class="font-semibold text-gray-700">{{ username }}</span>
               </div>
               <!-- Uncomment if profile page is needed -->
@@ -157,7 +157,7 @@ const handleLogout = () => {
                 Your Profile
               </router-link> -->
               <button type="button" @click="handleLogout"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200/60 hover:text-gray-800 transition-all duration-200"
                 role="menuitem">
                 Sign out
               </button>
@@ -168,7 +168,7 @@ const handleLogout = () => {
         <!-- Mobile menu button -->
         <div class="-mr-2 flex items-center sm:hidden">
           <button @click="toggleMobileMenu" type="button"
-            class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-200/60 hover:text-gray-700 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200"
             aria-controls="mobile-menu" :aria-expanded="showMobileMenu">
             <span class="sr-only">Open main menu</span>
             <Bars3Icon v-if="!showMobileMenu" class="h-6 w-6" aria-hidden="true" />
@@ -179,22 +179,22 @@ const handleLogout = () => {
     </div>
 
     <!-- Mobile menu -->
-    <div v-if="showMobileMenu" class="sm:hidden bg-white shadow-md" id="mobile-menu">
+    <div v-if="showMobileMenu" class="sm:hidden bg-gray-100/90 backdrop-blur-sm border-b border-gray-200/60 shadow-md" id="mobile-menu">
       <div class="space-y-1 pt-2 pb-3">
         <router-link v-for="item in navigationItems" :key="item.name" :to="item.href" :class="[
           isActive(item.href)
-            ? 'bg-indigo-100 text-indigo-700'
-            : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-700',
-          'block px-4 py-3 rounded-md text-base font-medium transition-colors duration-200',
+            ? 'bg-gray-200/80 text-gray-800'
+            : 'text-gray-600 hover:bg-gray-200/60 hover:text-gray-800',
+          'block px-4 py-3 rounded-md text-base font-medium transition-all duration-200 hover:scale-105 hover:shadow-md',
         ]" @click="toggleMobileMenu" v-show="shouldShowItem(item)">
           {{ item.name }}
         </router-link>
       </div>
-      <div class="border-t border-gray-200 pt-4 pb-3">
+      <div class="border-t border-gray-200/60 pt-4 pb-3">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
             <div
-              class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-semibold">
+              class="h-10 w-10 rounded-full bg-gray-200/80 flex items-center justify-center text-gray-800 font-semibold">
               {{ userInitials }}
             </div>
           </div>
@@ -212,7 +212,7 @@ const handleLogout = () => {
             Your Profile
           </router-link> -->
           <button type="button" @click="handleLogout"
-            class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-indigo-50 hover:text-indigo-700">
+            class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-200/60 hover:text-gray-800 transition-all duration-200">
             Sign out
           </button>
         </div>

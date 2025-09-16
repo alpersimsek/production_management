@@ -41,6 +41,8 @@ import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 import { useNotifications } from '../composables/useNotifications'
+import InputField from './InputField.vue'
+import SelectField from './SelectField.vue'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -56,10 +58,7 @@ const saving = ref(false)
 const successMessage = ref('')
 const { showPresetCreated, showSuccess } = useNotifications()
 const editing = computed(() => {
-  const isEditing = !!props.editPreset && typeof props.editPreset === 'object'
-  console.log('PresetForm - editPreset prop:', props.editPreset)
-  console.log('PresetForm - editing computed:', isEditing)
-  return isEditing
+  return !!props.editPreset && typeof props.editPreset === 'object'
 })
 
 watch(() => props.open, (isOpen) => {
@@ -70,27 +69,19 @@ watch(() => props.open, (isOpen) => {
 })
 
 const initializeForm = () => {
-  console.log('PresetForm - initializeForm called')
-  console.log('PresetForm - props.editPreset:', props.editPreset)
-  console.log('PresetForm - props.defaultProductId:', props.defaultProductId)
-  
   if (props.editPreset && typeof props.editPreset === 'object') {
-    console.log('PresetForm - Initializing form for EDITING')
     form.value = {
       name: props.editPreset.name || '',
       header: props.editPreset.header || '',
       productId: props.editPreset.product_id || null
     }
   } else {
-    console.log('PresetForm - Initializing form for ADDING NEW')
     form.value = {
       name: '',
       header: '',
       productId: props.defaultProductId || (props.products && props.products.length > 0 ? props.products[0].id : null)
     }
   }
-  
-  console.log('PresetForm - Form initialized with:', form.value)
 }
 
 const savePreset = async () => {
@@ -133,46 +124,51 @@ initializeForm()
     <div class="fixed inset-0 overflow-y-auto">
       <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
         <DialogPanel
-          class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl transition-all duration-300 sm:max-w-lg sm:w-full sm:scale-100">
+          class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl transition-all duration-300 sm:max-w-lg sm:w-full sm:scale-100">
           <button type="button"
-            class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
             @click="$emit('close')" aria-label="Close">
             <XMarkIcon class="h-6 w-6" />
           </button>
-          <DialogTitle as="h3" class="text-lg font-semibold text-gray-900">
+          <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">
             {{ editing ? 'Edit Preset' : 'Add New Preset' }}
           </DialogTitle>
-          <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-3 flex items-center">
+          <div v-if="successMessage" class="mt-4 rounded-2xl bg-green-50/80 backdrop-blur-sm border border-green-200/60 p-4 flex items-center">
             <CheckCircleIcon class="h-5 w-5 text-green-400" />
             <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
           </div>
           <div class="mt-6 space-y-6">
-            <div>
-              <label for="preset-name" class="block text-sm font-medium text-gray-700">Name</label>
-              <input type="text" id="preset-name" v-model="form.name"
-                class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Preset name" required />
-            </div>
-            <div>
-              <label for="preset-header" class="block text-sm font-medium text-gray-700">Header</label>
-              <input type="text" id="preset-header" v-model="form.header"
-                class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Preset header" required />
-            </div>
-            <div>
-              <label for="preset-product" class="block text-sm font-medium text-gray-700">Product</label>
-              <select id="preset-product" v-model="form.productId"
-                class="mt-2 block w-full rounded-md border-gray-300 py-2.5 text-base shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }}</option>
-              </select>
-            </div>
+            <InputField
+              id="preset-name"
+              v-model="form.name"
+              label="Name"
+              type="text"
+              placeholder="Preset name"
+              required
+            />
+            <InputField
+              id="preset-header"
+              v-model="form.header"
+              label="Header"
+              type="text"
+              placeholder="Preset header"
+              required
+            />
+            <SelectField
+              id="preset-product"
+              v-model="form.productId"
+              label="Product"
+              required
+            >
+              <option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }}</option>
+            </SelectField>
           </div>
           <div class="mt-8 flex justify-end gap-3">
             <button type="button"
-              class="inline-flex rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+              class="inline-flex rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
               @click="$emit('close')" :disabled="saving">Cancel</button>
             <button type="button"
-              class="inline-flex rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              class="inline-flex rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:from-gray-400 disabled:to-slate-500 transition-all duration-200"
               @click="savePreset" :disabled="saving">
               <svg v-if="saving" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

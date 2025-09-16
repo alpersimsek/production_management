@@ -86,9 +86,9 @@ const toggleExpanded = () => {
     <div class="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
       <button @click="toggleExpanded" class="w-full text-left">
         <div class="relative">
-          <div v-if="$slots.icon || icon" class="absolute rounded-md bg-primary p-3">
+          <div v-if="$slots.icon || icon" class="absolute rounded-lg bg-gray-100/80 backdrop-blur-sm p-3">
             <slot name="icon">
-              <component :is="icon" class="h-6 w-6 text-white" aria-hidden="true" />
+              <component :is="icon" class="h-6 w-6 text-gray-600" aria-hidden="true" />
             </slot>
           </div>
           <div class="flex items-center justify-between" :class="{ 'ml-16': $slots.icon || icon }">

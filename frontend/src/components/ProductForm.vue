@@ -33,6 +33,7 @@ import { ref, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
+import InputField from './InputField.vue'
 
 const props = defineProps({
   open: { type: Boolean, default: false }
@@ -94,26 +95,26 @@ const closeModal = () => {
 
 <template>
   <Dialog :open="open" @close="closeModal" class="relative z-50">
-    <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
+    <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity duration-300" aria-hidden="true" />
     <div class="fixed inset-0 flex items-center justify-center p-4">
-      <DialogPanel class="mx-auto max-w-md w-full bg-white rounded-xl shadow-xl">
+      <DialogPanel class="mx-auto max-w-md w-full bg-white/90 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-2xl">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
-            <DialogTitle class="text-xl font-semibold text-gray-900">
+            <DialogTitle class="text-2xl font-bold text-slate-900">
               Add New Product
             </DialogTitle>
             <button
               type="button"
               @click="closeModal"
               :disabled="saving"
-              class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1 transition-colors duration-200 disabled:opacity-50"
+              class="text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200 disabled:opacity-50"
               aria-label="Close modal"
             >
               <XMarkIcon class="h-6 w-6" />
             </button>
           </div>
 
-          <div v-if="successMessage" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div v-if="successMessage" class="mb-6 p-4 bg-green-50/80 backdrop-blur-sm border border-green-200/60 rounded-2xl">
             <div class="flex items-center">
               <CheckCircleIcon class="h-5 w-5 text-green-400 mr-3" />
               <p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
@@ -121,35 +122,30 @@ const closeModal = () => {
           </div>
 
           <form @submit.prevent="saveProduct" class="space-y-6">
-            <div>
-              <label for="product-name" class="block text-sm font-medium text-gray-700 mb-2">
-                Product Name <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="product-name"
-                v-model="form.name"
-                type="text"
-                required
-                :disabled="saving"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Enter product name"
-                maxlength="100"
-              />
-            </div>
+            <InputField
+              id="product-name"
+              v-model="form.name"
+              label="Product Name"
+              type="text"
+              placeholder="Enter product name"
+              required
+              :disabled="saving"
+              :maxlength="100"
+            />
 
             <div class="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
                 @click="closeModal"
                 :disabled="saving"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 :disabled="saving || !form.name.trim()"
-                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-gray-500 to-slate-600 rounded-2xl hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:from-gray-400 disabled:to-slate-500 disabled:cursor-not-allowed transition-all duration-200"
               >
                 <span v-if="saving" class="flex items-center">
                   <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

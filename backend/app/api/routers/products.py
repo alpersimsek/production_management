@@ -42,6 +42,7 @@ class ProductsRouter(APIRouter):
         # Product Routes
         self.get("/products", response_model=List[ProductResponse])(self.get_products)
         self.post("/products", response_model=ProductResponse)(self.create_product)
+        self.delete("/products/{product_id}")(self.delete_product)
 
     def get_products(self, req: Request):
         """Get all products."""
@@ -71,6 +72,44 @@ class ProductsRouter(APIRouter):
             })
             
             return ProductResponse.model_validate(created_product)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
+
+    def delete_product(self, req: Request, product_id: int):
+        """Delete a product if it has no presets."""
+        product_service = ProductService(req.state.db)
+        try:
+            # Check if product exists
+            product = product_service.get_by_id(product_id)
+            if not product:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, 
+                    detail="Product not found"
+                )
+            
+            # Check if product has presets
+            if product.presets and len(product.presets) > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot delete product '{product.name}' because it has {len(product.presets)} preset(s) associated with it. Please delete all presets first."
+                )
+            
+            # Delete the product
+            product_service.delete(product_id)
+            
+            # Log successful product deletion
+            logger.info({
+                "event": "product_deleted",
+                "product_id": product_id,
+                "product_name": product.name,
+                "username": req.state.user.username if hasattr(req.state, 'user') and req.state.user else "unknown"
+            })
+            
+            return {"message": f"Product '{product.name}' deleted successfully"}
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
