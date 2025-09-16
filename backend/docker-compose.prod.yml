@@ -7,6 +7,7 @@ services:
       - 8000:8000
     environment:
       - DATA_DIR=/data
+      - CELERY_BROKER=${CELERY_BROKER_URL}
       - DB_USERNAME=postgres
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=db
@@ -47,7 +48,7 @@ services:
     depends_on:
       - mq
       - db
-    command: bash -c 'while !</dev/tcp/web/8000; do sleep 1; done; celery -A tasks worker --loglevel=info --autoscale=4,1'
+    command: bash -c 'while !</dev/tcp/backend/8000; do sleep 1; done; celery -A tasks worker --loglevel=info --autoscale=4,1'
     logging:
       driver: "json-file"
       options:

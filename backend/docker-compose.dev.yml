@@ -7,6 +7,7 @@ services:
       - 8000:8000
     environment:
       - DATA_DIR=/data
+      - CELERY_BROKER=${CELERY_BROKER_URL}
       - DB_USERNAME=postgres
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=db
@@ -15,7 +16,12 @@ services:
       - .:/app
       - data:/data
     depends_on:
+      - mq
       - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
     networks:
       - gdpr-network
 
@@ -48,7 +54,7 @@ services:
     depends_on:
       - mq
       - db
-    command: bash -c 'while !</dev/tcp/web/8000; do sleep 1; done; celery -A tasks worker --loglevel=info --autoscale=4,1'
+    command: bash -c 'while !</dev/tcp/backend/8000; do sleep 1; done; celery -A tasks worker --loglevel=info --autoscale=4,1'
     logging:
       driver: "json-file"
       options:
@@ -59,8 +65,6 @@ services:
   mq:
     container_name: rabbitMQ
     image: rabbitmq:alpine
-    ports:
-      - 5672:5672
     networks:
       - gdpr-network
 
