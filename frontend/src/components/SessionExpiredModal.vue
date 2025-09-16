@@ -29,7 +29,7 @@ Features:
 -->
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { ExclamationTriangleIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 
@@ -49,20 +49,36 @@ const handleClose = () => {
 }
 
 const handleKeydown = (event) => {
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && props.open) {
+    event.stopPropagation()
+    event.preventDefault()
     handleClose()
-  } else if (event.key === 'Enter') {
+  } else if (event.key === 'Enter' && props.open) {
+    event.stopPropagation()
+    event.preventDefault()
     handleLogin()
   }
 }
 
 onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
+  // Event listener management is handled in the watch function
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
+
+// Watch for open prop changes
+watch(() => props.open, (newValue) => {
+  if (newValue) {
+    // Add event listener when modal opens (remove first to prevent duplicates)
+    document.removeEventListener('keydown', handleKeydown)
+    document.addEventListener('keydown', handleKeydown)
+  } else {
+    // Remove event listener when modal closes
+    document.removeEventListener('keydown', handleKeydown)
+  }
+}, { immediate: true })
 </script>
 
 <template>

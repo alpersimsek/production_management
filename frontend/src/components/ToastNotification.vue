@@ -35,7 +35,7 @@ Features:
 -->
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { 
   CheckCircleIcon, 
   InformationCircleIcon, 
@@ -148,6 +148,9 @@ const dismiss = () => {
   isLeaving.value = true
   pauseTimer()
   
+  // Remove event listener when dismissing
+  document.removeEventListener('keydown', handleKeydown)
+  
   setTimeout(() => {
     emit('dismiss')
     emit('close')
@@ -159,7 +162,9 @@ const handleClose = () => {
 }
 
 const handleKeydown = (event) => {
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && isVisible.value && !isLeaving.value) {
+    event.stopPropagation()
+    event.preventDefault()
     dismiss()
   }
 }
@@ -174,8 +179,6 @@ onMounted(() => {
       }
     }, 10)
   }
-  
-  document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
@@ -191,10 +194,15 @@ watch(() => props.open, (newValue) => {
     if (props.duration > 0) {
       startTimer()
     }
+    // Add event listener when toast becomes visible (remove first to prevent duplicates)
+    document.removeEventListener('keydown', handleKeydown)
+    document.addEventListener('keydown', handleKeydown)
   } else {
+    // Remove event listener when toast is closed
+    document.removeEventListener('keydown', handleKeydown)
     dismiss()
   }
-})
+}, { immediate: true })
 </script>
 
 <template>
