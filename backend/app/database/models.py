@@ -210,7 +210,7 @@ class Preset(Base):
 
     # Relationships
     rules: Mapped[list["PresetRule"]] = Relationship(
-        "PresetRule", back_populates="preset"
+        "PresetRule", back_populates="preset", passive_deletes=True
     )
     files: Mapped[list["File"]] = Relationship("File", back_populates="preset")
     product: Mapped["Product"] = Relationship("Product", back_populates="presets")
@@ -233,8 +233,8 @@ class Rule(Base):
 class PresetRule(Base):
     __tablename__ = "preset_rules"
 
-    preset_id: Mapped[int] = mapped_column(ForeignKey("presets.id"), nullable=False)
-    rule_id: Mapped[int] = mapped_column(ForeignKey("rules.id"), nullable=False)
+    preset_id: Mapped[int] = mapped_column(ForeignKey("presets.id", ondelete="CASCADE"), nullable=False)
+    rule_id: Mapped[int] = mapped_column(ForeignKey("rules.id", ondelete="CASCADE"), nullable=False)
     action: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Composite primary key on preset_id and rule_id

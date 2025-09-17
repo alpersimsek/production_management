@@ -18,8 +18,8 @@
         "--use-colors",
         "--factory"
       ],
-      "preLaunchTask": "Start PostgreSQL Service",
-      "postDebugTask": "Stop PostgreSQL Service",
+      "preLaunchTask": "Start Services",
+      "postDebugTask": "Stop Services",
       "justMyCode": true,
       "cwd": "${workspaceFolder}${pathSeparator}backend${pathSeparator}app",
       "console": "integratedTerminal",
@@ -60,7 +60,8 @@
         "run",
         "dev"
       ],
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "preLaunchTask": "Wait for Backend"
     },
     {
       "name": "Frontend: Chrome",
@@ -70,7 +71,8 @@
       "webRoot": "${workspaceFolder}/frontend",
       "sourceMapPathOverrides": {
         "webpack:///src/*": "${webRoot}/src/*"
-      }
+      },
+      "preLaunchTask": "Wait for Backend"
     }
   ],
   "compounds": [

@@ -43,14 +43,14 @@ fi
 echo "🧹 Stopping and removing all services under project '$PROJECT'..."
 
 cd "$BASE_DIR"
-$COMPOSE --project-name "$PROJECT" down --volumes --remove-orphans
+$COMPOSE --project-name "$PROJECT" down --remove-orphans
 
 echo "🔌 Removing shared Docker network if unused..."
 docker network rm "$DOCKER_NETWORK" 2>/dev/null || echo "⚠️  Network '$DOCKER_NETWORK' in use or already gone"
 
 if [ "$FULL_CLEAN" = true ]; then
-  echo "🗑️  Removing built images: ${PROJECT}-frontend and ${PROJECT}-backend"
-  docker rmi ${PROJECT}-frontend:latest ${PROJECT}-backend:latest postgres:17 2>/dev/null || true
+  echo "🗑️  Removing built images..."
+  docker rmi ${PROJECT}-frontend:latest ${PROJECT}-backend:latest ${PROJECT}-celery:latest postgres:17 rabbitmq:alpine mher/flower:2.0 2>/dev/null || true
   docker image prune -f
   docker builder prune -af
 fi

@@ -2,16 +2,24 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start PostgreSQL Service",
+      "label": "Start Services",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml up -d db mq flower",
+      "command": "bash",
+      "args": [
+        "-c",
+        "docker network inspect gdpr-network >/dev/null 2>&1 || docker network create gdpr-network; docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml --project-name gdpr up -d db mq flower --build"
+      ],
       "problemMatcher": []
       // "isBackground": true
     },
     {
-      "label": "Stop PostgreSQL Service",
+      "label": "Stop Services",
       "type": "shell",
-      "command": "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml down db mq flower",
+      "command": "bash",
+      "args": [
+        "-c",
+        "docker compose -f ${workspaceFolder}${pathSeparator}backend${pathSeparator}docker-compose.dev.yml --project-name gdpr down db mq flower --remove-orphans; docker network rm gdpr-network 2>/dev/null || echo 'Network gdpr-network in use or already gone'"
+      ],
       "problemMatcher": []
       // "isBackground": true
     },
@@ -20,8 +28,18 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "-lc",
-        "until nc -z 127.0.0.1 5672; do echo waiting for mq; sleep 1; done; until nc -z 127.0.0.1 5432; do echo waiting for db; sleep 1; done"
+        "-c",
+        "while !</dev/tcp/localhost/5432; do echo waiting for db; sleep 1; done; while !</dev/tcp/localhost/5672; do echo waiting for mq; sleep 1; done"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Wait for Backend",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "while !</dev/tcp/localhost/8000; do echo waiting for backend API...; sleep 2; done; echo Backend is ready!"
       ],
       "problemMatcher": []
     }
