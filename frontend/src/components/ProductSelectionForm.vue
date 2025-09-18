@@ -37,6 +37,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import AppButton from './AppButton.vue'
+import CustomSelect from './CustomSelect.vue'
 import ApiService from '../services/api'
 
 const props = defineProps({
@@ -168,68 +169,66 @@ onMounted(() => {
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel
-              class="relative transform overflow-hidden rounded-xl bg-white px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
+              class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
               <button type="button"
-                class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
                 @click="handleCancel" aria-label="Close modal">
                 <XMarkIcon class="h-6 w-6" />
               </button>
-              <DialogTitle as="h3" class="text-lg font-bold text-gray-900">
+              <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">
                 Select Product for Processing
               </DialogTitle>
               <div class="mt-2">
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-slate-600">
                   Choose a product to apply specific processing rules.
                 </p>
               </div>
               
               <form @submit.prevent="handleProcess" class="mt-6 space-y-6">
                 <!-- File Info -->
-                <div class="p-3 bg-gray-50 rounded-md">
-                  <div class="text-sm">
-                    <p><span class="font-medium">File:</span> {{ file?.filename }}</p>
-                    <p><span class="font-medium">Type:</span> {{ fileType }}</p>
-                    <p><span class="font-medium">Size:</span> {{ formatFileSize(file?.file_size) }}</p>
+                <div class="p-4 bg-slate-50/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl">
+                  <div class="text-sm space-y-1">
+                    <p><span class="font-semibold text-slate-700">File:</span> <span class="text-slate-600">{{ file?.filename }}</span></p>
+                    <p><span class="font-semibold text-slate-700">Type:</span> <span class="text-slate-600">{{ fileType }}</span></p>
+                    <p><span class="font-semibold text-slate-700">Size:</span> <span class="text-slate-600">{{ formatFileSize(file?.file_size) }}</span></p>
                   </div>
                 </div>
 
                 <!-- Product Selection -->
-                <div>
-                  <label for="product-select" class="block text-sm font-medium text-gray-700 mb-2">
-                    Product *
-                  </label>
-                                  <select
-                  id="product-select"
+                <CustomSelect
                   v-model="selectedProduct"
+                  :options="products.map(p => ({ value: p.id, label: p.name }))"
+                  label="Product"
+                  placeholder="Select a product..."
                   :disabled="productsLoading"
-                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': showError }"
-                >
-                  <option value="">Select a product...</option>
-                  <option v-for="product in products" :key="product.id" :value="product.id">
-                    {{ product.name }}
-                  </option>
-                </select>
-                  <p v-if="showError" class="mt-1 text-sm text-red-600">
-                    Please select a product to continue.
-                  </p>
-                </div>
+                  :loading="productsLoading"
+                  :required="true"
+                  :error="showError ? 'Please select a product to continue.' : ''"
+                />
               </form>
 
 
               
               <!-- Action buttons -->
-              <div class="mt-8 flex flex-row-reverse gap-3">
-                <AppButton
+              <div class="mt-8 flex justify-end gap-3">
+                <button
                   type="button"
-                  variant="primary"
-                  :loading="processing"
-                  :disabled="!selectedProduct || processing"
+                  @click="handleCancel"
+                  :disabled="processing"
+                  class="inline-flex rounded-2xl border border-slate-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
                   @click="handleProcess"
+                  :disabled="!selectedProduct || processing"
+                  class="inline-flex rounded-2xl bg-slate-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Process file"
                 >
                   <span v-if="processing" class="flex items-center">
-                    <svg class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                       <path class="opacity-75" fill="currentColor"
                         d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z" />
@@ -237,16 +236,7 @@ onMounted(() => {
                     Processing...
                   </span>
                   <span v-else>Process File</span>
-                </AppButton>
-                <AppButton
-                  type="button"
-                  variant="secondary"
-                  @click="handleCancel"
-                  :disabled="processing"
-                  aria-label="Cancel"
-                >
-                  Cancel
-                </AppButton>
+                </button>
               </div>
             </DialogPanel>
           </TransitionChild>

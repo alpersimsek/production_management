@@ -39,7 +39,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 import AppButton from './AppButton.vue'
 import InputField from './InputField.vue'
-import SelectField from './SelectField.vue'
+import CustomSelect from './CustomSelect.vue'
 import { XMarkIcon, ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 
@@ -217,12 +217,14 @@ const saveRule = async () => {
                 <InputField :input-ref="nameInput" id="rule-name" v-model="form.name" label="Name" type="text"
                   required placeholder="e.g., IP Address Masking" :error="errors.name"
                   aria-describedby="rule-name-error" @focus="clearFieldError('name')" />
-                <SelectField id="rule-category" v-model="form.category" label="Category" required
-                  :error="errors.category" aria-describedby="rule-category-error"
-                  @focus="clearFieldError('category')">
-                  <option value="" disabled>Select a category</option>
-                  <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                </SelectField>
+                <CustomSelect
+                  v-model="form.category"
+                  :options="categories.map(cat => ({ value: cat, label: cat }))"
+                  label="Category"
+                  placeholder="Select a category"
+                  :required="true"
+                  :error="errors.category"
+                />
                 <InputField id="rule-pattern" v-model="form.pattern"
                   label="Pattern" type="text" placeholder="e.g., \b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"
                   :error="errors.pattern" aria-describedby="rule-pattern-error"

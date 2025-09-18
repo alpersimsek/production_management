@@ -42,7 +42,7 @@ import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
 import { useNotifications } from '../composables/useNotifications'
 import InputField from './InputField.vue'
-import SelectField from './SelectField.vue'
+import CustomSelect from './CustomSelect.vue'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -154,14 +154,13 @@ initializeForm()
               placeholder="Preset header"
               required
             />
-            <SelectField
-              id="preset-product"
+            <CustomSelect
               v-model="form.productId"
+              :options="products.map(p => ({ value: p.id, label: p.name }))"
               label="Product"
-              required
-            >
-              <option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }}</option>
-            </SelectField>
+              placeholder="Select a product..."
+              :required="true"
+            />
           </div>
           <div class="mt-8 flex justify-end gap-3">
             <button type="button"

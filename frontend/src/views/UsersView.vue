@@ -38,7 +38,7 @@ import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog.vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import AppButton from '../components/AppButton.vue'
 import InputField from '../components/InputField.vue'
-import SelectField from '../components/SelectField.vue'
+import CustomSelect from '../components/CustomSelect.vue'
 import ApiService from '../services/api'
 import { useNotifications } from '../composables/useNotifications'
 import {
@@ -267,11 +267,16 @@ onMounted(() => {
                 custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4" />
               <InputField id="password" v-model="newUser.password" label="Password" type="password" required
                 custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4" />
-              <SelectField id="role" v-model="newUser.role" label="Role"
-                custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4">
-                <option value="user" class="py-2 px-4">User</option>
-                <option value="admin" class="py-2 px-4">Admin</option>
-              </SelectField>
+              <CustomSelect
+                v-model="newUser.role"
+                :options="[
+                  { value: 'user', label: 'User' },
+                  { value: 'admin', label: 'Admin' }
+                ]"
+                label="Role"
+                placeholder="Select a role"
+                :required="true"
+              />
             </div>
 
             <div class="mt-6 flex justify-end space-x-3">

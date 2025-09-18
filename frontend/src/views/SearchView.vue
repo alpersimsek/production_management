@@ -36,7 +36,7 @@ import MainLayout from '../components/MainLayout.vue'
 import ExpandableCard from '../components/ExpandableCard.vue'
 import AppButton from '../components/AppButton.vue'
 import InputField from '../components/InputField.vue'
-import SelectField from '../components/SelectField.vue'
+import CustomSelect from '../components/CustomSelect.vue'
 import ApiService from '../services/api'
 import {
   CheckCircleIcon,
@@ -351,19 +351,21 @@ onMounted(() => {
           <InputField id="search-query" v-model="searchQuery" label="Search Query" type="text"
             placeholder="Enter search terms or patterns" :disabled="searchLoading" ref="searchInputRef"
             custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4" />
-          <SelectField id="categories" v-model="selectedCategory" label="Data Category"
+          <CustomSelect
+            v-model="selectedCategory"
+            :options="categories"
+            label="Data Category"
+            placeholder="Select a category"
             :disabled="searchLoading || categoriesLoading"
-            custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4">
-            <option v-for="category in categories" :key="category.value" :value="category.value" class="py-2 px-4">
-              {{ category.label }}
-            </option>
-          </SelectField>
-          <SelectField id="sort" v-model="currentSort" label="Sort By" :disabled="searchLoading"
-            custom-class="border-gray-300 focus:border-gray-500 focus:ring-gray-400 rounded-2xl pl-4">
-            <option v-for="option in sortOptions" :key="option.value" :value="option.value" class="py-2 px-4">
-              {{ option.label }}
-            </option>
-          </SelectField>
+            :loading="categoriesLoading"
+          />
+          <CustomSelect
+            v-model="currentSort"
+            :options="sortOptions"
+            label="Sort By"
+            placeholder="Select sort option"
+            :disabled="searchLoading"
+          />
         </div>
       </div>
 

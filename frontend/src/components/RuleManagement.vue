@@ -41,7 +41,7 @@ GDPR compliance tool with proper data handling and user feedback.
 import { ref, computed, watch, onMounted } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import AppButton from './AppButton.vue'
-import SelectField from './SelectField.vue'
+import CustomSelect from './CustomSelect.vue'
 import InputField from './InputField.vue'
 import { XMarkIcon, PencilIcon, TrashIcon, ExclamationCircleIcon, PlusIcon, ChevronUpIcon, ChevronDownIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
@@ -214,10 +214,12 @@ const handleDeleteConfirm = async () => {
           </div>
           <div class="mt-4 flex items-end space-x-4">
             <div class="flex-1">
-              <SelectField id="category-filter" v-model="filterCategory" label="Filter by Category"
-                class="w-full" aria-label="Filter rules by category">
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-              </SelectField>
+              <CustomSelect
+                v-model="filterCategory"
+                :options="categories.map(cat => ({ value: cat, label: cat }))"
+                label="Filter by Category"
+                placeholder="Select category"
+              />
             </div>
             <div class="flex-[2]">
               <InputField

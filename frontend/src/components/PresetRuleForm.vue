@@ -41,7 +41,7 @@ import { ref, computed, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import ApiService from '../services/api'
-import SelectField from './SelectField.vue'
+import CustomSelect from './CustomSelect.vue'
 
 const props = defineProps({
   open: { type: Boolean, required: true },
@@ -155,17 +155,14 @@ const save = async () => {
           </button>
         </div>
         <div class="mt-6 space-y-4">
-          <SelectField
-            id="rule"
+          <CustomSelect
             v-model="formData.rule_id"
+            :options="availableRules.map(rule => ({ value: rule.id, label: rule.name }))"
             label="Rule"
-            required
+            placeholder="Select a rule"
+            :required="true"
             :error="errors.rule_id"
-            @focus="clearError('rule_id')"
-          >
-            <option value="" disabled>Select a rule</option>
-            <option v-for="rule in availableRules" :key="rule.id" :value="rule.id">{{ rule.name }}</option>
-          </SelectField>
+          />
         </div>
         <div class="mt-8 flex justify-end space-x-3">
           <button type="button" @click="$emit('close')"

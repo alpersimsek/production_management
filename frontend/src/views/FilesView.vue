@@ -405,7 +405,7 @@ const handleDownload = async (fileId) => {
                 totalUploadPages > 1 ? 'min-h-[400px]' : ''
               ]">
                 <div v-for="file in paginatedUploads" :key="file.id"
-                  class="flex items-start justify-between p-5 bg-slate-50/60 backdrop-blur-sm rounded-2xl border border-slate-100/60 hover:bg-slate-100/80 transition-all duration-300">
+                  class="relative flex items-start justify-between p-5 bg-slate-50/60 backdrop-blur-sm rounded-2xl border border-slate-100/60 hover:bg-slate-100/80 transition-all duration-300">
                   <div class="flex items-start space-x-4 flex-1 min-w-0">
                     <div class="flex-shrink-0 mt-1">
                       <div class="w-14 h-14 bg-gray-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -420,7 +420,7 @@ const handleDownload = async (fileId) => {
                       <p class="text-xs text-slate-500 mb-3">{{ file.formattedDate }}</p>
                       <ProcessingStatus v-if="isProcessing(file.id)" :percent="getProcessingStatus(file).percent"
                         :time-remaining="getProcessingStatus(file).timeRemaining"
-                        :progress-width="getProcessingStatus(file).progressWidth" class="h-4 w-24 flex items-center"
+                        :progress-width="getProcessingStatus(file).progressWidth"
                         aria-live="polite" />
                     </div>
                   </div>
