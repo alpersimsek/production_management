@@ -103,16 +103,7 @@ const displayText = computed(() => {
   return props.placeholder
 })
 
-const dropdownStyle = computed(() => {
-  if (!dropdownRef.value) return {}
-  
-  const rect = dropdownRef.value.getBoundingClientRect()
-  return {
-    top: `${rect.bottom + window.scrollY + 8}px`,
-    left: `${rect.left + window.scrollX}px`,
-    width: `${rect.width}px`
-  }
-})
+// Simple dropdown positioning - no complex calculations needed
 
 
 // Methods
@@ -271,20 +262,18 @@ onUnmounted(() => {
       </button>
 
       <!-- Dropdown List -->
-      <Teleport to="body">
-        <Transition
-          enter-active-class="transition duration-200 ease-out"
-          enter-from-class="transform scale-95 opacity-0"
-          enter-to-class="transform scale-100 opacity-100"
-          leave-active-class="transition duration-150 ease-in"
-          leave-from-class="transform scale-100 opacity-100"
-          leave-to-class="transform scale-95 opacity-0"
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="transform scale-95 opacity-0"
+        enter-to-class="transform scale-100 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="transform scale-100 opacity-100"
+        leave-to-class="transform scale-95 opacity-0"
+      >
+        <div
+          v-if="isOpen"
+          class="absolute top-full left-0 right-0 z-50 mt-1 rounded-2xl bg-white border border-slate-200 shadow-xl max-h-60 overflow-hidden"
         >
-          <div
-            v-if="isOpen"
-            class="fixed z-[9999] rounded-2xl bg-white/95 backdrop-blur-sm border border-slate-200/80 shadow-xl max-h-60 overflow-hidden"
-            :style="dropdownStyle"
-          >
           <!-- Search Input -->
           <div v-if="searchable" class="p-3 border-b border-slate-200/60">
             <div class="relative">
@@ -337,7 +326,6 @@ onUnmounted(() => {
           </div>
         </div>
       </Transition>
-      </Teleport>
     </div>
 
     <!-- Error Message -->

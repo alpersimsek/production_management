@@ -124,7 +124,7 @@ initializeForm()
     <div class="fixed inset-0 overflow-y-auto">
       <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
         <DialogPanel
-          class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl transition-all duration-300 sm:max-w-lg sm:w-full sm:scale-100">
+          class="relative transform overflow-visible rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl transition-all duration-300 sm:max-w-lg sm:w-full sm:scale-100">
           <button type="button"
             class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
             @click="$emit('close')" aria-label="Close">

@@ -75,10 +75,8 @@ const updateProductGroups = () => {
       grouped['unknown'].presets.push(preset)
     }
   })
-  const productsWithPresets = Object.values(grouped).filter(group => group.presets.length > 0)
-  if (productsWithPresets.length === 1 && Object.keys(expandedProducts.value).length === 0) {
-    expandedProducts.value[productsWithPresets[0].product.id] = true
-  }
+  // Removed automatic expansion of single product with presets
+  // Users should manually expand products they want to view
   productGroups.value = grouped
 }
 

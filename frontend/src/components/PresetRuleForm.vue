@@ -140,7 +140,7 @@ const save = async () => {
     <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity duration-300" aria-hidden="true" />
     <div class="fixed inset-0 flex items-center justify-center p-4">
       <DialogPanel
-        class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 p-6 shadow-2xl transition-all duration-300">
+        class="w-full max-w-md transform overflow-visible rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 p-6 shadow-2xl transition-all duration-300">
         <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">{{ isEdit ? 'Edit Rule for Preset' : 'Add Rule to Preset' }}</DialogTitle>
         <div v-if="successMessage" class="mt-4 rounded-2xl bg-green-50/80 backdrop-blur-sm border border-green-200/60 p-4 flex items-center animate-fade-in">
           <CheckCircleIcon class="h-5 w-5 text-green-400" />
