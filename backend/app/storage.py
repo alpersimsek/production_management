@@ -45,6 +45,7 @@ import shutil
 import os
 import json
 import re
+from charset_normalizer import from_bytes
 try:
     from avro.datafile import DataFileReader
     from avro.io import DatumReader
@@ -179,6 +180,21 @@ class FileStorage(BaseStorage):
     def get_size(self, file_id: str) -> int:
         file = self.get(file_id)
         return file.stat().st_size if file.exists() else 0
+    
+    def get_encoding(self, src: pathlib.Path) -> str:
+        """Detects file encoding using first 4KB of the file"""
+        with src.open("rb") as file:
+            bytes = file.read(4096)
+            
+        res = from_bytes(bytes).best()
+        encoding = res.encoding if res else None
+        
+        # File encoding can be detected as ASCII when it contains 
+        # mostly ASCII characters with some UTF-8 characters mixed in (elasticDump).
+        # If detected as ASCII, promote encoding to UTF-8
+        if encoding and encoding.lower() == 'ascii':
+            encoding = 'utf-8'
+        return encoding
 
     def get_type(self, file_id: str) -> str:
         """Get file type based on MIME, magic signature, or extension."""

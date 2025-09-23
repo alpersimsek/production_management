@@ -61,7 +61,6 @@ from storage import FileStorage, FileInfo
 from typing import Optional, Type, TypeVar, Generic, Any
 from fastapi import UploadFile
 from logger import logger
-from charset_normalizer import from_path
 from sqlalchemy import or_
 
 T = TypeVar("T")
@@ -137,36 +136,6 @@ class BaseService(Generic[T]):
     def __init__(self, model: Type[T], session: Session):
         self.model = model
         self.session = session
-
-    # def create(self, db_obj: T) -> T:
-    #     """Create a new database object with ID conflict resolution."""
-    #     try:
-    #         table_name = db_obj.__class__.__tablename__
-            
-    #         # Handle auto-increment tables (presets, products, rules, masking_map)
-    #         if hasattr(db_obj, 'id') and table_name in ['presets', 'products', 'rules', 'masking_map']:
-    #             # Always calculate and set the next available ID for auto-increment tables
-    #             try:
-    #                 max_id = self.session.query(db_obj.__class__.id).order_by(
-    #                     db_obj.__class__.id.desc()
-    #                 ).first()
-    #                 next_id = (max_id[0] + 1) if max_id else 1
-                    
-    #                 # Set the ID to avoid sequence conflicts
-    #                 db_obj.id = next_id
-    #                 print(f"Info: {table_name} - Setting ID to {next_id} to avoid sequence conflicts")
-                    
-    #             except Exception as e:
-    #                 print(f"Warning: Could not determine next ID for {table_name}: {e}")
-    #                 # Fallback: let PostgreSQL handle it (might still fail)
-            
-    #         self.session.add(db_obj)
-    #         self.session.flush()
-    #         return db_obj
-    #     except Exception as e:
-    #         # Rollback on any error to prevent PendingRollbackError
-    #         self.session.rollback()
-    #         raise e
 
     def create(self, db_obj: T) -> T:
         self.session.add(db_obj)
@@ -286,23 +255,20 @@ class FileService(BaseService[File]):
         try:
             if finfo.ftype == ContentType.TEXT.value:
                 src = self.storage.get(finfo.fid)
-                encoding_res = from_path(src).best()
-                if not encoding_res:
-                    # Get file object for filename
+                encoding = self.storage.get_encoding(src)
+                if not encoding:
                     logger.error({
                         "event": "encoding_detection_failed",
                         "file_id": finfo.fid,
                         "filename": finfo.fname,
                         "error": "Cannot detect file encoding",
                     })
-                    return None
-                encoding = encoding_res.encoding
-
+                    raise RuntimeError("Cannot detect file encoding")
+                                
+                # Now read the first line with the detected encoding
                 with src.open("r", encoding=encoding) as file:
                     header = file.readline().strip()
                 
-                # File header read - removed verbose logging
-
                 # Try to match header with product presets
                 product_presets = self.session.query(Preset).filter(Preset.product_id == self.product_id).all()
                 
@@ -354,7 +320,6 @@ class FileService(BaseService[File]):
                     # Valid PCAP file - find PCAP preset
                     preset = self.session.query(Preset).filter(Preset.name == "pcap").first()
                     if preset:
-                        # Get file object for filename
                         logger.info({
                             "event": "pcap_preset_assigned",
                             "file_id": finfo.fid,
@@ -375,7 +340,6 @@ class FileService(BaseService[File]):
                         return None
                 else:
                     # Not a valid PCAP file
-                    # Get file object for filename
                     logger.warning({
                         "event": "invalid_pcap_file",
                         "filename": finfo.fname,
@@ -407,7 +371,7 @@ class FileService(BaseService[File]):
         preset = None
         product = None
 
-        # product and preset is set during file process
+        # product and preset is set during file processing
         if self.product_id:
             product = self.session.query(Product).filter(Product.id == self.product_id).first()
             preset = self.get_preset(finfo)
@@ -508,7 +472,6 @@ class FileService(BaseService[File]):
                 "nesting_level": nesting_level,
                 "error": str(e),
             }, extra={"context": {"file_id": file.id}})
-            # Continue with any files extracted before the error
 
         if not files:
             logger.info({

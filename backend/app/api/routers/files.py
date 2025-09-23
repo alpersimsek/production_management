@@ -50,8 +50,6 @@ from database.models import Role
 from logger import logger
 import tasks
 
-router = APIRouter()
-
 
 class FilesRouter(APIRouter):
 
@@ -278,7 +276,7 @@ class FilesRouter(APIRouter):
 
             # Build the signed URL with JWT token
             base_url = str(req.base_url).rstrip("/")
-            signed_url = f"{base_url}/api/v1/files/download/{file_id}?token={token}"
+            signed_url = f"{base_url}{settings.API_PREFIX}{self.prefix}/download/{file_id}?token={token}"
             
             # Log download URL generation
             logger.info({

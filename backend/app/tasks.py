@@ -25,6 +25,13 @@ app = celery.Celery(
     backend=None  # optional: can use rabbitMQ ("rpc://") or Redis for results
 )
 
+app.conf.update(
+    # CRITICAL: Cancel long-running tasks on connection loss to prevent redelivery of completed tasks
+    # Without this setting, completed long-duration tasks can be redelivered to the queue when workers
+    # lose connection, causing duplicate processing of already finished work.
+    worker_cancel_long_running_tasks_on_connection_loss=True,
+)
+
 def _process_file(config: ProcessingConfig, storage: FileStorage, file_id: str, file_service: FileService) -> None:
     """Process a single file with the given configuration."""
     db_session = file_service.session
@@ -75,22 +82,14 @@ def _process_file(config: ProcessingConfig, storage: FileStorage, file_id: str, 
         dst_filename = f"{base}_masked{ext}" if not base.endswith('_masked') else file_obj.filename
     else:
         file_type = storage.get_type(file_id)
-        dst_filename = f"{base}_masked.pcap" if file_type == storage.T_PCAP else f"{base}_masked.txt"
+        dst_filename = f"{base}_masked.pcap" if file_type == storage.T_PCAP else f"{base}_masked"
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=f"_masked{ext}", dir=storage.base_dir) as temp_file:
         temp_dst = pathlib.Path(temp_file.name)
         try:
             if content_type == ContentType.TEXT:
-                encoding_res = from_path(src).best()
-                if not encoding_res:
-                    logger.error({
-                        "event": "process_failed",
-                        "file_id": file_id,
-                        "filename": file_obj.filename,
-                        "error": "Cannot detect encoding for file",
-                    })
-                    raise PcapProcessingError("Cannot detect encoding for file")
-                encoding = encoding_res.encoding
+                encoding = storage.get_encoding(src)
+
                 done_size = 0
                 unreported = 0
                 total_size = storage.get_size(file_id)
@@ -193,7 +192,7 @@ def _process_file(config: ProcessingConfig, storage: FileStorage, file_id: str, 
             if temp_dst.exists():
                 temp_dst.unlink()
             db_session.commit()
-            raise PcapProcessingError(f"Error processing file {file_id}: {str(ex)}")
+            raise RuntimeError(f"Error processing file {file_id}: {str(ex)}")
 
 @app.task
 def process_file(files: Dict[str, str], rules_configs: Dict[str, List], user_id: str):

@@ -1,8 +1,8 @@
-"""Initial Migration
+"""initial migration
 
-Revision ID: a9f241ac3bee
+Revision ID: 07087500cf34
 Revises: 
-Create Date: 2025-08-27 16:33:59.134295
+Create Date: 2025-09-23 12:07:27.770524
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a9f241ac3bee'
+revision: str = '07087500cf34'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -55,7 +55,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('product_id', sa.Integer(), nullable=False),
     sa.Column('header', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('files',
@@ -66,7 +66,7 @@ def upgrade() -> None:
     sa.Column('completed_size', sa.BigInteger(), nullable=False),
     sa.Column('time_remaining', sa.Integer(), nullable=True),
     sa.Column('content_type', sa.Enum('TEXT', 'PCAP', 'ARCHIVE', 'JSON', 'UNKNOWN', name='contenttype'), nullable=False),
-    sa.Column('status', sa.Enum('CREATED', 'QUEUED', 'IN_PROGRESS', 'DONE', 'ERROR', name='filestatus'), nullable=False),
+    sa.Column('status', sa.Enum('CREATED', 'QUEUED', 'IN_PROGRESS', 'DONE', 'ERROR', 'CANCELLED', name='filestatus'), nullable=False),
     sa.Column('create_date', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('product_id', sa.Integer(), nullable=True),
@@ -83,8 +83,8 @@ def upgrade() -> None:
     sa.Column('preset_id', sa.Integer(), nullable=False),
     sa.Column('rule_id', sa.Integer(), nullable=False),
     sa.Column('action', sa.JSON(), nullable=False),
-    sa.ForeignKeyConstraint(['preset_id'], ['presets.id'], ),
-    sa.ForeignKeyConstraint(['rule_id'], ['rules.id'], ),
+    sa.ForeignKeyConstraint(['preset_id'], ['presets.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['rule_id'], ['rules.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('preset_id', 'rule_id')
     )
     # ### end Alembic commands ###

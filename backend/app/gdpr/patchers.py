@@ -109,20 +109,17 @@ class ReplacePatcher(BasePatcher):
             # Store it in the database for future consistency
             self.maskingMapService.store_mask(match, replacement, self.category)
             
-            logger.info({
-                "event": "data_masked_new",
-                "category": self.category.value if self.category else "unknown",
-                "original": match,
-                "masked": replacement,
-                "action": "Generated new masked value"
-            })
-        else:
-            logger.info({
-                "event": "data_masked_existing",
-                "category": self.category.value if self.category else "unknown",
-                "original": match,
-                "masked": replacement,
-                "action": "Used existing masked value"
-            })
+        #     logger.info({
+        #         "event": "data_masked_new",
+        #         "category": self.category.value if self.category else "unknown",
+        #         "original": match,
+        #         "masked": replacement,
+        #         "action": "Generated new masked value"
+        #     })
+        # else:
+        #     logger.info({
+        #         "event": "data_masked_existing",
+        #         "category": self.category.value if self.category else "unknown",
+        #     })
 
         return replacement

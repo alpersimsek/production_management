@@ -48,7 +48,12 @@
       "cwd": "${workspaceFolder}/backend/app",
       "preLaunchTask": "wait-mq-db",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "redirectOutput": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1", // for real-time logging
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
     },
     {
       "name": "Frontend: npm",

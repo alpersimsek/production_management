@@ -1,8 +1,8 @@
-"""Insert static data
+"""insert static data
 
-Revision ID: 88b3d941c0b5
-Revises: a9f241ac3bee
-Create Date: 2025-08-27 16:41:24.451271
+Revision ID: 9bd560807c2b
+Revises: 07087500cf34
+Create Date: 2025-09-23 12:24:05.838018
 
 """
 from typing import Sequence, Union
@@ -13,8 +13,8 @@ from logger import logger
 from database.models import Product, Preset, Rule, PresetRule
 
 # revision identifiers, used by Alembic.
-revision: str = '88b3d941c0b5'
-down_revision: Union[str, None] = 'a9f241ac3bee'
+revision: str = '9bd560807c2b'
+down_revision: Union[str, None] = '07087500cf34'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -28,17 +28,16 @@ def upgrade() -> None:
     op.bulk_insert(
         Product.__table__,
         [
-            {"id": 1, "name": "Generic"},
-            {"id": 2, "name": "GSX 9000"},
-            {"id": 3, "name": "C3 Call Controller"},
-            {"id": 4, "name": "G9 Media Gateway"},
-            {"id": 5, "name": "SBC 7000"},
-            {"id": 6, "name": "C20 Call Controller"},
-            {"id": 7, "name": "Application Server"},
-            {"id": 8, "name": "EMS"},
-            {"id": 9, "name": "RAMP"},
-            {"id": 10, "name": "PSX"},
-            {"id": 11, "name": "RA"},
+            {"id": 1, "name": "GSX 9000"},
+            {"id": 2, "name": "C3 Call Controller"},
+            {"id": 3, "name": "G9 Media Gateway"},
+            {"id": 4, "name": "SBC 7000"},
+            {"id": 5, "name": "C20 Call Controller"},
+            {"id": 6, "name": "Application Server"},
+            {"id": 7, "name": "EMS"},
+            {"id": 8, "name": "RAMP"},
+            {"id": 9, "name": "PSX"},
+            {"id": 10, "name": "RA"},
         ],
     )
     logger.info("Product insertion completed")
@@ -62,26 +61,20 @@ def upgrade() -> None:
         [
             {
                 "id": 1,
-                "name": "Default",
-                "product_id": 1,
-                "header": "",
-            },
-            {
-                "id": 2,
                 "name": "SYS Log",
-                "product_id": 2,
+                "product_id": 1,
                 "header": "SYS",
             },
             {
-                "id": 3,
+                "id": 2,
                 "name": "DBG Log",
-                "product_id": 2,
+                "product_id": 1,
                 "header": "DBG",
             },
             {
-                "id": 4,
+                "id": 3,
                 "name": "TRC Log",
-                "product_id": 2,
+                "product_id": 1,
                 "header": "TRC",
             },
         ],
@@ -120,18 +113,15 @@ def upgrade() -> None:
     op.bulk_insert(
         PresetRule.__table__,
         [
-            # Default preset
+            # SYS Log preset
             {"id": 1, "preset_id": 1, "rule_id": 1, "action": {"type": "replace"}},
             {"id": 2, "preset_id": 1, "rule_id": 2, "action": {"type": "replace"}},
-            # SYS Log preset
+            # DBG Log preset
             {"id": 3, "preset_id": 2, "rule_id": 1, "action": {"type": "replace"}},
             {"id": 4, "preset_id": 2, "rule_id": 2, "action": {"type": "replace"}},
-            # DBG Log preset
+            # TRC Log preset
             {"id": 5, "preset_id": 3, "rule_id": 1, "action": {"type": "replace"}},
             {"id": 6, "preset_id": 3, "rule_id": 2, "action": {"type": "replace"}},
-            # TRC Log preset
-            {"id": 7, "preset_id": 4, "rule_id": 1, "action": {"type": "replace"}},
-            {"id": 8, "preset_id": 4, "rule_id": 2, "action": {"type": "replace"}},
         ],
     )
     logger.info("PresetRule insertion completed")
