@@ -40,12 +40,12 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'secondary', 'danger', 'warning', 'success', 'text'].includes(value)
+    validator: (value) => ['primary', 'secondary', 'danger', 'text'].includes(value)
   },
   size: {
     type: String,
     default: 'md',
-    validator: (value) => ['sm', 'md', 'lg'].includes(value)
+    validator: (value) => ['md', 'lg'].includes(value)
   },
   // Button behavior
   type: {
@@ -75,8 +75,6 @@ const variantClasses = computed(() => {
     primary: 'border border-transparent bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:ring-indigo-500',
     secondary: 'border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-indigo-500',
     danger: 'border border-transparent bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-500',
-    warning: 'border border-transparent bg-yellow-600 text-white shadow-sm hover:bg-yellow-700 focus:ring-yellow-500',
-    success: 'border border-transparent bg-green-600 text-white shadow-sm hover:bg-green-700 focus:ring-green-500',
     text: 'border-none bg-transparent text-indigo-600 hover:text-indigo-800 hover:underline focus:ring-indigo-500 shadow-none'
   }
 
@@ -86,7 +84,6 @@ const variantClasses = computed(() => {
 // Computed classes based on size
 const sizeClasses = computed(() => {
   const sizes = {
-    sm: 'px-2.5 py-1.5 text-xs',
     md: 'px-4 py-2 text-sm',
     lg: 'px-6 py-3 text-base'
   }

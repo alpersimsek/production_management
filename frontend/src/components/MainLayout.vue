@@ -39,8 +39,4 @@ import AppNavbar from './NavBar.vue'
 </template>
 
 <style scoped>
-/* Smooth gradient transition */
-.bg-gradient-to-b {
-  transition: background-color 0.5s ease-in-out;
-}
 </style>
