@@ -380,7 +380,7 @@ const handleDownload = async (fileId) => {
             </div>
             
             <!-- Upload Area -->
-            <div class="p-6">
+            <div class="p-4">
               <FileUploader :upload-progress="filesStore.uploadProgress" :error="null" :show-icon="true"
                 @file-upload="handleFileUpload" class="w-full" />
             </div>
@@ -388,12 +388,12 @@ const handleDownload = async (fileId) => {
 
           <!-- Uploads Card -->
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-sm hover:bg-white/90 transition-all duration-300">
-            <div class="p-6">
+            <div class="p-4">
               <!-- Custom Header -->
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-4">
-                  <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <DocumentArrowUpIcon class="h-6 w-6 text-white" aria-hidden="true" />
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <DocumentArrowUpIcon class="h-5 w-5 text-white" aria-hidden="true" />
                   </div>
                   <h3 class="text-lg font-semibold text-slate-900">Uploads</h3>
                 </div>
@@ -401,53 +401,52 @@ const handleDownload = async (fileId) => {
               
               <!-- File List -->
               <div v-if="paginatedUploads.length" :class="[
-                'space-y-4',
-                totalUploadPages > 1 ? 'min-h-[400px]' : ''
+                'space-y-3',
+                totalUploadPages > 1 ? 'min-h-[300px]' : ''
               ]">
                 <div v-for="file in paginatedUploads" :key="file.id"
-                  class="relative flex items-start justify-between p-5 bg-slate-50/60 backdrop-blur-sm rounded-2xl border border-slate-100/60 hover:bg-slate-100/80 transition-all duration-300">
-                  <div class="flex items-start space-x-4 flex-1 min-w-0">
+                  class="relative flex items-start justify-between p-3 bg-slate-50/60 backdrop-blur-sm rounded-2xl border border-slate-100/60 hover:bg-slate-100/80 transition-all duration-300">
+                  <div class="flex items-start space-x-3 flex-1 min-w-0">
                     <div class="flex-shrink-0 mt-1">
-                      <div class="w-14 h-14 bg-gray-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                        <svg class="w-7 h-7 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <div class="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-slate-900 truncate mb-2">{{ file.filename }}</p>
-                      <p class="text-xs text-slate-500 mb-1">{{ file.formattedSize }}</p>
-                      <p class="text-xs text-slate-500 mb-3">{{ file.formattedDate }}</p>
+                      <p class="text-sm font-semibold text-slate-900 truncate mb-1">{{ file.filename }}</p>
+                      <p class="text-xs text-slate-500 mb-1">{{ file.formattedSize }} • {{ file.formattedDate }}</p>
                       <ProcessingStatus v-if="isProcessing(file.id)" :percent="getProcessingStatus(file).percent"
                         :time-remaining="getProcessingStatus(file).timeRemaining"
                         :progress-width="getProcessingStatus(file).progressWidth"
                         aria-live="polite" />
                     </div>
                   </div>
-                  <div class="flex items-center space-x-2 ml-6 flex-shrink-0">
+                  <div class="flex items-center space-x-2 ml-4 flex-shrink-0">
                     <template v-if="!isProcessing(file.id)">
                       <button @click="handleProcess(file.id)"
-                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl hover:bg-gray-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+                        class="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-700 bg-gray-100/80 backdrop-blur-sm border border-gray-200/60 rounded-xl hover:bg-gray-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                         title="Process File" aria-label="Process File">
-                        <PlayIcon class="h-6 w-6 mr-1.5" aria-hidden="true" />
+                        <PlayIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                         Process
                       </button>
                     </template>
                     <button @click="handleDelete(file.id)"
-                      class="inline-flex items-center px-3 py-2 text-xs font-medium text-red-700 bg-red-100/80 backdrop-blur-sm border border-red-200/60 rounded-2xl hover:bg-red-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-all duration-200"
+                      class="inline-flex items-center px-2 py-1.5 text-xs font-medium text-red-700 bg-red-100/80 backdrop-blur-sm border border-red-200/60 rounded-xl hover:bg-red-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-all duration-200"
                       title="Delete File" aria-label="Delete File">
-                      <TrashIcon class="h-6 w-6 mr-1.5" aria-hidden="true" />
+                      <TrashIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                       Delete
                     </button>
                   </div>
                 </div>
               </div>
               <div v-else :class="[
-                'text-center py-8',
-                totalUploadPages > 1 ? 'min-h-[400px]' : ''
+                'text-center py-6',
+                totalUploadPages > 1 ? 'min-h-[300px]' : ''
               ]">
-                <div class="w-20 h-20 mx-auto mb-4 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <DocumentArrowUpIcon class="h-10 w-10 text-slate-400" />
+                <div class="w-16 h-16 mx-auto mb-3 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <DocumentArrowUpIcon class="h-8 w-8 text-slate-400" />
                 </div>
                 <p class="text-sm text-slate-500 font-medium">No uploads available</p>
               </div>
@@ -492,56 +491,56 @@ const handleDownload = async (fileId) => {
 
         <!-- Processed Files Card -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-sm hover:bg-white/90 transition-all duration-300">
-          <div class="p-6">
+          <div class="p-4">
             <!-- Custom Header -->
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <DocumentCheckIcon class="h-6 w-6 text-white" aria-hidden="true" />
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <DocumentCheckIcon class="h-5 w-5 text-white" aria-hidden="true" />
                 </div>
                 <h3 class="text-lg font-semibold text-slate-900">Processed Files</h3>
               </div>
             </div>
             
             <!-- File List -->
-            <div v-if="paginatedProcessed.length" class="space-y-4">
+            <div v-if="paginatedProcessed.length" class="space-y-3">
               <div v-for="file in paginatedProcessed" :key="file.id"
-                class="flex items-start justify-between p-5 bg-slate-50/60 backdrop-blur-sm rounded-2xl border border-slate-100/60 hover:bg-slate-100/80 transition-all duration-300">
-                <div class="flex items-start space-x-4 flex-1 min-w-0">
+                class="flex items-start justify-between p-3 bg-slate-50/60 backdrop-blur-sm rounded-2xl border border-slate-100/60 hover:bg-slate-100/80 transition-all duration-300">
+                <div class="flex items-start space-x-3 flex-1 min-w-0">
                   <div class="flex-shrink-0 mt-1">
-                    <div class="w-14 h-14 bg-gray-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                      <svg class="w-7 h-7 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <div class="w-10 h-10 bg-gray-100/80 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                      <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center justify-between mb-1">
                       <p class="text-sm font-semibold text-slate-900 truncate">{{ file.filename }}</p>
                       <span class="text-xs text-slate-500 bg-slate-200/60 px-2 py-1 rounded-full">{{ file.formattedSize }}</span>
                     </div>
-                    <p class="text-xs text-slate-500 mb-3">{{ file.formattedDate }}</p>
+                    <p class="text-xs text-slate-500">{{ file.formattedDate }}</p>
                   </div>
                 </div>
-                <div class="flex items-center space-x-2 ml-6 flex-shrink-0">
+                <div class="flex items-center space-x-2 ml-4 flex-shrink-0">
                   <button @click="handleDownload(file.id)"
-                    class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl hover:bg-gray-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+                    class="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-700 bg-gray-100/80 backdrop-blur-sm border border-gray-200/60 rounded-xl hover:bg-gray-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                     title="Download File" aria-label="Download File">
-                    <ArrowDownTrayIcon class="h-6 w-6 mr-1.5" aria-hidden="true" />
+                    <ArrowDownTrayIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                     Download
                   </button>
                   <button @click="handleDelete(file.id)"
-                    class="inline-flex items-center px-3 py-2 text-xs font-medium text-red-700 bg-red-100/80 backdrop-blur-sm border border-red-200/60 rounded-2xl hover:bg-red-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-all duration-200"
+                    class="inline-flex items-center px-2 py-1.5 text-xs font-medium text-red-700 bg-red-100/80 backdrop-blur-sm border border-red-200/60 rounded-xl hover:bg-red-200/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-all duration-200"
                     title="Delete File" aria-label="Delete File">
-                    <TrashIcon class="h-6 w-6 mr-1.5" aria-hidden="true" />
+                    <TrashIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                     Delete
                   </button>
                 </div>
               </div>
             </div>
-            <div v-else class="text-center py-8">
-              <div class="w-20 h-20 mx-auto mb-4 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <DocumentCheckIcon class="h-10 w-10 text-slate-400" />
+            <div v-else class="text-center py-6">
+              <div class="w-16 h-16 mx-auto mb-3 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <DocumentCheckIcon class="h-8 w-8 text-slate-400" />
               </div>
               <p class="text-sm text-slate-500 font-medium">No processed files available</p>
             </div>

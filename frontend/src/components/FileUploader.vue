@@ -125,11 +125,11 @@ const formatFileSize = (bytes) => {
       </div>
       
       <!-- Content -->
-      <div class="relative p-8 sm:p-12 text-center">
+      <div class="relative p-4 sm:p-6 text-center">
         <!-- Upload Icon with Animation -->
-        <div class="relative mb-6">
-          <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-            <ArrowUpTrayIcon v-if="props.showIcon" class="h-10 w-10 text-white" aria-hidden="true" />
+        <div class="relative mb-3">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+            <ArrowUpTrayIcon v-if="props.showIcon" class="h-8 w-8 text-white" aria-hidden="true" />
           </div>
           <!-- Floating particles effect -->
           <div class="absolute -top-2 -right-2 w-3 h-3 bg-gray-400 rounded-full opacity-60 animate-pulse"></div>
@@ -137,8 +137,8 @@ const formatFileSize = (bytes) => {
         </div>
         
         <!-- Upload Text -->
-        <div class="space-y-2 mb-6">
-          <h3 class="text-xl font-bold text-gray-800 group-hover:text-gray-700 transition-colors duration-300">
+        <div class="space-y-1 mb-3">
+          <h3 class="text-lg font-bold text-gray-800 group-hover:text-gray-700 transition-colors duration-300">
             Drop files here
           </h3>
           <p class="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
