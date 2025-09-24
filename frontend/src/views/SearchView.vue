@@ -307,7 +307,7 @@ onMounted(() => {
 
 <template>
   <MainLayout>
-    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
+    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1 overflow-visible">
       <!-- Header -->
       <div class="sm:flex sm:items-center mb-8">
         <div class="sm:flex-auto">
@@ -346,7 +346,7 @@ onMounted(() => {
       </div>
 
       <!-- Search Form -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6 mb-8 animate-fade-in">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6 mb-8 animate-fade-in overflow-visible relative z-20">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <InputField id="search-query" v-model="searchQuery" label="Search Query" type="text"
             placeholder="Enter search terms or patterns" :disabled="searchLoading" ref="searchInputRef"
@@ -404,7 +404,7 @@ onMounted(() => {
 
         <!-- Results Table -->
         <div v-if="searchResults.length > 0"
-          class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6 animate-fade-in">
+          class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6 animate-fade-in relative z-10">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-200/60">
               <thead class="bg-slate-50/60 backdrop-blur-sm">

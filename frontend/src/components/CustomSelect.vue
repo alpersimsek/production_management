@@ -105,7 +105,6 @@ const displayText = computed(() => {
 
 // Simple dropdown positioning - no complex calculations needed
 
-
 // Methods
 const toggleDropdown = () => {
   if (props.disabled || props.loading) return
@@ -272,7 +271,7 @@ onUnmounted(() => {
       >
         <div
           v-if="isOpen"
-          class="absolute top-full left-0 right-0 z-50 mt-1 rounded-2xl bg-white border border-slate-200 shadow-xl max-h-60 overflow-hidden"
+          class="absolute top-full left-0 right-0 z-[99999] mt-1 rounded-2xl bg-white border border-slate-200 shadow-xl max-h-60 overflow-hidden"
         >
           <!-- Search Input -->
           <div v-if="searchable" class="p-3 border-b border-slate-200/60">
