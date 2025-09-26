@@ -103,11 +103,27 @@ const displayText = computed(() => {
   return props.placeholder
 })
 
+// Check if dropdown is inside a modal
+const isInsideModal = computed(() => {
+  return dropdownRef.value?.closest('[role="dialog"]') !== null
+})
+
+// Dynamic z-index based on context
+const dropdownZIndex = computed(() => {
+  return isInsideModal.value ? 'z-[999999]' : 'z-[99999]'
+})
+
 // Simple dropdown positioning - no complex calculations needed
 
 // Methods
-const toggleDropdown = () => {
+const toggleDropdown = (event) => {
   if (props.disabled || props.loading) return
+  
+  // Prevent event propagation when inside a modal to avoid conflicts
+  if (isInsideModal.value && event) {
+    event.stopPropagation()
+  }
+  
   isOpen.value = !isOpen.value
   if (isOpen.value && props.searchable) {
     nextTick(() => {
@@ -116,8 +132,14 @@ const toggleDropdown = () => {
   }
 }
 
-const selectOption = (option) => {
+const selectOption = (option, event) => {
   if (option.disabled) return
+  
+  // Prevent event propagation when inside a modal to avoid conflicts
+  if (isInsideModal.value && event) {
+    event.stopPropagation()
+  }
+  
   emit('update:modelValue', option.value)
   isOpen.value = false
   searchQuery.value = ''
@@ -168,8 +190,13 @@ const closeDropdown = () => {
   searchQuery.value = ''
 }
 
-// Body scroll lock methods
+// Body scroll lock methods - only lock if not inside a modal
 const lockBodyScroll = () => {
+  // Don't lock body scroll when inside a modal to avoid conflicts
+  if (isInsideModal.value) {
+    return
+  }
+  
   // Store the current scrollbar width
   const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
   document.body.style.overflow = 'hidden'
@@ -177,15 +204,31 @@ const lockBodyScroll = () => {
 }
 
 const unlockBodyScroll = () => {
+  // Don't unlock body scroll when inside a modal to avoid conflicts
+  if (isInsideModal.value) {
+    return
+  }
+  
   document.body.style.overflow = ''
   document.body.style.paddingRight = ''
 }
 
-// Click outside handler
+// Click outside handler - improved for modal contexts
 const handleClickOutside = (event) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-    closeDropdown()
+  if (!dropdownRef.value || dropdownRef.value.contains(event.target)) {
+    return
   }
+  
+  // Check if the click is on a modal backdrop or close button
+  const isModalBackdrop = event.target.classList.contains('backdrop-blur-sm') || 
+                         event.target.closest('[role="dialog"]')
+  
+  // If clicking on modal backdrop, don't close dropdown to avoid conflicts
+  if (isModalBackdrop) {
+    return
+  }
+  
+  closeDropdown()
 }
 
 // Watchers
@@ -197,6 +240,15 @@ watch(() => props.modelValue, () => {
 watch(isOpen, (newValue) => {
   if (newValue) {
     lockBodyScroll()
+    // Ensure focus stays within modal when dropdown opens
+    if (isInsideModal.value) {
+      nextTick(() => {
+        const modal = dropdownRef.value?.closest('[role="dialog"]')
+        if (modal && !modal.contains(document.activeElement)) {
+          dropdownRef.value?.focus()
+        }
+      })
+    }
   } else {
     unlockBodyScroll()
   }
@@ -271,7 +323,10 @@ onUnmounted(() => {
       >
         <div
           v-if="isOpen"
-          class="absolute top-full left-0 right-0 z-[99999] mt-1 rounded-2xl bg-white border border-slate-200 shadow-xl max-h-60 overflow-hidden"
+          :class="[
+            'absolute top-full left-0 right-0 mt-1 rounded-2xl bg-white border border-slate-200 shadow-xl max-h-60 overflow-hidden',
+            dropdownZIndex
+          ]"
         >
           <!-- Search Input -->
           <div v-if="searchable" class="p-3 border-b border-slate-200/60">
@@ -299,7 +354,7 @@ onUnmounted(() => {
               :key="option.value"
               type="button"
               :disabled="option.disabled"
-              @click="selectOption(option)"
+              @click="selectOption(option, $event)"
               :class="[
                 'w-full px-4 py-3 text-left text-sm transition-all duration-200 border-b border-slate-100/60 last:border-b-0',
                 {

@@ -169,7 +169,7 @@ onMounted(() => {
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel
-              class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
+              class="relative transform overflow-visible rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl sm:my-8 sm:w-full sm:max-w-lg">
               <button type="button"
                 class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
                 @click="handleCancel" aria-label="Close modal">
@@ -184,7 +184,7 @@ onMounted(() => {
                 </p>
               </div>
               
-              <form @submit.prevent="handleProcess" class="mt-6 space-y-6">
+              <div class="mt-6 space-y-6">
                 <!-- File Info -->
                 <div class="p-4 bg-slate-50/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl">
                   <div class="text-sm space-y-1">
@@ -205,7 +205,7 @@ onMounted(() => {
                   :required="true"
                   :error="showError ? 'Please select a product to continue.' : ''"
                 />
-              </form>
+              </div>
 
 
               
