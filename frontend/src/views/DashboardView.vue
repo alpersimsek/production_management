@@ -255,6 +255,9 @@ const handleFileUpload = async (files) => {
         
         <!-- Quick Stats -->
         <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-4">
+          <div class="text-center mb-2">
+            <p class="text-xs text-slate-500 mb-4">Quick Stats - Click to navigate</p>
+          </div>
           <router-link v-if="adminCheck" to="/users" class="w-12 h-12 bg-gray-100/80 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center hover:scale-105 transition-all duration-200 hover:bg-slate-100/60 p-2">
             <div class="text-lg font-bold text-slate-900">{{ totalUsers }}</div>
             <div class="text-xs text-slate-500 uppercase tracking-wide">Users</div>
@@ -293,7 +296,10 @@ const handleFileUpload = async (files) => {
                     <div class="w-14 h-14 bg-gray-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
                       <UploadIcon class="h-7 w-7 text-gray-600" aria-hidden="true" />
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-900">Uploads</h3>
+                    <div>
+                      <h3 class="text-lg font-semibold text-slate-900">Uploads</h3>
+                      <p class="text-sm text-slate-500">Files ready for processing - click expand to view and process</p>
+                    </div>
                   </div>
                   <button @click="toggleUploadsExpanded" class="p-2 hover:bg-slate-100/60 hover:scale-105 rounded-lg transition-all duration-200 hover:shadow-md">
                     <svg class="w-7 h-7 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -411,7 +417,10 @@ const handleFileUpload = async (files) => {
                     <div class="w-14 h-14 bg-gray-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
                       <Docs class="h-7 w-7 text-gray-600" aria-hidden="true" />
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-900">Processed Files</h3>
+                    <div>
+                      <h3 class="text-lg font-semibold text-slate-900">Processed Files</h3>
+                      <p class="text-sm text-slate-500">Files with sensitive data masked - ready for download and use</p>
+                    </div>
                   </div>
                   <button @click="toggleProcessedExpanded" class="p-2 hover:bg-slate-100/60 hover:scale-105 rounded-lg transition-all duration-200 hover:shadow-md">
                     <svg class="w-7 h-7 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -520,7 +529,7 @@ const handleFileUpload = async (files) => {
                   </div>
                   <div>
                     <h3 class="text-lg font-semibold text-slate-900">User Management</h3>
-                    <p class="text-sm text-slate-600">Manage system users and permissions</p>
+                    <p class="text-sm text-slate-600">Admin only - Create, edit, and manage user accounts</p>
                   </div>
                 </div>
                 <router-link to="/users"
@@ -542,7 +551,7 @@ const handleFileUpload = async (files) => {
                   </div>
                   <div>
                     <h3 class="text-lg font-semibold text-slate-900">File Management</h3>
-                    <p class="text-sm text-slate-600">Upload and process files for GDPR compliance</p>
+                    <p class="text-sm text-slate-600">Upload new files and manage all your files in one place</p>
                   </div>
                 </div>
                 <router-link to="/files"

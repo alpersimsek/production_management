@@ -179,7 +179,7 @@ const saveRule = async () => {
 
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog class="relative z-30" :open="open" @close="handleClose">
+    <Dialog class="relative z-[70]" :open="open" @close="handleClose">
       <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
         leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
         <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity" />
@@ -201,6 +201,9 @@ const saveRule = async () => {
               <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">
                 {{ editing ? 'Edit Rule' : 'Create New Rule' }}
               </DialogTitle>
+              <p class="mt-2 text-sm text-slate-600">
+                {{ editing ? 'Update the masking rule pattern and configuration' : 'Define a new masking rule with regex pattern for data detection' }}
+              </p>
               <div v-if="error" class="mt-4 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 flex items-center">
                 <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
                 <p class="ml-2 text-sm text-red-800">{{ error }}</p>

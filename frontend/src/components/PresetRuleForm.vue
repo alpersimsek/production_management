@@ -142,6 +142,9 @@ const save = async () => {
       <DialogPanel
         class="w-full max-w-md transform overflow-visible rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 p-6 shadow-2xl transition-all duration-300">
         <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">{{ isEdit ? 'Edit Rule for Preset' : 'Add Rule to Preset' }}</DialogTitle>
+        <p class="mt-2 text-sm text-slate-600">
+          {{ isEdit ? 'Update the masking rule configuration for this preset' : 'Select a masking rule to apply when this preset is used for file processing' }}
+        </p>
         <div v-if="successMessage" class="mt-4 rounded-2xl bg-green-50/80 backdrop-blur-sm border border-green-200/60 p-4 flex items-center animate-fade-in">
           <CheckCircleIcon class="h-5 w-5 text-green-400" />
           <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>

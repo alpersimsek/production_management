@@ -100,9 +100,12 @@ const closeModal = () => {
       <DialogPanel class="mx-auto max-w-md w-full bg-white/90 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-2xl">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
-            <DialogTitle class="text-2xl font-bold text-slate-900">
-              Add New Product
-            </DialogTitle>
+            <div>
+              <DialogTitle class="text-2xl font-bold text-slate-900">
+                Add New Product
+              </DialogTitle>
+              <p class="mt-1 text-sm text-slate-600">Create a new product category for organizing presets and masking rules</p>
+            </div>
             <button
               type="button"
               @click="closeModal"

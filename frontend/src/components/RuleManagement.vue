@@ -56,7 +56,7 @@ const loading = ref(false)
 const showDeleteConfirm = ref(false)
 const ruleToDelete = ref(null)
 const currentPage = ref(1)
-const itemsPerPage = ref(5)
+const itemsPerPage = ref(3)
 const sortColumn = ref('name')
 const sortDirection = ref('asc')
 const categories = ref(['All Categories', 'IPV4_ADDR', 'MAC_ADDR', 'USERNAME', 'DOMAIN', 'PHONE_NUM'])
@@ -180,40 +180,42 @@ const handleDeleteConfirm = async () => {
 </script>
 
 <template>
-  <Dialog as="div" class="relative z-20" @close="$emit('close')" :open="open">
+  <Dialog as="div" class="relative z-[60]" @close="$emit('close')" :open="open">
     <div class="fixed inset-0 backdrop-blur-sm bg-gray-500/60 transition-opacity duration-300" aria-hidden="true" />
     <div class="fixed inset-0 overflow-y-auto">
-      <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
+      <div class="flex min-h-full items-center justify-center p-2 sm:p-4 pt-20 sm:pt-4">
         <DialogPanel
-          class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-6 py-8 shadow-2xl transition-all duration-300 sm:my-8 sm:w-full sm:max-w-5xl">
+          class="relative transform overflow-hidden rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200/60 px-4 py-6 sm:px-6 sm:py-8 shadow-2xl transition-all duration-300 sm:my-8 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
           <button type="button"
             class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-lg p-1 transition-all duration-200"
             @click="$emit('close')" aria-label="Close modal">
             <XMarkIcon class="h-6 w-6" />
           </button>
-          <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">Manage Rules</DialogTitle>
-          <div v-if="error" class="mt-4 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 flex items-center">
-            <ExclamationCircleIcon class="h-5 w-5 text-red-400" />
-            <p class="ml-2 text-sm text-red-800">{{ error }}</p>
-            <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700 rounded-lg p-1 transition-all duration-200"
+          <DialogTitle as="h3" class="text-xl sm:text-2xl font-bold text-slate-900">Manage Rules</DialogTitle>
+          <p class="mt-2 text-sm text-slate-600">View, create, edit, and delete masking rules used in presets for GDPR compliance</p>
+          <div v-if="error" class="mt-4 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-3 sm:p-4 flex items-center">
+            <ExclamationCircleIcon class="h-5 w-5 text-red-400 flex-shrink-0" />
+            <p class="ml-2 text-sm text-red-800 flex-1">{{ error }}</p>
+            <button type="button" @click="error = ''" class="ml-auto text-red-500 hover:text-red-700 rounded-lg p-1 transition-all duration-200 flex-shrink-0"
               aria-label="Dismiss error">
               <XMarkIcon class="h-6 w-6" />
             </button>
           </div>
-          <div class="mt-6 flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-              <p class="text-sm text-slate-600">Create and manage custom rules for your presets.</p>
+          <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
+            <div class="flex items-center">
+              <p class="text-sm text-slate-600">Rules define patterns for detecting and masking sensitive data in files</p>
             </div>
-            <div class="flex space-x-3">
+            <div class="flex justify-end sm:justify-start">
               <AppButton @click="$emit('open-rule-form')" variant="primary"
-                class="inline-flex items-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200">
-                <PlusIcon class="h-5 w-5 mr-2" />
-                Add Rule
+                class="inline-flex items-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-3 py-2 sm:px-4 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200">
+                <PlusIcon class="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <span class="hidden sm:inline">Add Rule</span>
+                <span class="sm:hidden">Add</span>
               </AppButton>
             </div>
           </div>
-          <div class="mt-4 flex items-end space-x-4">
-            <div class="flex-1">
+          <div class="mt-4 flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+            <div class="flex-1 sm:flex-none sm:w-48">
               <CustomSelect
                 v-model="filterCategory"
                 :options="categories.map(cat => ({ value: cat, label: cat }))"
@@ -221,7 +223,7 @@ const handleDeleteConfirm = async () => {
                 placeholder="Select category"
               />
             </div>
-            <div class="flex-[2]">
+            <div class="flex-1">
               <InputField
                 v-model="searchQuery"
                 placeholder="Search rules by name or pattern..."
@@ -237,79 +239,83 @@ const handleDeleteConfirm = async () => {
             <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-400/60 border-t-transparent"></div>
             <p class="ml-4 text-sm font-medium text-slate-600">Loading rules...</p>
           </div>
-          <div v-else class="mt-6 overflow-x-auto rounded-2xl border border-slate-200/60">
-            <table class="min-w-full divide-y divide-slate-200/60" role="grid" aria-label="Rules table">
-              <thead class="bg-slate-50/60 backdrop-blur-sm sticky top-0">
-                <tr>
-                  <th scope="col" class="py-3.5 pl-6 pr-3 text-left text-sm font-semibold text-slate-900">
-                    <button @click="toggleSort('name')" class="flex items-center space-x-1 hover:bg-slate-100/60 rounded-lg p-1 -m-1 transition-colors duration-200"
-                      :aria-sort="sortColumn === 'name' ? sortDirection : 'none'">
-                      <span>Name</span>
-                      <component :is="getSortIcon('name')" class="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">
-                    <button @click="toggleSort('category')" class="flex items-center space-x-1 hover:bg-slate-100/60 rounded-lg p-1 -m-1 transition-colors duration-200"
-                      :aria-sort="sortColumn === 'category' ? sortDirection : 'none'">
-                      <span>Category</span>
-                      <component :is="getSortIcon('category')" class="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Type/Pattern</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Patcher</th>
-                  <th scope="col" class="relative py-3.5 pl-3 pr-6"><span class="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200/60 bg-white/80 backdrop-blur-sm">
-                <tr v-for="rule in sortedRules" :key="rule.id" class="hover:bg-slate-50/60 transition-all duration-200"
-                  role="row">
-                  <td class="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-slate-900" role="cell">
-                    {{ rule.name }}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600" role="cell">{{ rule.category }}</td>
-                  <td class="px-3 py-4 text-sm text-slate-600 max-w-md" role="cell">
-                    <div class="break-all whitespace-normal">
-                      {{ getPatternFromConfig(rule.config) }}
-                    </div>
-                  </td>
-                  <td class="px-3 py-4 text-sm text-slate-600" role="cell">{{ getPatcherFromConfig(rule.config) }}</td>
-                  <td class="whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium" role="cell">
-                    <div class="flex space-x-2 justify-end">
-                      <AppButton @click="$emit('open-rule-form', rule)" variant="text"
-                        class="text-gray-600 hover:text-gray-800 hover:scale-105 transition-all duration-200" title="Edit rule" aria-label="Edit rule">
-                        <PencilIcon class="h-5 w-5" />
-                      </AppButton>
-                      <AppButton @click="confirmDelete(rule)" variant="text" class="text-red-600 hover:text-red-800 hover:scale-105 transition-all duration-200"
-                        title="Delete rule" aria-label="Delete rule">
-                        <TrashIcon class="h-5 w-5" />
-                      </AppButton>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="sortedRules.length === 0">
-                  <td colspan="5" class="py-8 text-center text-sm text-slate-600" role="cell">
-                    <div class="w-16 h-16 mx-auto mb-4 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                      <MagnifyingGlassIcon class="h-8 w-8 text-slate-400" />
-                    </div>
-                    No rules available. Add your first rule to get started.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else class="mt-4 sm:mt-6 flex-1 overflow-hidden rounded-2xl border border-slate-200/60 flex flex-col">
+            <div class="overflow-x-auto flex-1">
+              <table class="min-w-full divide-y divide-slate-200/60" role="grid" aria-label="Rules table">
+                <thead class="bg-slate-50/60 backdrop-blur-sm sticky top-0">
+                  <tr>
+                    <th scope="col" class="py-3 pl-3 sm:pl-6 pr-3 text-left text-xs sm:text-sm font-semibold text-slate-900 min-w-[120px]">
+                      <button @click="toggleSort('name')" class="flex items-center space-x-1 hover:bg-slate-100/60 rounded-lg p-1 -m-1 transition-colors duration-200"
+                        :aria-sort="sortColumn === 'name' ? sortDirection : 'none'">
+                        <span>Name</span>
+                        <component :is="getSortIcon('name')" class="h-3 w-3 sm:h-4 sm:w-4" />
+                      </button>
+                    </th>
+                    <th scope="col" class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 min-w-[100px]">
+                      <button @click="toggleSort('category')" class="flex items-center space-x-1 hover:bg-slate-100/60 rounded-lg p-1 -m-1 transition-colors duration-200"
+                        :aria-sort="sortColumn === 'category' ? sortDirection : 'none'">
+                        <span>Category</span>
+                        <component :is="getSortIcon('category')" class="h-3 w-3 sm:h-4 sm:w-4" />
+                      </button>
+                    </th>
+                    <th scope="col" class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 min-w-[150px]">Type/Pattern</th>
+                    <th scope="col" class="px-3 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 min-w-[80px]">Patcher</th>
+                    <th scope="col" class="relative py-3 pl-3 pr-3 sm:pr-6 min-w-[80px]"><span class="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200/60 bg-white/80 backdrop-blur-sm">
+                  <tr v-for="rule in sortedRules" :key="rule.id" class="hover:bg-slate-50/60 transition-all duration-200"
+                    role="row">
+                    <td class="whitespace-nowrap py-3 sm:py-4 pl-3 sm:pl-6 pr-3 text-xs sm:text-sm font-medium text-slate-900" role="cell">
+                      {{ rule.name }}
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 sm:py-4 text-xs sm:text-sm text-slate-600" role="cell">{{ rule.category }}</td>
+                    <td class="px-3 py-3 sm:py-4 text-xs sm:text-sm text-slate-600 max-w-xs sm:max-w-md" role="cell">
+                      <div class="break-all whitespace-normal">
+                        {{ getPatternFromConfig(rule.config) }}
+                      </div>
+                    </td>
+                    <td class="px-3 py-3 sm:py-4 text-xs sm:text-sm text-slate-600" role="cell">{{ getPatcherFromConfig(rule.config) }}</td>
+                    <td class="whitespace-nowrap py-3 sm:py-4 pl-3 pr-3 sm:pr-6 text-right text-xs sm:text-sm font-medium" role="cell">
+                      <div class="flex space-x-1 sm:space-x-2 justify-end">
+                        <AppButton @click="$emit('open-rule-form', rule)" variant="text"
+                          class="text-gray-600 hover:text-gray-800 hover:scale-105 transition-all duration-200" title="Edit rule" aria-label="Edit rule">
+                          <PencilIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+                        </AppButton>
+                        <AppButton @click="confirmDelete(rule)" variant="text" class="text-red-600 hover:text-red-800 hover:scale-105 transition-all duration-200"
+                          title="Delete rule" aria-label="Delete rule">
+                          <TrashIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+                        </AppButton>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="sortedRules.length === 0">
+                    <td colspan="5" class="py-6 sm:py-8 text-center text-xs sm:text-sm text-slate-600" role="cell">
+                      <div class="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-slate-100/60 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                        <MagnifyingGlassIcon class="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
+                      </div>
+                      <span class="hidden sm:inline">No rules available. Add your first rule to get started.</span>
+                      <span class="sm:hidden">No rules available.</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <!-- Pagination -->
-            <div class="mt-4 flex justify-between items-center px-6 py-4 bg-slate-50/60 backdrop-blur-sm">
-              <div class="text-sm text-slate-600">
+            <div class="mt-2 sm:mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 bg-slate-50/60 backdrop-blur-sm">
+              <div class="text-xs sm:text-sm text-slate-600 text-center sm:text-left">
                 Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
                 {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} rules
               </div>
-              <div class="flex space-x-2">
+              <div class="flex justify-center sm:justify-end space-x-2">
                 <AppButton @click="changePage(currentPage - 1)" :disabled="currentPage === 1" variant="secondary"
-                  class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+                  class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                   aria-label="Previous page">
-                  Previous
+                  <span class="hidden sm:inline">Previous</span>
+                  <span class="sm:hidden">Prev</span>
                 </AppButton>
                 <AppButton @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" variant="secondary"
-                  class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+                  class="rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100/80 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
                   aria-label="Next page">
                   Next
                 </AppButton>

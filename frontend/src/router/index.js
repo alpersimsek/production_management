@@ -21,6 +21,7 @@
  * - /search: Search masking records (auth required)
  * - /presets: Preset management (auth + admin required)
  * - /privacy: Privacy policy page (no auth required)
+ * - /help: Help and documentation page (auth required)
  * 
  * Navigation Guards:
  * - beforeEach: Checks authentication, token expiration, and admin privileges
@@ -81,6 +82,12 @@ const router = createRouter({
       component: () => import('../views/Privacy.vue'),
       meta: { requiresAuth: false },
     },
+    {
+      path: '/help',
+      name: 'help',
+      component: () => import('../views/HelpView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
@@ -95,7 +102,7 @@ router.beforeEach(async (to, from, next) => {
       next('/login')
       return
     }
-    
+
     // Additional check for token expiration
     if (authStore.isTokenExpired()) {
       console.log('Token expired during navigation, logging out user')

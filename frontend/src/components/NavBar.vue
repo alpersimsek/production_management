@@ -48,10 +48,11 @@ const useFallbackLogo = ref(false) // For fallback logo
 // Navigation items
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', requiresAuth: true },
+  { name: 'Presets', href: '/presets', requiresAuth: true, requiresAdmin: true },
   { name: 'Files', href: '/files', requiresAuth: true },
   { name: 'Search', href: '/search', requiresAuth: true },
   { name: 'Users', href: '/users', requiresAuth: true, requiresAdmin: true },
-  { name: 'Presets', href: '/presets', requiresAuth: true, requiresAdmin: true },
+  { name: 'Help', href: '/help', requiresAuth: true },
 ]
 
 // User information

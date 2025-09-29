@@ -133,6 +133,9 @@ initializeForm()
           <DialogTitle as="h3" class="text-2xl font-bold text-slate-900">
             {{ editing ? 'Edit Preset' : 'Add New Preset' }}
           </DialogTitle>
+          <p class="mt-2 text-sm text-slate-600">
+            {{ editing ? 'Update preset configuration and product association' : 'Create a new preset template for specific products' }}
+          </p>
           <div v-if="successMessage" class="mt-4 rounded-2xl bg-green-50/80 backdrop-blur-sm border border-green-200/60 p-4 flex items-center">
             <CheckCircleIcon class="h-5 w-5 text-green-400" />
             <p class="ml-2 text-sm text-green-800">{{ successMessage }}</p>
@@ -154,6 +157,7 @@ initializeForm()
               placeholder="Preset header"
               required
             />
+            <p class="text-xs text-slate-500 -mt-2">Header helps identify which preset to use based on matched expressions at the first few lines of the file that is processed</p>
             <CustomSelect
               v-model="form.productId"
               :options="products.map(p => ({ value: p.id, label: p.name }))"

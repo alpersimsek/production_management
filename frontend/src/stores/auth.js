@@ -7,7 +7,7 @@
  * 
  * Key Features:
  * - User authentication state management (user, token, isAuthenticated)
- * - Session persistence using sessionStorage
+ * - Session persistence using localStorage (cross-window/tab support)
  * - JWT token validation and expiration checking
  * - Automatic axios header configuration for API requests
  * - Force logout functionality for token expiration scenarios
@@ -19,7 +19,7 @@
  * - isAuthenticated: Boolean flag indicating authentication status
  * 
  * Actions:
- * - setAuth(): Initializes auth state from sessionStorage and configures axios
+ * - setAuth(): Initializes auth state from localStorage and configures axios
  * - login(username, password): Authenticates user and stores session data
  * - logout(): Clears session data and resets auth state
  * - forceLogout(): Enhanced logout for token expiration scenarios
@@ -64,8 +64,8 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     setAuth() {
-      const token = sessionStorage.getItem('token')
-      const user = sessionStorage.getItem('user')
+      const token = localStorage.getItem('token')
+      const user = localStorage.getItem('user')
 
       this.token = token
       this.user = user ? JSON.parse(user) : null
@@ -84,21 +84,21 @@ export const useAuthStore = defineStore('auth', {
         username,
         role: data.role,
       }
-      sessionStorage.setItem('token', data.access_token)
-      sessionStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('token', data.access_token)
+      localStorage.setItem('user', JSON.stringify(user))
       this.setAuth()
     },
 
     logout() {
-      sessionStorage.removeItem('token')
-      sessionStorage.removeItem('user')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
       this.setAuth()
     },
 
     // Enhanced logout for token expiration
     forceLogout() {
-      sessionStorage.removeItem('token')
-      sessionStorage.removeItem('user')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
       this.token = null
       this.user = null
       this.isAuthenticated = false
@@ -108,7 +108,7 @@ export const useAuthStore = defineStore('auth', {
     // Check if token is expired (if we have JWT decode capability)
     isTokenExpired() {
       if (!this.token) return true
-      
+
       try {
         // Basic JWT expiration check (payload.exp)
         const payload = JSON.parse(atob(this.token.split('.')[1]))

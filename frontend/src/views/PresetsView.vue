@@ -391,32 +391,32 @@ const confirmDeleteProduct = async () => {
             </div>
             <div>
               <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Preset Management</h1>
-              <p class="mt-1 text-sm text-slate-600 font-medium">Seamlessly manage product presets and their associated rules</p>
+              <p class="mt-1 text-sm text-slate-600 font-medium">Create and manage product presets with masking rules for GDPR compliance</p>
             </div>
           </div>
         </div>
         <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none flex space-x-4">
-          <button type="button" @click="openRuleListModal"
-            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
-            aria-label="Manage rules">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-            Manage Rules
-          </button>
-          <button type="button" @click="openPresetModal()"
-            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
-            aria-label="Add preset">
-            <PlusIcon class="h-5 w-5 mr-2" />
-            Add Preset
-          </button>
-          <button type="button" @click="openProductModal"
-            class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
-            aria-label="Add product">
-            <PlusIcon class="h-5 w-5 mr-2" />
-            Add Product
-          </button>
+            <button type="button" @click="openRuleListModal"
+              class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+              aria-label="Manage rules">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
+              Manage Rules
+            </button>
+            <button type="button" @click="openPresetModal()"
+              class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+              aria-label="Add preset">
+              <PlusIcon class="h-5 w-5 mr-2" />
+              Add Preset
+            </button>
+            <button type="button" @click="openProductModal"
+              class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-gray-500 to-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:from-gray-600 hover:to-slate-700 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200"
+              aria-label="Add product">
+              <PlusIcon class="h-5 w-5 mr-2" />
+              Add Product
+            </button>
         </div>
       </div>
       <div v-if="error" class="mt-6 rounded-2xl bg-red-50/80 backdrop-blur-sm border border-red-200/60 p-4 shadow-sm animate-fade-in">
@@ -434,11 +434,16 @@ const confirmDeleteProduct = async () => {
         <div class="animate-spin rounded-full h-12 w-12 border-2 border-gray-400/60 border-t-transparent"></div>
         <p class="ml-4 text-sm font-medium text-slate-600">Loading presets...</p>
       </div>
-      <div v-else class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
-        <PresetsList :presets="presets" :products="products" :rules="rules" :loading="loading"
-          @add-preset="handleAddPreset" @edit-preset="handleEditPreset" @delete-preset="handleDeletePreset"
-          @add-rule-to-preset="handleAddRuleToPreset" @edit-preset-rule="handleEditPresetRule"
-          @delete-preset-rule="handleDeletePresetRule" @load-preset-rules="loadPresetRules" @delete-product="handleDeleteProduct" class="animate-fade-in" />
+      <div v-else class="mt-8">
+        <div class="mb-4">
+          <p class="text-sm text-slate-600">View and manage all products, presets, and their associated masking rules below</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
+          <PresetsList :presets="presets" :products="products" :rules="rules" :loading="loading"
+            @add-preset="handleAddPreset" @edit-preset="handleEditPreset" @delete-preset="handleDeletePreset"
+            @add-rule-to-preset="handleAddRuleToPreset" @edit-preset-rule="handleEditPresetRule"
+            @delete-preset-rule="handleDeletePresetRule" @load-preset-rules="loadPresetRules" @delete-product="handleDeleteProduct" class="animate-fade-in" />
+        </div>
       </div>
       <PresetForm v-if="showPresetModal" :open="showPresetModal" :products="products" :editPreset="editingPreset"
         :defaultProductId="defaultProductId" @close="showPresetModal = false" @saved="handlePresetSaved"
