@@ -433,9 +433,6 @@ const helpSections = [
       <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">GDPR Tool Help Center</h1>
-        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-          Comprehensive guide to using the GDPR compliance tool effectively and securely
-        </p>
       </div>
 
       <!-- Help Sections -->
