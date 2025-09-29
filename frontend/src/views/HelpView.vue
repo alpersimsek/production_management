@@ -45,7 +45,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // State for collapsible sections
-const expandedSections = ref(new Set(['getting-started', 'dashboard']))
+const expandedSections = ref(new Set(['dashboard']))
 
 const toggleSection = (sectionId) => {
   if (expandedSections.value.has(sectionId)) {
@@ -59,31 +59,6 @@ const isExpanded = (sectionId) => expandedSections.value.has(sectionId)
 
 // Help sections data
 const helpSections = [
-  {
-    id: 'getting-started',
-    title: 'Getting Started',
-    icon: BookOpenIcon,
-    content: [
-      {
-        subtitle: 'Login Process',
-        steps: [
-          'Navigate to the login page',
-          'Enter your username and password',
-          'Click "Sign In" to authenticate',
-          'You will be redirected to the dashboard upon successful login'
-        ]
-      },
-      {
-        subtitle: 'First Time Setup',
-        steps: [
-          'Contact your administrator to create your account',
-          'Ensure you have the correct permissions for your role',
-          'Familiarize yourself with the dashboard layout',
-          'Review the available features based on your user role'
-        ]
-      }
-    ]
-  },
   {
     id: 'dashboard',
     title: 'Dashboard Overview',
