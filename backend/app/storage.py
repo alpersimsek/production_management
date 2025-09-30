@@ -12,12 +12,11 @@ Key Components:
 Supported File Types:
 - Text Files: Plain text, JSON, CSV, log files
 - PCAP Files: Network packet capture files
-- Archive Files: ZIP, TAR, GZIP, BZIP2, XZ, 7Z, RAR, ZSTD, LZMA, CPIO, AR, CAB, ISO
-- Avro Files: Apache Avro data files (converted to JSON)
+- Archive Files: ZIP, TAR, GZIP, BZIP2, XZ
 
 Archive Processing Features:
 - Recursive Extraction: Supports nested archives with depth limits
-- Multiple Formats: Handles 13+ different archive formats
+- Multiple Formats: Handles 5 different archive formats
 - Type Detection: Uses MIME types, magic signatures, and file extensions
 - Sanitization: Prevents path traversal attacks in archive contents
 - Error Handling: Graceful handling of corrupted or unsupported archives
@@ -47,31 +46,9 @@ import json
 import re
 from charset_normalizer import from_bytes
 try:
-    from avro.datafile import DataFileReader
-    from avro.io import DatumReader
-except ImportError:
-    DataFileReader = None
-    DatumReader = None
-try:
-    import py7zr
-except ImportError:
-    py7zr = None
-try:
-    import rarfile
-except ImportError:
-    rarfile = None
-try:
-    import zstandard as zstd
-except ImportError:
-    zstd = None
-try:
     import lzma
 except ImportError:
     lzma = None
-try:
-    import libarchive
-except ImportError:
-    libarchive = None
 from database.models import MimeType
 from typing import List, Iterator, Optional
 from database.models import File
@@ -99,21 +76,11 @@ class FileStorage(BaseStorage):
     T_GZIP = "gzip"
     T_BZIP2 = "bzip2"
     T_XZ = "xz"
-    T_7Z = "7z"
-    T_RAR = "rar"
-    T_ZSTD = "zstd"
-    T_LZMA = "lzma"
-    T_CPIO = "cpio"
-    T_AR = "ar"
-    T_CAB = "cab"
-    T_ISO = "iso"
-    T_AVRO = "avro"
     T_UNKNOWN = "unknown"
 
-    FILE_TYPES = [T_TEXT, T_PCAP, T_AVRO]
+    FILE_TYPES = [T_TEXT, T_PCAP]
     ARCHIVE_TYPES = [
-        T_ZIP, T_TAR, T_GZIP, T_BZIP2, T_XZ, T_7Z, T_RAR, T_ZSTD,
-        T_LZMA, T_CPIO, T_AR, T_CAB, T_ISO
+        T_ZIP, T_TAR, T_GZIP, T_BZIP2, T_XZ
     ]
 
     MIME_TYPES = {
@@ -124,14 +91,6 @@ class FileStorage(BaseStorage):
         "application/x-gzip": T_GZIP,
         "application/x-bzip2": T_BZIP2,
         "application/x-xz": T_XZ,
-        "application/x-7z-compressed": T_7Z,
-        "application/x-rar-compressed": T_RAR,
-        "application/zstd": T_ZSTD,
-        "application/x-lzma": T_LZMA,
-        "application/x-cpio": T_CPIO,
-        "application/x-archive": T_AR,
-        "application/vnd.ms-cab-compressed": T_CAB,
-        "application/x-iso9660-image": T_ISO,
         "application/vnd.tcpdump.pcap": T_PCAP,
         "application/octet-stream": None,  # Handled by magic signature
         "application/json": T_TEXT,  # Handle JSON as text
@@ -148,17 +107,6 @@ class FileStorage(BaseStorage):
         ".tar.bz2": T_BZIP2,
         ".xz": T_XZ,
         ".tar.xz": T_XZ,
-        ".7z": T_7Z,
-        ".rar": T_RAR,
-        ".zst": T_ZSTD,
-        ".tar.zst": T_ZSTD,
-        ".lzma": T_LZMA,
-        ".tar.lzma": T_LZMA,
-        ".cpio": T_CPIO,
-        ".ar": T_AR,
-        ".cab": T_CAB,
-        ".iso": T_ISO,
-        ".avro": T_AVRO,
         ".pcap": T_PCAP,
         ".pcapng": T_PCAP,
     }
@@ -227,22 +175,8 @@ class FileStorage(BaseStorage):
 
         # Special cases for octet-stream
         if mime == "application/octet-stream":
-            if "Apache Avro" in magic_sig:
-                return self.T_AVRO
             if "pcapng capture file" in magic_sig.lower():
                 return self.T_PCAP
-            if "7z" in magic_sig.lower():
-                return self.T_7Z
-            if "rar" in magic_sig.lower():
-                return self.T_RAR
-            if "zstandard" in magic_sig.lower():
-                return self.T_ZSTD
-            if "cpio" in magic_sig.lower():
-                return self.T_CPIO
-            if "ar archive" in magic_sig.lower():
-                return self.T_AR
-            if "iso 9660" in magic_sig.lower():
-                return self.T_ISO
 
         if mime in (MimeType.JSON.value, MimeType.TEXT.value, MimeType.TEXTX.value):
             return self.T_TEXT
@@ -409,350 +343,9 @@ class FileStorage(BaseStorage):
                 })
                 return []
 
-    def _unpack_7z(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if py7zr is None:
-            logger.warning({
-                "event": "7z_unpack_failed",
-                "file_id": file_id,
-                "error": "py7zr library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with py7zr.SevenZipFile(path, mode='r') as arc:
-                    arc.extractall(temp_dir)
-                for extracted in pathlib.Path(temp_dir).rglob("*"):
-                    if extracted.is_file():
-                        fname = self._sanitize_filename(os.path.relpath(extracted, temp_dir))
-                        with extracted.open("rb") as stream:
-                            fid = self.save_file(stream)
-                        info = FileInfo(
-                            fid=fid,
-                            fname=os.path.join(base, fname),
-                            fsize=extracted.stat().st_size,
-                            ftype=self.get_type(fid)
-                        )
-                        archive_info.append(info)
-            except py7zr.Bad7zFile as e:
-                logger.warning({
-                    "event": "7z_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-        return archive_info
 
-    def _unpack_rar(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if rarfile is None:
-            logger.warning({
-                "event": "rar_unpack_failed",
-                "file_id": file_id,
-                "error": "rarfile library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with rarfile.RarFile(path) as arc:
-                    arc.extractall(temp_dir)
-                for extracted in pathlib.Path(temp_dir).rglob("*"):
-                    if extracted.is_file():
-                        fname = self._sanitize_filename(os.path.relpath(extracted, temp_dir))
-                        with extracted.open("rb") as stream:
-                            fid = self.save_file(stream)
-                        info = FileInfo(
-                            fid=fid,
-                            fname=os.path.join(base, fname),
-                            fsize=extracted.stat().st_size,
-                            ftype=self.get_type(fid)
-                        )
-                        archive_info.append(info)
-            except rarfile.RarError as e:
-                logger.warning({
-                    "event": "rar_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-        return archive_info
 
-    def _unpack_zstd(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if zstd is None:
-            logger.warning({
-                "event": "zstd_unpack_failed",
-                "file_id": file_id,
-                "error": "zstandard library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        filename = base[:-4] if base.lower().endswith(".zst") else base
-        with tempfile.NamedTemporaryFile(dir=self.base_dir, delete=False) as temp_file:
-            try:
-                with open(path, 'rb') as src:
-                    dctx = zstd.ZstdDecompressor()
-                    with open(temp_file.name, 'wb') as dst:
-                        dctx.copy_stream(src, dst)
-                fid = pathlib.Path(temp_file.name).name[3:]
-                info = FileInfo(
-                    fid=fid,
-                    fname=filename,
-                    fsize=pathlib.Path(temp_file.name).stat().st_size,
-                    ftype=self.get_type(fid)
-                )
-                return [info]
-            except zstd.ZstdError as e:
-                logger.warning({
-                    "event": "zstd_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-                return []
 
-    def _unpack_lzma(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        filename = base[:-5] if base.lower().endswith(".lzma") else base
-        with tempfile.NamedTemporaryFile(dir=self.base_dir, delete=False) as temp_file:
-            try:
-                with lzma.open(path) as stream:
-                    shutil.copyfileobj(stream, temp_file)
-                fid = pathlib.Path(temp_file.name).name[3:]
-                info = FileInfo(
-                    fid=fid,
-                    fname=filename,
-                    fsize=pathlib.Path(temp_file.name).stat().st_size,
-                    ftype=self.get_type(fid)
-                )
-                return [info]
-            except lzma.LZMAError as e:
-                logger.warning({
-                    "event": "lzma_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-                return []
-
-    def _unpack_cpio(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if libarchive is None:
-            logger.warning({
-                "event": "cpio_unpack_failed",
-                "file_id": file_id,
-                "error": "libarchive-c library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with libarchive.file_reader(str(path)) as arc:
-                    for entry in arc:
-                        if entry.isfile():
-                            fname = self._sanitize_filename(entry.pathname)
-                            temp_path = pathlib.Path(temp_dir) / fname
-                            with open(temp_path, 'wb') as f:
-                                for block in entry.get_blocks():
-                                    f.write(block)
-                            with temp_path.open("rb") as stream:
-                                fid = self.save_file(stream)
-                            info = FileInfo(
-                                fid=fid,
-                                fname=os.path.join(base, fname),
-                                fsize=temp_path.stat().st_size,
-                                ftype=self.get_type(fid)
-                            )
-                            archive_info.append(info)
-            except libarchive.ArchiveError as e:
-                logger.warning({
-                    "event": "cpio_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-        return archive_info
-
-    def _unpack_ar(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if libarchive is None:
-            logger.warning({
-                "event": "ar_unpack_failed",
-                "file_id": file_id,
-                "error": "libarchive-c library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with libarchive.file_reader(str(path)) as arc:
-                    for entry in arc:
-                        if entry.isfile():
-                            fname = self._sanitize_filename(entry.pathname)
-                            temp_path = pathlib.Path(temp_dir) / fname
-                            with open(temp_path, 'wb') as f:
-                                for block in entry.get_blocks():
-                                    f.write(block)
-                            with temp_path.open("rb") as stream:
-                                fid = self.save_file(stream)
-                            info = FileInfo(
-                                fid=fid,
-                                fname=os.path.join(base, fname),
-                                fsize=temp_path.stat().st_size,
-                                ftype=self.get_type(fid)
-                            )
-                            archive_info.append(info)
-            except libarchive.ArchiveError as e:
-                logger.warning({
-                    "event": "ar_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-        return archive_info
-
-    def _unpack_cab(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if libarchive is None:
-            logger.warning({
-                "event": "cab_unpack_failed",
-                "file_id": file_id,
-                "error": "libarchive-c library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with libarchive.file_reader(str(path)) as arc:
-                    for entry in arc:
-                        if entry.isfile():
-                            fname = self._sanitize_filename(entry.pathname)
-                            temp_path = pathlib.Path(temp_dir) / fname
-                            with open(temp_path, 'wb') as f:
-                                for block in entry.get_blocks():
-                                    f.write(block)
-                            with temp_path.open("rb") as stream:
-                                fid = self.save_file(stream)
-                            info = FileInfo(
-                                fid=fid,
-                                fname=os.path.join(base, fname),
-                                fsize=temp_path.stat().st_size,
-                                ftype=self.get_type(fid)
-                            )
-                            archive_info.append(info)
-            except libarchive.ArchiveError as e:
-                logger.warning({
-                    "event": "cab_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-        return archive_info
-
-    def _unpack_iso(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        if libarchive is None:
-            logger.warning({
-                "event": "iso_unpack_failed",
-                "file_id": file_id,
-                "error": "libarchive-c library not installed"
-            })
-            return []
-        path = self.get(file_id)
-        if not path.exists():
-            raise FileNotFoundError(f"Archive file does not exist: {path}")
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with libarchive.file_reader(str(path)) as arc:
-                    for entry in arc:
-                        if entry.isfile():
-                            fname = self._sanitize_filename(entry.pathname)
-                            temp_path = pathlib.Path(temp_dir) / fname
-                            with open(temp_path, 'wb') as f:
-                                for block in entry.get_blocks():
-                                    f.write(block)
-                            with temp_path.open("rb") as stream:
-                                fid = self.save_file(stream)
-                            info = FileInfo(
-                                fid=fid,
-                                fname=os.path.join(base, fname),
-                                fsize=temp_path.stat().st_size,
-                                ftype=self.get_type(fid)
-                            )
-                            archive_info.append(info)
-            except libarchive.ArchiveError as e:
-                logger.warning({
-                    "event": "iso_unpack_failed",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e)
-                })
-        return archive_info
-
-    def unpack_avro(self, file_id: str, base: str, nesting_level: int) -> List[FileInfo]:
-        """Extract records from an Avro file as JSON text files."""
-        if DataFileReader is None or DatumReader is None:
-            logger.error({
-                "event": "avro_unpack_failed",
-                "file_id": file_id,
-                "error": "Avro library not installed. Install with 'pip install avro'"
-            })
-            raise ImportError("Avro library not installed")
-        
-        path = self.get(file_id)
-        if not path.exists():
-            logger.error({
-                "event": "avro_unpack_failed",
-                "file_id": file_id,
-                "error": f"Avro file does not exist: {path}"
-            })
-            raise FileNotFoundError(f"Avro file does not exist: {path}")
-
-        archive_info = []
-        with tempfile.TemporaryDirectory(dir=self.base_dir) as temp_dir:
-            try:
-                with open(path, 'rb') as f:
-                    reader = DataFileReader(f, DatumReader())
-                    for idx, record in enumerate(reader):
-                        record_json = json.dumps(record, ensure_ascii=False)
-                        record_filename = f"{base}_record_{idx}.json"
-                        temp_path = pathlib.Path(temp_dir) / record_filename
-                        with temp_path.open("w", encoding="utf-8") as f:
-                            f.write(record_json)
-                        with temp_path.open("rb") as stream:
-                            fid = self.save_file(stream)
-                        info = FileInfo(
-                            fid=fid,
-                            fname=record_filename,
-                            fsize=temp_path.stat().st_size,
-                            ftype=self.T_TEXT
-                        )
-                        archive_info.append(info)
-                    reader.close()
-            except Exception as e:
-                logger.warning({
-                    "event": "avro_unpack_error",
-                    "file_id": file_id,
-                    "path": str(path),
-                    "error": str(e),
-                    "nesting_level": nesting_level
-                })
-        return archive_info
 
     def _unpack_file(self, file_id: str, ftype: str, base: str, nesting_level: int) -> List[FileInfo]:
         """Unpack archive based on file type."""
@@ -867,36 +460,6 @@ class FileStorage(BaseStorage):
                             })
                             raise FileNotFoundError(f"Child file does not exist: {file_path}")
                         archive.add(file_path, arcname=child.filename)
-            elif format == "7z" and py7zr:
-                with py7zr.SevenZipFile(dst, "w") as archive:
-                    for child in file.archive_files:
-                        file_path = self.get(child.id)
-                        if not file_path.exists():
-                            logger.error({
-                                "event": "repack_failed",
-                                "file_id": file.id,
-                                "child_id": child.id,
-                                "error": f"Child file does not exist: {file_path}"
-                            })
-                            raise FileNotFoundError(f"Child file does not exist: {file_path}")
-                        archive.write(file_path, arcname=child.filename)
-            elif format == "rar" and rarfile:
-                raise ValueError("RAR repacking not supported")
-            elif format == "zstd" and zstd:
-                child = file.archive_files[0]
-                file_path = self.get(child.id)
-                if not file_path.exists():
-                    logger.error({
-                        "event": "repack_failed",
-                        "file_id": file.id,
-                        "child_id": child.id,
-                        "error": f"Child file does not exist: {file_path}"
-                    })
-                    raise FileNotFoundError(f"Child file does not exist: {file_path}")
-                with open(dst, 'wb') as dst_file:
-                    cctx = zstd.ZstdCompressor()
-                    with open(file_path, 'rb') as src_file:
-                        cctx.copy_stream(src_file, dst_file)
             else:
                 raise ValueError(f"Unsupported archive format for repacking: {format}")
 

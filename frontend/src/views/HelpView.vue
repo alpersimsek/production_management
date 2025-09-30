@@ -403,11 +403,20 @@ const helpSections = [
 
 <template>
   <MainLayout>
-    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">GDPR Tool Help Center</h1>
+    <div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-1 sm:py-1">
+      <!-- Header Section -->
+      <div class="sm:flex sm:items-center mb-8">
+        <div class="sm:flex-auto">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <BookOpenIcon class="h-6 w-6 text-white transition-transform duration-300 hover:scale-110" />
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900 tracking-tight">GDPR Tool Help Center</h1>
+              <p class="mt-1 text-sm text-slate-600 font-medium">Comprehensive guide to using the GDPR compliance tool effectively and securely</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Help Sections -->
@@ -415,21 +424,21 @@ const helpSections = [
         <div 
           v-for="section in helpSections" 
           :key="section.id"
-          class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+          class="bg-white/80 backdrop-blur-sm rounded-lg border border-slate-200/60 shadow-sm hover:bg-white/90 transition-all duration-300 overflow-hidden"
         >
           <!-- Section Header -->
           <button
             @click="toggleSection(section.id)"
-            class="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
+            class="w-full px-6 py-4 text-left hover:bg-slate-50/60 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <component :is="section.icon" class="h-6 w-6 text-indigo-600" />
-                <h2 class="text-xl font-semibold text-gray-900">{{ section.title }}</h2>
+                <component :is="section.icon" class="h-6 w-6 text-slate-600" />
+                <h2 class="text-xl font-semibold text-slate-900">{{ section.title }}</h2>
               </div>
               <component 
                 :is="isExpanded(section.id) ? ChevronDownIcon : ChevronRightIcon" 
-                class="h-5 w-5 text-gray-400 transition-transform duration-200"
+                class="h-5 w-5 text-slate-400 transition-transform duration-200"
                 :class="{ 'rotate-90': isExpanded(section.id) }"
               />
             </div>
@@ -438,7 +447,7 @@ const helpSections = [
           <!-- Section Content -->
           <div 
             v-if="isExpanded(section.id)"
-            class="px-6 pb-6 border-t border-gray-100"
+            class="px-6 pb-6 border-t border-slate-100"
           >
             <div class="pt-6 space-y-8">
               <div 
@@ -446,8 +455,8 @@ const helpSections = [
                 :key="index"
                 class="space-y-4"
               >
-                <h3 class="text-lg font-medium text-gray-800 flex items-center">
-                  <div class="w-2 h-2 bg-indigo-500 rounded-full mr-3"></div>
+                <h3 class="text-lg font-medium text-slate-800 flex items-center">
+                  <div class="w-2 h-2 bg-slate-500 rounded-full mr-3"></div>
                   {{ item.subtitle }}
                 </h3>
                 
@@ -458,10 +467,10 @@ const helpSections = [
                     :key="stepIndex"
                     class="flex items-start space-x-3"
                   >
-                    <div class="flex-shrink-0 w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center mt-0.5">
-                      <span class="text-xs font-medium text-indigo-600">{{ stepIndex + 1 }}</span>
+                    <div class="flex-shrink-0 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center mt-0.5">
+                      <span class="text-xs font-medium text-slate-600">{{ stepIndex + 1 }}</span>
                     </div>
-                    <p class="text-gray-700 leading-relaxed">{{ step }}</p>
+                    <p class="text-slate-700 leading-relaxed">{{ step }}</p>
                   </div>
                 </div>
               </div>
@@ -471,64 +480,47 @@ const helpSections = [
       </div>
 
       <!-- Contact Support -->
-      <div class="mt-12 bg-indigo-50 rounded-2xl p-8 text-center">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Need More Help?</h2>
-        <p class="text-gray-600 mb-6">
-          If you can't find what you're looking for or need additional assistance, 
-          contact our support team directly.
-        </p>
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-indigo-100">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Contact Support Team</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="flex items-center space-x-3">
-              <UserIcon class="h-5 w-5 text-indigo-600 flex-shrink-0" />
-              <a href="mailto:asimsek@rbbn.com" class="text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200 text-sm sm:text-base">
-                asimsek@rbbn.com
-              </a>
-            </div>
-            <div class="flex items-center space-x-3">
-              <UserIcon class="h-5 w-5 text-indigo-600 flex-shrink-0" />
-              <a href="mailto:SChandrasekhar@rbbn.com" class="text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200 text-sm sm:text-base">
-                SChandrasekhar@rbbn.com
-              </a>
-            </div>
-            <div class="flex items-center space-x-3">
-              <UserIcon class="h-5 w-5 text-indigo-600 flex-shrink-0" />
-              <a href="mailto:vbenli@rbbn.com" class="text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200 text-sm sm:text-base">
-                vbenli@rbbn.com
-              </a>
-            </div>
-            <div class="flex items-center space-x-3">
-              <UserIcon class="h-5 w-5 text-indigo-600 flex-shrink-0" />
-              <a href="mailto:Dhananjay.Jahagirdar@rbbn.com" class="text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200 text-sm sm:text-base">
-                Dhananjay.Jahagirdar@rbbn.com
-              </a>
+      <div class="mt-12 bg-white/80 backdrop-blur-sm rounded-lg border border-slate-200/60 shadow-sm hover:bg-white/90 transition-all duration-300">
+        <div class="p-6">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Need More Help?</h2>
+            <p class="text-slate-600">
+              If you can't find what you're looking for or need additional assistance, 
+              contact our support team directly.
+            </p>
+          </div>
+          <div class="bg-slate-50/60 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4 text-center">Contact Support Team</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="flex items-center space-x-3">
+                <UserIcon class="h-5 w-5 text-slate-600 flex-shrink-0" />
+                <a href="mailto:asimsek@rbbn.com" class="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 text-sm sm:text-base">
+                  asimsek@rbbn.com
+                </a>
+              </div>
+              <div class="flex items-center space-x-3">
+                <UserIcon class="h-5 w-5 text-slate-600 flex-shrink-0" />
+                <a href="mailto:SChandrasekhar@rbbn.com" class="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 text-sm sm:text-base">
+                  SChandrasekhar@rbbn.com
+                </a>
+              </div>
+              <div class="flex items-center space-x-3">
+                <UserIcon class="h-5 w-5 text-slate-600 flex-shrink-0" />
+                <a href="mailto:vbenli@rbbn.com" class="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 text-sm sm:text-base">
+                  vbenli@rbbn.com
+                </a>
+              </div>
+              <div class="flex items-center space-x-3">
+                <UserIcon class="h-5 w-5 text-slate-600 flex-shrink-0" />
+                <a href="mailto:Dhananjay.Jahagirdar@rbbn.com" class="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 text-sm sm:text-base">
+                  Dhananjay.Jahagirdar@rbbn.com
+                </a>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   </MainLayout>
 </template>
 
-<style scoped>
-/* Custom scrollbar for better UX */
-.space-y-6::-webkit-scrollbar {
-  width: 6px;
-}
-
-.space-y-6::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.space-y-6::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.space-y-6::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-</style>
