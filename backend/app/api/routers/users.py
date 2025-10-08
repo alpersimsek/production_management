@@ -86,7 +86,7 @@ class UserRouter(APIRouter):
             })
             
             return TokenResponse(
-                access_token=token, token_type="bearer", role=user.role
+                access_token=token, token_type="bearer", role=user.role.value
             )
         else:
             # Log failed login attempt

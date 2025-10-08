@@ -69,12 +69,14 @@ const isActive = (path) => {
   return route.path.startsWith(path) && path !== '/'
 }
 
-// Check if a navigation item should be shown based on user permissions
-const shouldShowItem = (item) => {
-  if (item.requiresAuth && !authStore.isAuthenticated) return false
-  if (item.requiresAdmin && (!authStore.user || authStore.user.role !== 'admin')) return false
-  return true
-}
+// Filter navigation items based on user permissions (reactive computed property)
+const visibleNavigationItems = computed(() => {
+  return navigationItems.filter(item => {
+    if (item.requiresAuth && !authStore.isAuthenticated) return false
+    if (item.requiresAdmin && (!authStore.user || authStore.user.role !== 'admin')) return false
+    return true
+  })
+})
 
 // Toggle mobile menu
 const toggleMobileMenu = () => {
@@ -118,12 +120,12 @@ const handleLogout = () => {
         <!-- Main navigation - Desktop -->
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           <div class="flex space-x-1">
-            <router-link v-for="item in navigationItems" :key="item.name" :to="item.href" :class="[
+            <router-link v-for="item in visibleNavigationItems" :key="item.name" :to="item.href" :class="[
               isActive(item.href)
                 ? 'bg-gray-200/80 text-gray-800'
                 : 'text-gray-600 hover:bg-gray-200/60 hover:text-gray-800',
               'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-md',
-            ]" v-show="shouldShowItem(item)">
+            ]">
               {{ item.name }}
             </router-link>
           </div>
@@ -182,12 +184,12 @@ const handleLogout = () => {
     <!-- Mobile menu -->
     <div v-if="showMobileMenu" class="sm:hidden bg-gray-100/90 backdrop-blur-sm border-b border-gray-200/60 shadow-md" id="mobile-menu">
       <div class="space-y-1 pt-2 pb-3">
-        <router-link v-for="item in navigationItems" :key="item.name" :to="item.href" :class="[
+        <router-link v-for="item in visibleNavigationItems" :key="item.name" :to="item.href" :class="[
           isActive(item.href)
             ? 'bg-gray-200/80 text-gray-800'
             : 'text-gray-600 hover:bg-gray-200/60 hover:text-gray-800',
           'block px-4 py-3 rounded-md text-base font-medium transition-all duration-200 hover:scale-105 hover:shadow-md',
-        ]" @click="toggleMobileMenu" v-show="shouldShowItem(item)">
+        ]" @click="toggleMobileMenu">
           {{ item.name }}
         </router-link>
       </div>

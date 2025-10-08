@@ -73,7 +73,7 @@ const defaultProductId = ref(null)
 
 const isAdmin = computed(() => {
   try {
-    const userData = JSON.parse(sessionStorage.getItem('user'))
+    const userData = JSON.parse(localStorage.getItem('user'))
     return userData && userData.role === 'admin'
   } catch {
     return false
