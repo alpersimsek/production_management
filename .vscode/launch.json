@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start Backend Services",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up", "-d", "db", "redis", "flower", "worker"],
+      "console": "integratedTerminal",
+      "postDebugTask": "Stop Infrastructure"
+    },
+    {
+      "name": "FastAPI Debug (Python)",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/backend/.env.local",
+      "python": "${workspaceFolder}/backend/venv/bin/python",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Start Infrastructure (db+redis+flower)",
+      "postDebugTask": "Stop Infrastructure"
+    },
+    {
+      "name": "Vue Dev Server (HMR)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "serve"],
+      "port": 3000,
+      "console": "integratedTerminal",
+      "postDebugTask": "Stop Infrastructure"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack — Start All (F5)",
+      "configurations": [
+        "FastAPI Debug (Python)",
+        "Vue Dev Server (HMR)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Full Stack — Stop All",
+      "configurations": [
+        "FastAPI Debug (Python)"
+      ],
+      "preLaunchTask": "Stop Infrastructure"
+    }
+  ]
+}
