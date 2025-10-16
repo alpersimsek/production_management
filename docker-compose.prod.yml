@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: olgahan
+      POSTGRES_USER: olgahan
+      POSTGRES_PASSWORD: olgahan
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+    restart: unless-stopped
+
+  api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://olgahan:olgahan@db:5432/olgahan
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - SECRET_KEY=your-secret-key-change-this-in-production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports: ["8000:8000"]
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+  worker:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["celery", "-A", "app.celery_app:celery", "worker", "--loglevel=info"]
+    environment:
+      - DATABASE_URL=postgresql://olgahan:olgahan@db:5432/olgahan
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - SECRET_KEY=your-secret-key-change-this-in-production
+    depends_on:
+      - api
+      - redis
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+  flower:
+    image: mher/flower:1.2.0
+    command: ["celery", "flower", "--port=5555", "--broker=redis://redis:6379/0"]
+    ports: ["5555:5555"]
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -5,7 +5,7 @@
         Olgahan Kimya ERP
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
-        Sign in to your account
+        {{ $t('auth.login') }}
       </p>
     </div>
 
@@ -14,7 +14,7 @@
         <form @submit.prevent="doLogin" class="space-y-6">
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700">
-              Email address
+              {{ $t('auth.email') }}
             </label>
             <div class="mt-1">
               <input
@@ -32,7 +32,7 @@
 
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700">
-              Password
+              {{ $t('auth.password') }}
             </label>
             <div class="mt-1">
               <input
@@ -85,18 +85,136 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {{ authStore.loading ? 'Signing in...' : 'Sign in' }}
+              {{ authStore.loading ? $t('common.loading') : $t('auth.login_button') }}
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Demo credentials -->
+      <!-- Demo Users -->
       <div class="mt-6 card p-4">
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Demo Credentials</h3>
-        <div class="text-sm text-gray-600">
-          <p><strong>Email:</strong> admin@olgahan.com</p>
-          <p><strong>Password:</strong> admin123</p>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Demo Users - Click to Auto-Fill</h3>
+        <div class="space-y-3">
+          <!-- Admin Users -->
+          <div class="border-l-4 border-red-500 pl-3">
+            <h4 class="text-sm font-semibold text-red-700 mb-2">Admin Users</h4>
+            <div class="grid grid-cols-1 gap-2">
+              <button
+                @click="selectUser('ahmet@olgahan.com', 'admin123')"
+                class="flex items-center justify-between p-2 text-left bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Ahmet Yılmaz</div>
+                  <div class="text-xs text-gray-600">ahmet@olgahan.com • Admin • Üretim</div>
+                </div>
+                <div class="text-xs text-red-600 font-medium">Select</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Manager Users -->
+          <div class="border-l-4 border-blue-500 pl-3">
+            <h4 class="text-sm font-semibold text-blue-700 mb-2">Manager Users</h4>
+            <div class="grid grid-cols-1 gap-2">
+              <button
+                @click="selectUser('fatma@olgahan.com', 'manager123')"
+                class="flex items-center justify-between p-2 text-left bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Fatma Özkan</div>
+                  <div class="text-xs text-gray-600">fatma@olgahan.com • Manager • Üretim</div>
+                </div>
+                <div class="text-xs text-blue-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('elif@olgahan.com', 'manager123')"
+                class="flex items-center justify-between p-2 text-left bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Elif Korkmaz</div>
+                  <div class="text-xs text-gray-600">elif@olgahan.com • Manager • Paketleme</div>
+                </div>
+                <div class="text-xs text-blue-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('selin@olgahan.com', 'manager123')"
+                class="flex items-center justify-between p-2 text-left bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Selin Aktaş</div>
+                  <div class="text-xs text-gray-600">selin@olgahan.com • Manager • Sevkiyat</div>
+                </div>
+                <div class="text-xs text-blue-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('gulay@olgahan.com', 'manager123')"
+                class="flex items-center justify-between p-2 text-left bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Gülay Yılmaz</div>
+                  <div class="text-xs text-gray-600">gulay@olgahan.com • Manager • Plasiyer</div>
+                </div>
+                <div class="text-xs text-blue-600 font-medium">Select</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Operator Users -->
+          <div class="border-l-4 border-green-500 pl-3">
+            <h4 class="text-sm font-semibold text-green-700 mb-2">Operator Users</h4>
+            <div class="grid grid-cols-1 gap-2">
+              <button
+                @click="selectUser('mehmet@olgahan.com', 'operator123')"
+                class="flex items-center justify-between p-2 text-left bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Mehmet Kaya</div>
+                  <div class="text-xs text-gray-600">mehmet@olgahan.com • Operator • Paketleme</div>
+                </div>
+                <div class="text-xs text-green-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('ali@olgahan.com', 'operator123')"
+                class="flex items-center justify-between p-2 text-left bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Ali Çelik</div>
+                  <div class="text-xs text-gray-600">ali@olgahan.com • Operator • Üretim</div>
+                </div>
+                <div class="text-xs text-green-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('zeynep@olgahan.com', 'operator123')"
+                class="flex items-center justify-between p-2 text-left bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Zeynep Arslan</div>
+                  <div class="text-xs text-gray-600">zeynep@olgahan.com • Operator • Depo</div>
+                </div>
+                <div class="text-xs text-green-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('mustafa@olgahan.com', 'operator123')"
+                class="flex items-center justify-between p-2 text-left bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Mustafa Yıldız</div>
+                  <div class="text-xs text-gray-600">mustafa@olgahan.com • Operator • Sevkiyat</div>
+                </div>
+                <div class="text-xs text-green-600 font-medium">Select</div>
+              </button>
+              <button
+                @click="selectUser('burak@olgahan.com', 'operator123')"
+                class="flex items-center justify-between p-2 text-left bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900">Burak Şahin</div>
+                  <div class="text-xs text-gray-600">burak@olgahan.com • Operator • Üretim</div>
+                </div>
+                <div class="text-xs text-green-600 font-medium">Select</div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -111,8 +229,13 @@ import { useAuthStore } from '@/store/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('admin@olgahan.com')
-const password = ref('admin123')
+const email = ref('')
+const password = ref('')
+
+function selectUser (userEmail, userPassword) {
+  email.value = userEmail
+  password.value = userPassword
+}
 
 async function doLogin () {
   const success = await authStore.login(email.value, password.value)

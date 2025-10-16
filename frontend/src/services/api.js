@@ -80,4 +80,105 @@ export const authAPI = {
   }
 }
 
+export const ordersAPI = {
+  async getOrders (params = {}) {
+    const response = await api.get('/orders/', { params })
+    return response.data
+  },
+
+  async getOrder (orderId) {
+    const response = await api.get(`/orders/${orderId}`)
+    return response.data
+  },
+
+  async createOrder (orderData) {
+    const response = await api.post('/orders/', orderData)
+    return response.data
+  },
+
+  async updateOrder (orderId, orderData) {
+    const response = await api.put(`/orders/${orderId}`, orderData)
+    return response.data
+  },
+
+  async deleteOrder (orderId) {
+    const response = await api.delete(`/orders/${orderId}`)
+    return response.data
+  },
+
+  async getOrderItems (orderId) {
+    const response = await api.get(`/orders/${orderId}/items`)
+    return response.data
+  },
+
+  async createOrderItem (orderId, itemData) {
+    const response = await api.post(`/orders/${orderId}/items`, itemData)
+    return response.data
+  },
+
+  async updateOrderItem (itemId, itemData) {
+    const response = await api.put(`/orders/items/${itemId}`, itemData)
+    return response.data
+  },
+
+  async deleteOrderItem (itemId) {
+    const response = await api.delete(`/orders/items/${itemId}`)
+    return response.data
+  }
+}
+
+export const customersAPI = {
+  async getCustomers (params = {}) {
+    const response = await api.get('/customers/', { params })
+    return response.data
+  },
+
+  async getCustomer (customerId) {
+    const response = await api.get(`/customers/${customerId}`)
+    return response.data
+  },
+
+  async createCustomer (customerData) {
+    const response = await api.post('/customers/', customerData)
+    return response.data
+  },
+
+  async updateCustomer (customerId, customerData) {
+    const response = await api.put(`/customers/${customerId}`, customerData)
+    return response.data
+  },
+
+  async deleteCustomer (customerId) {
+    const response = await api.delete(`/customers/${customerId}`)
+    return response.data
+  }
+}
+
+export const productsAPI = {
+  async getProducts (params = {}) {
+    const response = await api.get('/products/', { params })
+    return response.data
+  },
+
+  async getProduct (productId) {
+    const response = await api.get(`/products/${productId}`)
+    return response.data
+  },
+
+  async createProduct (productData) {
+    const response = await api.post('/products/', productData)
+    return response.data
+  },
+
+  async updateProduct (productId, productData) {
+    const response = await api.put(`/products/${productId}`, productData)
+    return response.data
+  },
+
+  async deleteProduct (productId) {
+    const response = await api.delete(`/products/${productId}`)
+    return response.data
+  }
+}
+
 export default api
