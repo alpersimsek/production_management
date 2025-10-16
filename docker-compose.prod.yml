@@ -28,7 +28,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://olgahan:olgahan@db:5432/olgahan
+      - DATABASE_URL=postgresql+psycopg2://olgahan:olgahan@db:5432/olgahan
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
       - SECRET_KEY=your-secret-key-change-this-in-production
@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     command: ["celery", "-A", "app.celery_app:celery", "worker", "--loglevel=info"]
     environment:
-      - DATABASE_URL=postgresql://olgahan:olgahan@db:5432/olgahan
+      - DATABASE_URL=postgresql+psycopg2://olgahan:olgahan@db:5432/olgahan
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
       - SECRET_KEY=your-secret-key-change-this-in-production
