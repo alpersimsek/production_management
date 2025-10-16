@@ -27,15 +27,15 @@ print_error() {
 
 # Update system
 print_status "Updating system packages..."
-sudo yum update -y
+sudo apt update -y
 
 # Install required packages
 print_status "Installing required packages..."
-sudo yum install -y git curl wget unzip
+sudo apt install -y git curl wget unzip
 
 # Install Docker
 print_status "Installing Docker..."
-sudo yum install -y docker
+sudo apt install -y docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -a -G docker ubuntu
@@ -47,15 +47,15 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 # Install Node.js (for frontend build)
 print_status "Installing Node.js..."
-curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-sudo yum install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
 
-# Configure firewall (if firewalld is running)
-if systemctl is-active --quiet firewalld; then
+# Configure firewall (if ufw is running)
+if command -v ufw &> /dev/null; then
     print_status "Configuring firewall..."
-    sudo firewall-cmd --permanent --add-port=80/tcp
-    sudo firewall-cmd --permanent --add-port=443/tcp
-    sudo firewall-cmd --reload
+    sudo ufw allow 80/tcp
+    sudo ufw allow 443/tcp
+    sudo ufw --force enable
 fi
 
 # Create application directory
