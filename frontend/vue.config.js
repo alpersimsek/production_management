@@ -23,7 +23,7 @@ module.exports = defineConfig({
   chainWebpack: config => {
     config.plugin('define').tap(definitions => {
       Object.assign(definitions[0], {
-        'process.env.VUE_APP_API_URL': JSON.stringify('http://localhost:8000')
+        'process.env.VUE_APP_API_URL': JSON.stringify(process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8000')
       })
       return definitions
     })
