@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <div class="flex-shrink-0 text-white text-2xl font-bold">
-            Olgahan ERP
+            Demo ERP
           </div>
 
           <!-- User Info and Actions -->

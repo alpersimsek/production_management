@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Olgahan Kimya ERP Deployment Script
+# Demo Kimya ERP Deployment Script
 # This script deploys the application to OCI server
 
 set -e
 
-echo "🚀 Starting Olgahan Kimya ERP Deployment..."
+echo "🚀 Starting Demo Kimya ERP Deployment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -87,9 +87,9 @@ echo "  - Health: http://145.241.236.172/health"
 
 echo ""
 print_status "🔑 Default login credentials:"
-echo "  - Admin: admin@olgahan.com / admin123"
-echo "  - Manager: manager@olgahan.com / manager123"
-echo "  - Operator: operator@olgahan.com / operator123"
+echo "  - Admin: admin@demo.com / admin123"
+echo "  - Manager: manager@demo.com / manager123"
+echo "  - Operator: operator@demo.com / operator123"
 
 echo ""
 print_warning "⚠️  Remember to:"

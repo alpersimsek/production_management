@@ -1,4 +1,4 @@
-# Cursor‑Ready Monorepo — Olgahan Kimya ERP
+# Cursor‑Ready Monorepo — Demo Kimya ERP
 
 Aşağıdaki içerik **Cursor** ile otomasyon için hazırdır. Önce **Backend & DB** (tam dosya ağacı ve içerikleri), ardından **Frontend** bölümü gelir. Kopyala‑yapıştırla dosyaları oluşturabilir veya Cursor’a topluca uygulatabilirsin.
 
@@ -8,7 +8,7 @@ Aşağıdaki içerik **Cursor** ile otomasyon için hazırdır. Önce **Backend 
 
 ## 0) Kök Dizin Yapısı
 ```
-olgahan-erp/
+demo-erp/
   backend/
   frontend/
   docker-compose.yml
@@ -28,9 +28,9 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: olgahan
-      POSTGRES_USER: olgahan
-      POSTGRES_PASSWORD: olgahan
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
     ports: ["5432:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -109,7 +109,7 @@ python-slugify==8.0.4
 
 **`backend/.env`**
 ```dotenv
-DATABASE_URL=postgresql+psycopg://olgahan:olgahan@db:5432/olgahan
+DATABASE_URL=postgresql+psycopg://demo:demo@db:5432/demo
 JWT_SECRET=change_me
 JWT_EXPIRES_MIN=60
 REFRESH_EXPIRES_MIN=1440
@@ -206,7 +206,7 @@ def get_db():
 from fastapi import FastAPI
 from .routers import auth, settings as settings_router, orders, production, lots, packaging, warehouse, shipments, analytics
 
-app = FastAPI(title="Olgahan Kimya ERP API")
+app = FastAPI(title="Demo Kimya ERP API")
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(settings_router.router, prefix="/settings", tags=["settings"])
@@ -225,7 +225,7 @@ from celery import Celery
 from .config import settings
 
 celery = Celery(
-    "olgahan",
+    "demo",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
 )
@@ -442,7 +442,7 @@ open http://localhost:8000/docs
 **`frontend/package.json`**
 ```json
 {
-  "name": "olgahan-erp-frontend",
+  "name": "demo-erp-frontend",
   "version": "0.0.1",
   "type": "module",
   "scripts": {
@@ -605,7 +605,7 @@ export const useAuthStore = defineStore('auth', {
 <template>
   <v-app>
     <v-app-bar app flat>
-      <v-toolbar-title>Olgahan ERP</v-toolbar-title>
+      <v-toolbar-title>Demo ERP</v-toolbar-title>
       <v-spacer />
       <v-btn to="/orders" variant="text">Sipariş</v-btn>
     </v-app-bar>
@@ -806,7 +806,7 @@ Aşağıdaki değişikliklerle frontend’i tamamen **JS** (Typescript’siz) ç
 **`frontend/package.json` (JS sürümü)**
 ```json
 {
-  "name": "olgahan-erp-frontend",
+  "name": "demo-erp-frontend",
   "version": "0.0.1",
   "type": "module",
   "scripts": {

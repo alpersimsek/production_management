@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: olgahan
-      POSTGRES_USER: olgahan
-      POSTGRES_PASSWORD: olgahan
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
     ports: ["5432:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -28,7 +28,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+psycopg2://olgahan:olgahan@db:5432/olgahan
+      - DATABASE_URL=postgresql+psycopg2://demo:demo@db:5432/demo
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
       - SECRET_KEY=your-secret-key-change-this-in-production
@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     command: ["celery", "-A", "app.celery_app:celery", "worker", "--loglevel=info"]
     environment:
-      - DATABASE_URL=postgresql+psycopg2://olgahan:olgahan@db:5432/olgahan
+      - DATABASE_URL=postgresql+psycopg2://demo:demo@db:5432/demo
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
       - SECRET_KEY=your-secret-key-change-this-in-production

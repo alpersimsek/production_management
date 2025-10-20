@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# OCI Server Setup Script for Olgahan Kimya ERP
+# OCI Server Setup Script for Demo Kimya ERP
 # Run this script on your OCI server to prepare it for deployment
 
 set -e
 
-echo "🔧 Setting up OCI server for Olgahan Kimya ERP..."
+echo "🔧 Setting up OCI server for Demo Kimya ERP..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -60,13 +60,13 @@ fi
 
 # Create application directory
 print_status "Creating application directory..."
-sudo mkdir -p /home/ubuntu/olgahan-erp
-sudo chown ubuntu:ubuntu /home/ubuntu/olgahan-erp
+sudo mkdir -p /home/ubuntu/demo-erp
+sudo chown ubuntu:ubuntu /home/ubuntu/demo-erp
 
 # Set up log rotation
 print_status "Setting up log rotation..."
-sudo tee /etc/logrotate.d/olgahan-erp > /dev/null <<EOF
-/home/ubuntu/olgahan-erp/logs/*.log {
+sudo tee /etc/logrotate.d/demo-erp > /dev/null <<EOF
+/home/ubuntu/demo-erp/logs/*.log {
     daily
     missingok
     rotate 7
@@ -79,12 +79,12 @@ EOF
 
 print_status "✅ OCI server setup completed!"
 print_warning "⚠️  Please logout and login again to apply Docker group changes"
-print_status "📁 Upload your application files to: /home/ubuntu/olgahan-erp"
+print_status "📁 Upload your application files to: /home/ubuntu/demo-erp"
 print_status "🚀 Then run: ./deploy.sh"
 
 echo ""
 print_status "📋 Next steps:"
 echo "1. Logout and login again"
-echo "2. Upload your application files to /home/ubuntu/olgahan-erp"
+echo "2. Upload your application files to /home/ubuntu/demo-erp"
 echo "3. Run ./deploy.sh to deploy the application"
 echo "4. Access your application at http://145.241.236.172"

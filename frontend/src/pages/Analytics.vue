@@ -139,6 +139,10 @@
               @touchstart.passive="handleKpiTouchStart"
               @touchmove.prevent="handleKpiTouchMove"
               @touchend="handleKpiTouchEnd"
+              @mousedown.prevent="handleKpiMouseDown"
+              @mousemove.prevent="handleKpiMouseMove"
+              @mouseup.prevent="handleKpiMouseUp"
+              @mouseleave.prevent="handleKpiMouseUp"
             >
               <div class="p-5" v-if="currentKpiCard">
                 <div class="flex items-center">
@@ -213,6 +217,10 @@
               @touchstart.passive="handleChartTouchStart"
               @touchmove.prevent="handleChartTouchMove"
               @touchend="handleChartTouchEnd"
+              @mousedown.prevent="handleChartMouseDown"
+              @mousemove.prevent="handleChartMouseMove"
+              @mouseup.prevent="handleChartMouseUp"
+              @mouseleave.prevent="handleChartMouseUp"
             >
               <div class="p-6" v-if="currentChart">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">{{ currentChart.title }}</h3>
@@ -266,16 +274,14 @@
                 @touchstart.passive="handleTabTouchStart"
                 @touchmove.prevent="handleTabTouchMove"
                 @touchend="handleTabTouchEnd"
+                @mousedown.prevent="handleTabMouseDown"
+                @mousemove.prevent="handleTabMouseMove"
+                @mouseup.prevent="handleTabMouseUp"
+                @mouseleave.prevent="handleTabMouseUp"
               >
                 <div class="bg-primary-50 border border-primary-200 rounded-lg p-4" v-if="currentTab">
                   <h3 class="text-lg font-medium text-primary-900 mb-2">{{ currentTab.name }}</h3>
-                  <p class="text-sm text-primary-700 mb-3">{{ $t(`analytics.tab_descriptions.${currentTab.id}`) }}</p>
-                  <button
-                    @click="activeTab = currentTab.id"
-                    class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    {{ $t('analytics.view_tab_content') }}
-                  </button>
+                  <p class="text-sm text-primary-700">{{ $t(`analytics.tab_descriptions.${currentTab.id}`) }}</p>
                 </div>
               </div>
               <div class="flex justify-between px-6 pb-4">
@@ -640,186 +646,126 @@ function previousTab () {
 }
 
 // Touch/Mouse handlers for KPI
-function handleKpiTouchStart (event) {
-  kpiTouchStartX.value = event.touches[0].clientX
-  kpiTouchStartY.value = event.touches[0].clientY
+function handleKpiTouchStart (e) {
+  const touch = e.touches[0]
+  kpiTouchStartX.value = touch.clientX
+  kpiTouchStartY.value = touch.clientY
+  kpiIsDragging.value = true
+}
+
+function handleKpiTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleKpiTouchEnd (e) {
+  if (!kpiIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - kpiTouchStartX.value
   kpiIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextKpi()
+  else if (dx > threshold) previousKpi()
 }
 
-function handleKpiTouchMove (event) {
-  if (!kpiIsDragging.value) {
-    const deltaX = Math.abs(event.touches[0].clientX - kpiTouchStartX.value)
-    const deltaY = Math.abs(event.touches[0].clientY - kpiTouchStartY.value)
-    if (deltaX > deltaY && deltaX > 10) {
-      kpiIsDragging.value = true
-    }
-  }
+function handleKpiMouseDown (e) {
+  kpiTouchStartX.value = e.clientX
+  kpiTouchStartY.value = e.clientY
+  kpiIsDragging.value = true
 }
 
-function handleKpiTouchEnd (event) {
-  if (kpiIsDragging.value) {
-    const deltaX = event.changedTouches[0].clientX - kpiTouchStartX.value
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        previousKpi()
-      } else {
-        nextKpi()
-      }
-    }
-  }
+function handleKpiMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleKpiMouseUp (e) {
+  if (!kpiIsDragging.value) return
+  const dx = e.clientX - kpiTouchStartX.value
   kpiIsDragging.value = false
-}
-
-function handleKpiMouseDown (event) {
-  kpiTouchStartX.value = event.clientX
-  kpiTouchStartY.value = event.clientY
-  kpiIsDragging.value = false
-}
-
-function handleKpiMouseMove (event) {
-  if (!kpiIsDragging.value) {
-    const deltaX = Math.abs(event.clientX - kpiTouchStartX.value)
-    const deltaY = Math.abs(event.clientY - kpiTouchStartY.value)
-    if (deltaX > deltaY && deltaX > 10) {
-      kpiIsDragging.value = true
-    }
-  }
-}
-
-function handleKpiMouseUp (event) {
-  if (kpiIsDragging.value) {
-    const deltaX = event.clientX - kpiTouchStartX.value
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        previousKpi()
-      } else {
-        nextKpi()
-      }
-    }
-  }
-  kpiIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextKpi()
+  else if (dx > threshold) previousKpi()
 }
 
 // Touch/Mouse handlers for Charts
-function handleChartTouchStart (event) {
-  chartTouchStartX.value = event.touches[0].clientX
-  chartTouchStartY.value = event.touches[0].clientY
+function handleChartTouchStart (e) {
+  const touch = e.touches[0]
+  chartTouchStartX.value = touch.clientX
+  chartTouchStartY.value = touch.clientY
+  chartIsDragging.value = true
+}
+
+function handleChartTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleChartTouchEnd (e) {
+  if (!chartIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - chartTouchStartX.value
   chartIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextChart()
+  else if (dx > threshold) previousChart()
 }
 
-function handleChartTouchMove (event) {
-  if (!chartIsDragging.value) {
-    const deltaX = Math.abs(event.touches[0].clientX - chartTouchStartX.value)
-    const deltaY = Math.abs(event.touches[0].clientY - chartTouchStartY.value)
-    if (deltaX > deltaY && deltaX > 10) {
-      chartIsDragging.value = true
-    }
-  }
+function handleChartMouseDown (e) {
+  chartTouchStartX.value = e.clientX
+  chartTouchStartY.value = e.clientY
+  chartIsDragging.value = true
 }
 
-function handleChartTouchEnd (event) {
-  if (chartIsDragging.value) {
-    const deltaX = event.changedTouches[0].clientX - chartTouchStartX.value
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        previousChart()
-      } else {
-        nextChart()
-      }
-    }
-  }
+function handleChartMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleChartMouseUp (e) {
+  if (!chartIsDragging.value) return
+  const dx = e.clientX - chartTouchStartX.value
   chartIsDragging.value = false
-}
-
-function handleChartMouseDown (event) {
-  chartTouchStartX.value = event.clientX
-  chartTouchStartY.value = event.clientY
-  chartIsDragging.value = false
-}
-
-function handleChartMouseMove (event) {
-  if (!chartIsDragging.value) {
-    const deltaX = Math.abs(event.clientX - chartTouchStartX.value)
-    const deltaY = Math.abs(event.clientY - chartTouchStartY.value)
-    if (deltaX > deltaY && deltaX > 10) {
-      chartIsDragging.value = true
-    }
-  }
-}
-
-function handleChartMouseUp (event) {
-  if (chartIsDragging.value) {
-    const deltaX = event.clientX - chartTouchStartX.value
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        previousChart()
-      } else {
-        nextChart()
-      }
-    }
-  }
-  chartIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextChart()
+  else if (dx > threshold) previousChart()
 }
 
 // Touch/Mouse handlers for Tabs
-function handleTabTouchStart (event) {
-  tabTouchStartX.value = event.touches[0].clientX
-  tabTouchStartY.value = event.touches[0].clientY
+function handleTabTouchStart (e) {
+  const touch = e.touches[0]
+  tabTouchStartX.value = touch.clientX
+  tabTouchStartY.value = touch.clientY
+  tabIsDragging.value = true
+}
+
+function handleTabTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleTabTouchEnd (e) {
+  if (!tabIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - tabTouchStartX.value
   tabIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextTab()
+  else if (dx > threshold) previousTab()
 }
 
-function handleTabTouchMove (event) {
-  if (!tabIsDragging.value) {
-    const deltaX = Math.abs(event.touches[0].clientX - tabTouchStartX.value)
-    const deltaY = Math.abs(event.touches[0].clientY - tabTouchStartY.value)
-    if (deltaX > deltaY && deltaX > 10) {
-      tabIsDragging.value = true
-    }
-  }
+function handleTabMouseDown (e) {
+  tabTouchStartX.value = e.clientX
+  tabTouchStartY.value = e.clientY
+  tabIsDragging.value = true
 }
 
-function handleTabTouchEnd (event) {
-  if (tabIsDragging.value) {
-    const deltaX = event.changedTouches[0].clientX - tabTouchStartX.value
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        previousTab()
-      } else {
-        nextTab()
-      }
-    }
-  }
+function handleTabMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleTabMouseUp (e) {
+  if (!tabIsDragging.value) return
+  const dx = e.clientX - tabTouchStartX.value
   tabIsDragging.value = false
-}
-
-function handleTabMouseDown (event) {
-  tabTouchStartX.value = event.clientX
-  tabTouchStartY.value = event.clientY
-  tabIsDragging.value = false
-}
-
-function handleTabMouseMove (event) {
-  if (!tabIsDragging.value) {
-    const deltaX = Math.abs(event.clientX - tabTouchStartX.value)
-    const deltaY = Math.abs(event.clientY - tabTouchStartY.value)
-    if (deltaX > deltaY && deltaX > 10) {
-      tabIsDragging.value = true
-    }
-  }
-}
-
-function handleTabMouseUp (event) {
-  if (tabIsDragging.value) {
-    const deltaX = event.clientX - tabTouchStartX.value
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        previousTab()
-      } else {
-        nextTab()
-      }
-    }
-  }
-  tabIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextTab()
+  else if (dx > threshold) previousTab()
 }
 
 // ESC key handler

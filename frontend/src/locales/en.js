@@ -736,13 +736,22 @@ export default {
   // Settings
   settings: {
     system_settings: 'System Settings',
+    user_management: 'User Management',
+    add_user: 'Add User',
+    showing_tab: 'Showing tab',
+    showing_user: 'Showing user',
+    tab_descriptions: {
+      users: 'Manage system users, roles, and permissions',
+      roles: 'Configure user roles and access levels',
+      language: 'Set application language and localization',
+      system: 'Configure system-wide settings and preferences',
+      backup: 'Manage backups and system maintenance'
+    },
     users: 'Users',
     roles_label: 'Roles',
     language: 'Language',
     system: 'System',
     backup: 'Backup',
-    user_management: 'User Management',
-    add_user: 'Add User',
     role_management: 'Role Management',
     add_role: 'Add Role',
     users_count: 'users',

@@ -1,6 +1,6 @@
-# Olgahan Kimya ERP — Teknik Analiz ve Taslak
+# Demo Kimya ERP — Teknik Analiz ve Taslak
 
-> Bu doküman, Olgahan Kimya ERP için kapsam, mimari, veri modeli, akışlar, yetkilendirme, analizler ve yol haritasını tek bir yerde toplar. Notlar Türkçe ve üretim odaklıdır.
+> Bu doküman, Demo Kimya ERP için kapsam, mimari, veri modeli, akışlar, yetkilendirme, analizler ve yol haritasını tek bir yerde toplar. Notlar Türkçe ve üretim odaklıdır.
 
 ---
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Seed data script for Olgahan Kimya ERP
+Seed data script for Demo Kimya ERP
 """
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Set environment variable for local database
-os.environ["DATABASE_URL"] = "postgresql+psycopg://olgahan:olgahan@localhost:5433/olgahan"
+os.environ["DATABASE_URL"] = "postgresql+psycopg://demo:demo@localhost:5433/demo"
 
 from sqlalchemy.orm import Session
 from app.db import engine
@@ -93,7 +93,7 @@ def create_users(db):
     users_data = [
         {
             "full_name": "Admin User",
-            "email": "admin@olgahan.com",
+            "email": "admin@demo.com",
             "password_hash": get_password_hash("admin123"),
             "role_id": 1,  # admin
             "phone": "+90 555 000 0001",
@@ -101,7 +101,7 @@ def create_users(db):
         },
         {
             "full_name": "Ahmet Yılmaz",
-            "email": "ahmet@olgahan.com",
+            "email": "ahmet@demo.com",
             "password_hash": get_password_hash("plasiyer123"),
             "role_id": 2,  # plasiyer
             "phone": "+90 555 000 0002",
@@ -109,7 +109,7 @@ def create_users(db):
         },
         {
             "full_name": "Mehmet Demir",
-            "email": "mehmet@olgahan.com",
+            "email": "mehmet@demo.com",
             "password_hash": get_password_hash("uretim123"),
             "role_id": 3,  # uretim
             "phone": "+90 555 000 0003",
@@ -117,7 +117,7 @@ def create_users(db):
         },
         {
             "full_name": "Ayşe Kaya",
-            "email": "ayse@olgahan.com",
+            "email": "ayse@demo.com",
             "password_hash": get_password_hash("depo123"),
             "role_id": 4,  # depo
             "phone": "+90 555 000 0004",
@@ -125,7 +125,7 @@ def create_users(db):
         },
         {
             "full_name": "Fatma Özkan",
-            "email": "fatma@olgahan.com",
+            "email": "fatma@demo.com",
             "password_hash": get_password_hash("sevkiyat123"),
             "role_id": 5,  # sevkiyat
             "phone": "+90 555 000 0005",
@@ -252,7 +252,7 @@ def create_notifications(db):
         {
             "user_id": 1,  # admin
             "title": "Hoş Geldiniz!",
-            "message": "Olgahan Kimya ERP sistemine hoş geldiniz. Sistem başarıyla kuruldu.",
+            "message": "Demo Kimya ERP sistemine hoş geldiniz. Sistem başarıyla kuruldu.",
             "notification_type": "success",
             "is_read": False
         },
@@ -284,7 +284,7 @@ def create_settings(db):
     settings_data = [
         {
             "key": "company_name",
-            "value": {"value": "Olgahan Kimya"},
+            "value": {"value": "Demo Kimya"},
             "description": "Şirket adı",
             "updated_by": 1
         },
@@ -333,11 +333,11 @@ def main():
             
             print("\n✅ Seed data creation completed successfully!")
             print("\n📋 Test Users:")
-            print("  Admin: admin@olgahan.com / admin123")
-            print("  Plasiyer: ahmet@olgahan.com / plasiyer123")
-            print("  Üretim: mehmet@olgahan.com / uretim123")
-            print("  Depo: ayse@olgahan.com / depo123")
-            print("  Sevkiyat: fatma@olgahan.com / sevkiyat123")
+            print("  Admin: admin@demo.com / admin123")
+            print("  Plasiyer: ahmet@demo.com / plasiyer123")
+            print("  Üretim: mehmet@demo.com / uretim123")
+            print("  Depo: ayse@demo.com / depo123")
+            print("  Sevkiyat: fatma@demo.com / sevkiyat123")
             
         except Exception as e:
             print(f"❌ Error creating seed data: {e}")

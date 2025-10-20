@@ -1,4 +1,4 @@
-# Olgahan Kimya ERP - Test Users
+# Demo Kimya ERP - Test Users
 
 This document contains test user credentials for different roles and departments to facilitate comprehensive testing of the ERP system.
 
@@ -7,26 +7,26 @@ This document contains test user credentials for different roles and departments
 ### Admin Users
 | Name | Email | Role | Department | Status | Password |
 |------|-------|------|------------|--------|----------|
-| Ahmet Yılmaz | ahmet@olgahan.com | Admin | Üretim | Active | admin123 |
+| Ahmet Yılmaz | ahmet@demo.com | Admin | Üretim | Active | admin123 |
 
 ### Manager Users
 | Name | Email | Role | Department | Status | Password |
 |------|-------|------|------------|--------|----------|
-| Fatma Özkan | fatma@olgahan.com | Manager | Üretim | Active | manager123 |
-| Ayşe Demir | ayse@olgahan.com | Manager | Depo | Inactive | manager123 |
-| Elif Korkmaz | elif@olgahan.com | Manager | Paketleme | Active | manager123 |
-| Selin Aktaş | selin@olgahan.com | Manager | Sevkiyat | Active | manager123 |
-| Gülay Yılmaz | gulay@olgahan.com | Manager | Plasiyer | Active | manager123 |
+| Fatma Özkan | fatma@demo.com | Manager | Üretim | Active | manager123 |
+| Ayşe Demir | ayse@demo.com | Manager | Depo | Inactive | manager123 |
+| Elif Korkmaz | elif@demo.com | Manager | Paketleme | Active | manager123 |
+| Selin Aktaş | selin@demo.com | Manager | Sevkiyat | Active | manager123 |
+| Gülay Yılmaz | gulay@demo.com | Manager | Plasiyer | Active | manager123 |
 
 ### Operator Users
 | Name | Email | Role | Department | Status | Password |
 |------|-------|------|------------|--------|----------|
-| Mehmet Kaya | mehmet@olgahan.com | Operator | Paketleme | Active | operator123 |
-| Ali Çelik | ali@olgahan.com | Operator | Üretim | Active | operator123 |
-| Zeynep Arslan | zeynep@olgahan.com | Operator | Depo | Active | operator123 |
-| Mustafa Yıldız | mustafa@olgahan.com | Operator | Sevkiyat | Active | operator123 |
-| Hasan Güneş | hasan@olgahan.com | Operator | Plasiyer | Inactive | operator123 |
-| Burak Şahin | burak@olgahan.com | Operator | Üretim | Active | operator123 |
+| Mehmet Kaya | mehmet@demo.com | Operator | Paketleme | Active | operator123 |
+| Ali Çelik | ali@demo.com | Operator | Üretim | Active | operator123 |
+| Zeynep Arslan | zeynep@demo.com | Operator | Depo | Active | operator123 |
+| Mustafa Yıldız | mustafa@demo.com | Operator | Sevkiyat | Active | operator123 |
+| Hasan Güneş | hasan@demo.com | Operator | Plasiyer | Inactive | operator123 |
+| Burak Şahin | burak@demo.com | Operator | Üretim | Active | operator123 |
 
 ## 🏢 Department Distribution
 

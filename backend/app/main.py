@@ -5,7 +5,7 @@ from .routers import (
     warehouse, shipments, analytics, customers, products, attachments, notifications
 )
 
-app = FastAPI(title="Olgahan Kimya ERP API")
+app = FastAPI(title="Demo Kimya ERP API")
 
 # Add CORS middleware
 app.add_middleware(
@@ -33,7 +33,7 @@ app.include_router(notifications.router, prefix="/notifications", tags=["notific
 
 @app.get("/")
 async def root():
-    return {"message": "Olgahan Kimya ERP API", "version": "1.0.0"}
+    return {"message": "Demo Kimya ERP API", "version": "1.0.0"}
 
 @app.get("/health")
 async def health_check():

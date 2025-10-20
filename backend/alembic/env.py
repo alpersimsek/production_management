@@ -41,7 +41,7 @@ def run_migrations_offline():
 
 def run_migrations_online():
     # Get database URL from environment or config
-    database_url = os.getenv('DATABASE_URL', 'postgresql+psycopg://olgahan:olgahan@localhost:5433/olgahan')
+    database_url = os.getenv('DATABASE_URL', 'postgresql+psycopg://demo:demo@localhost:5433/demo')
     
     # Create engine with the database URL
     connectable = engine_from_config(

@@ -1,4 +1,4 @@
-# Olgahan Kimya ERP - OCI Deployment Guide
+# Demo Kimya ERP - OCI Deployment Guide
 
 ## 🚀 Quick Deployment
 
@@ -52,13 +52,13 @@ exit
 **Option B: Manual upload**
 ```bash
 # Upload files manually
-scp -r -i your-key.pem ./ ubuntu@145.241.236.172:/home/ubuntu/olgahan-erp/
+scp -r -i your-key.pem ./ ubuntu@145.241.236.172:/home/ubuntu/demo-erp/
 ```
 
 **Then deploy on the server:**
 ```bash
 # Navigate to your project directory
-cd /home/ubuntu/olgahan-erp
+cd /home/ubuntu/demo-erp
 
 # Run the deployment script
 ./deploy.sh
@@ -75,9 +75,9 @@ Once deployment is complete, you can access:
 
 ## 🔐 Default Login Credentials
 
-- **Admin**: admin@olgahan.com / admin123
-- **Manager**: manager@olgahan.com / manager123
-- **Operator**: operator@olgahan.com / operator123
+- **Admin**: admin@demo.com / admin123
+- **Manager**: manager@demo.com / manager123
+- **Operator**: operator@demo.com / operator123
 
 ## 🛠️ Manual Deployment (Alternative)
 

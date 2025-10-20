@@ -9,470 +9,461 @@
     <main>
       <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
-          <!-- Settings Navigation -->
-          <div class="bg-white shadow rounded-lg mb-8">
-            <div class="border-b border-gray-200">
-              <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+          <!-- Settings Accordion -->
+          <div class="space-y-4">
+            <!-- Mobile Accordion -->
+            <div class="block lg:hidden space-y-4">
+              <div v-for="tab in settingsTabs" :key="tab.id" class="bg-white border rounded-lg shadow-sm">
                 <button
-                  v-for="tab in settingsTabs"
-                  :key="tab.id"
-                  @click="activeTab = tab.id"
-                  :class="[
-                    'py-4 px-1 border-b-2 font-medium text-sm',
-                    activeTab === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  ]"
+                  @click="toggleAccordion(tab.id)"
+                  class="w-full px-4 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
-                  {{ tab.name }}
+                  <div class="flex items-center space-x-3">
+                    <span class="text-2xl">{{ getTabIcon(tab.id) }}</span>
+                    <div>
+                      <h3 class="font-medium text-gray-900">{{ tab.name }}</h3>
+                      <p class="text-sm text-gray-500">{{ $t(`settings.tab_descriptions.${tab.id}`) }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span v-if="tab.id === 'users'" class="text-sm text-gray-500">{{ users.length }} {{ $t('settings.users_count') }}</span>
+                    <svg
+                      :class="['w-5 h-5 text-gray-400 transition-transform', expandedAccordions.includes(tab.id) ? 'rotate-180' : '']"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
                 </button>
-              </nav>
-            </div>
 
-            <div class="p-6">
-              <!-- User Management -->
-              <div v-if="activeTab === 'users'" class="space-y-6">
-                <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.user_management') }}</h3>
-                  <button
-                    @click="showAddUserModal = true"
-                    class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    {{ $t('settings.add_user') }}
-                  </button>
-                </div>
+                <!-- Accordion Content -->
+                <div v-if="expandedAccordions.includes(tab.id)" class="border-t border-gray-200">
+                  <div class="p-4">
+                    <!-- User Management Content -->
+                    <div v-if="tab.id === 'users'" class="space-y-4">
+                      <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">{{ $t('settings.user_management') }}</h4>
+                        <button
+                          @click="showAddUserModal = true"
+                          class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                          {{ $t('settings.add_user') }}
+                        </button>
+                      </div>
 
-                <div class="bg-white shadow overflow-hidden sm:rounded-md">
-                  <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                      <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {{ $t('common.user') }}
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {{ $t('common.role') }}
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {{ $t('common.department') }}
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {{ $t('common.status') }}
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {{ $t('common.last_login') }}
-                        </th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {{ $t('common.actions') }}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                      <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10">
-                              <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span class="text-sm font-medium text-gray-700">{{ user.name.charAt(0) }}</span>
-                              </div>
+                      <!-- User List -->
+                      <div class="space-y-2">
+                        <div v-for="user in users" :key="user.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                              <span class="text-sm font-medium text-gray-700">{{ user.name.charAt(0) }}</span>
                             </div>
-                            <div class="ml-4">
-                              <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                            <div>
+                              <div class="font-medium text-gray-900">{{ user.name }}</div>
                               <div class="text-sm text-gray-500">{{ user.email }}</div>
                             </div>
                           </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {{ user.role }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {{ user.department }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <span
-                            :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                          >
-                            {{ user.isActive ? $t('common.active') : $t('common.inactive') }}
-                          </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {{ user.lastLogin ? formatDate(user.lastLogin) : $t('common.never') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            @click="editUser(user)"
-                            class="text-primary-600 hover:text-primary-900 mr-3"
-                          >
-                            {{ $t('common.edit') }}
-                          </button>
-                          <button
-                            @click="toggleUserStatus(user)"
-                            :class="user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
-                          >
-                            {{ user.isActive ? $t('common.deactivate') : $t('common.activate') }}
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- Role Management -->
-              <div v-if="activeTab === 'roles'" class="space-y-6">
-                <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.role_management') }}</h3>
-                  <button
-                    @click="showAddRoleModal = true"
-                    class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    {{ $t('settings.add_role') }}
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div v-for="role in roles" :key="role.id" class="bg-gray-50 p-4 rounded-lg">
-                    <div class="flex justify-between items-start mb-2">
-                      <h4 class="text-sm font-medium text-gray-900">{{ role.name }}</h4>
-                      <span class="text-xs text-gray-500">{{ role.userCount }} {{ $t('settings.users_count') }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-3">{{ role.description }}</p>
-                    <div class="space-y-1">
-                      <div v-for="permission in role.permissions" :key="permission" class="text-xs text-gray-500">
-                        • {{ permission }}
+                          <div class="flex items-center space-x-2">
+                            <span
+                              :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                              class="px-2 py-1 text-xs font-semibold rounded-full"
+                            >
+                              {{ user.isActive ? $t('common.active') : $t('common.inactive') }}
+                            </span>
+                            <button
+                              @click="editUser(user)"
+                              class="text-primary-600 hover:text-primary-900 text-sm"
+                            >
+                              {{ $t('common.edit') }}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div class="mt-3 flex gap-2">
-                      <button
-                        @click="editRole(role)"
-                        class="text-primary-600 hover:text-primary-900 text-xs"
-                      >
-                        {{ $t('common.edit') }}
-                      </button>
-                      <button
-                        @click="deleteRole(role)"
-                        class="text-red-600 hover:text-red-900 text-xs"
-                      >
-                        {{ $t('common.delete') }}
-                      </button>
+
+                    <!-- Role Management Content -->
+                    <div v-if="tab.id === 'roles'" class="space-y-4">
+                      <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">{{ $t('settings.role_management') }}</h4>
+                        <button
+                          @click="showAddRoleModal = true"
+                          class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                          {{ $t('settings.add_role') }}
+                        </button>
+                      </div>
+
+                      <div class="space-y-3">
+                        <div v-for="role in roles" :key="role.id" class="p-3 bg-gray-50 rounded-lg">
+                          <div class="flex justify-between items-start mb-2">
+                            <h5 class="font-medium text-gray-900">{{ role.name }}</h5>
+                            <span class="text-xs text-gray-500">{{ role.userCount }} {{ $t('settings.users_count') }}</span>
+                          </div>
+                          <p class="text-sm text-gray-600 mb-2">{{ role.description }}</p>
+                          <div class="flex gap-2">
+                            <button
+                              @click="editRole(role)"
+                              class="text-primary-600 hover:text-primary-900 text-xs"
+                            >
+                              {{ $t('common.edit') }}
+                            </button>
+                            <button
+                              @click="deleteRole(role)"
+                              class="text-red-600 hover:text-red-900 text-xs"
+                            >
+                              {{ $t('common.delete') }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Language Settings Content -->
+                    <div v-if="tab.id === 'language'" class="space-y-4">
+                      <h4 class="font-medium text-gray-900">{{ $t('settings.language_settings') }}</h4>
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ $t('settings.default_application_language') }}
+                          </label>
+                          <select
+                            v-model="defaultLanguage"
+                            @change="updateDefaultLanguage"
+                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                          >
+                            <option value="en">🇺🇸 English</option>
+                            <option value="tr">🇹🇷 Türkçe</option>
+                          </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                          <div class="bg-white p-3 rounded border">
+                            <div class="text-sm font-medium text-gray-700">{{ $t('settings.your_language') }}</div>
+                            <div class="text-sm text-gray-500">{{ currentUserLanguage }}</div>
+                          </div>
+                          <div class="bg-white p-3 rounded border">
+                            <div class="text-sm font-medium text-gray-700">{{ $t('settings.system_default') }}</div>
+                            <div class="text-sm text-gray-500">{{ defaultLanguage }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- System Settings Content -->
+                    <div v-if="tab.id === 'system'" class="space-y-4">
+                      <h4 class="font-medium text-gray-900">{{ $t('settings.system_configuration') }}</h4>
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.company_name') }}</label>
+                          <input
+                            v-model="systemSettings.companyName"
+                            type="text"
+                            class="w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.default_currency') }}</label>
+                          <select v-model="systemSettings.currency" class="w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500">
+                            <option value="TRY">Turkish Lira (₺)</option>
+                            <option value="USD">US Dollar ($)</option>
+                            <option value="EUR">Euro (€)</option>
+                          </select>
+                        </div>
+                        <button
+                          @click="saveSystemSettings"
+                          class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                        >
+                          {{ $t('settings.save_settings') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Backup & Maintenance Content -->
+                    <div v-if="tab.id === 'backup'" class="space-y-4">
+                      <h4 class="font-medium text-gray-900">{{ $t('settings.backup_maintenance') }}</h4>
+                      <div class="space-y-4">
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                          <h5 class="font-medium text-gray-900 mb-2">{{ $t('settings.backup_settings') }}</h5>
+                          <div class="space-y-2">
+                            <label class="flex items-center">
+                              <input
+                                v-model="backupSettings.autoBackup"
+                                type="checkbox"
+                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                              />
+                              <span class="ml-2 text-sm text-gray-700">{{ $t('settings.enable_automatic_backups') }}</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div class="space-y-2">
+                          <button
+                            @click="cleanupDatabase"
+                            class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                          >
+                            {{ $t('settings.clean_database') }}
+                          </button>
+                          <button
+                            @click="clearCache"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                          >
+                            {{ $t('settings.clear_cache') }}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <!-- Language Settings -->
-              <div v-if="activeTab === 'language'" class="space-y-6">
-                <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.language_settings') }}</h3>
+            <!-- Desktop Tabs -->
+            <div class="hidden lg:block bg-white shadow rounded-lg mb-8">
+              <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                  <button
+                    v-for="tab in settingsTabs"
+                    :key="tab.id"
+                    @click="activeTab = tab.id"
+                    :class="[
+                      'py-4 px-1 border-b-2 font-medium text-sm',
+                      activeTab === tab.id
+                        ? 'border-primary-500 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]"
+                  >
+                    {{ tab.name }}
+                  </button>
+                </nav>
+              </div>
+              <div class="p-6">
+                <!-- Desktop content will be the same as mobile accordion content -->
+                <div v-if="activeTab === 'users'" class="space-y-6">
+                  <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.user_management') }}</h3>
+                    <button
+                      @click="showAddUserModal = true"
+                      class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      {{ $t('settings.add_user') }}
+                    </button>
+                  </div>
 
-                <div class="bg-gray-50 p-6 rounded-lg">
-                  <div class="space-y-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        {{ $t('settings.default_application_language') }}
-                      </label>
-                      <select
-                        v-model="defaultLanguage"
-                        @change="updateDefaultLanguage"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                      >
-                        <option value="en">🇺🇸 English</option>
-                        <option value="tr">🇹🇷 Türkçe</option>
-                      </select>
-                      <p class="mt-2 text-sm text-gray-500">
-                        {{ $t('settings.language_description') }}
-                      </p>
+                  <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('common.user') }}</th>
+                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('common.role') }}</th>
+                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('common.department') }}</th>
+                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('common.status') }}</th>
+                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('common.last_login') }}</th>
+                          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('common.actions') }}</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                              <div class="flex-shrink-0 h-10 w-10">
+                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                  <span class="text-sm font-medium text-gray-700">{{ user.name.charAt(0) }}</span>
+                                </div>
+                              </div>
+                              <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.role }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.department }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                              :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                            >
+                              {{ user.isActive ? $t('common.active') : $t('common.inactive') }}
+                            </span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ user.lastLogin ? formatDate(user.lastLogin) : $t('common.never') }}
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button
+                              @click="editUser(user)"
+                              class="text-primary-600 hover:text-primary-900 mr-3"
+                            >
+                              {{ $t('common.edit') }}
+                            </button>
+                            <button
+                              @click="toggleUserStatus(user)"
+                              :class="user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
+                            >
+                              {{ user.isActive ? $t('common.deactivate') : $t('common.activate') }}
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Other tabs content can be added here -->
+                <div v-if="activeTab === 'roles'" class="space-y-6">
+                  <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.role_management') }}</h3>
+                    <button
+                      @click="showAddRoleModal = true"
+                      class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      {{ $t('settings.add_role') }}
+                    </button>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="role in roles" :key="role.id" class="bg-gray-50 p-4 rounded-lg">
+                      <div class="flex justify-between items-start mb-2">
+                        <h4 class="text-sm font-medium text-gray-900">{{ role.name }}</h4>
+                        <span class="text-xs text-gray-500">{{ role.userCount }} {{ $t('settings.users_count') }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600 mb-3">{{ role.description }}</p>
+                      <div class="space-y-1">
+                        <div v-for="permission in role.permissions" :key="permission" class="text-xs text-gray-500">
+                          • {{ permission }}
+                        </div>
+                      </div>
+                      <div class="mt-3 flex gap-2">
+                        <button
+                          @click="editRole(role)"
+                          class="text-primary-600 hover:text-primary-900 text-xs"
+                        >
+                          {{ $t('common.edit') }}
+                        </button>
+                        <button
+                          @click="deleteRole(role)"
+                          class="text-red-600 hover:text-red-900 text-xs"
+                        >
+                          {{ $t('common.delete') }}
+                        </button>
+                      </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div class="border-t pt-4">
-                      <h4 class="text-sm font-medium text-gray-900 mb-3">{{ $t('settings.current_language_status') }}</h4>
+                <!-- Language Settings -->
+                <div v-if="activeTab === 'language'" class="space-y-6">
+                  <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.language_settings') }}</h3>
+                  <div class="bg-gray-50 p-6 rounded-lg">
+                    <div class="space-y-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                          {{ $t('settings.default_application_language') }}
+                        </label>
+                        <select
+                          v-model="defaultLanguage"
+                          @change="updateDefaultLanguage"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        >
+                          <option value="en">🇺🇸 English</option>
+                          <option value="tr">🇹🇷 Türkçe</option>
+                        </select>
+                      </div>
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="bg-white p-3 rounded border">
-                          <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700">{{ $t('settings.your_language') }}</span>
-                            <span class="text-sm text-gray-500">{{ currentUserLanguage }}</span>
-                          </div>
+                          <div class="text-sm font-medium text-gray-700">{{ $t('settings.your_language') }}</div>
+                          <div class="text-sm text-gray-500">{{ currentUserLanguage }}</div>
                         </div>
                         <div class="bg-white p-3 rounded border">
-                          <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700">{{ $t('settings.system_default') }}</span>
-                            <span class="text-sm text-gray-500">{{ defaultLanguage }}</span>
+                          <div class="text-sm font-medium text-gray-700">{{ $t('settings.system_default') }}</div>
+                          <div class="text-sm text-gray-500">{{ defaultLanguage }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- System Settings -->
+                <div v-if="activeTab === 'system'" class="space-y-6">
+                  <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.system_configuration') }}</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                      <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.general_settings') }}</h4>
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.company_name') }}</label>
+                          <input
+                            v-model="systemSettings.companyName"
+                            type="text"
+                            class="input-field mt-1"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.default_currency') }}</label>
+                          <select v-model="systemSettings.currency" class="input-field mt-1">
+                            <option value="TRY">Turkish Lira (₺)</option>
+                            <option value="USD">US Dollar ($)</option>
+                            <option value="EUR">Euro (€)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex justify-end">
+                    <button
+                      @click="saveSystemSettings"
+                      class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      {{ $t('settings.save_settings') }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Backup & Maintenance -->
+                <div v-if="activeTab === 'backup'" class="space-y-6">
+                  <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.backup_maintenance') }}</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                      <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.backup_settings') }}</h4>
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.auto_backup') }}</label>
+                          <div class="mt-2">
+                            <label class="flex items-center">
+                              <input
+                                v-model="backupSettings.autoBackup"
+                                type="checkbox"
+                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                              />
+                              <span class="ml-2 text-sm text-gray-700">{{ $t('settings.enable_automatic_backups') }}</span>
+                            </label>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- System Settings -->
-              <div v-if="activeTab === 'system'" class="space-y-6">
-                <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.system_configuration') }}</h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- General Settings -->
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.general_settings') }}</h4>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.company_name') }}</label>
-                        <input
-                          v-model="systemSettings.companyName"
-                          type="text"
-                          class="input-field mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.default_currency') }}</label>
-                        <select v-model="systemSettings.currency" class="input-field mt-1">
-                          <option value="TRY">Turkish Lira (₺)</option>
-                          <option value="USD">US Dollar ($)</option>
-                          <option value="EUR">Euro (€)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.time_zone') }}</label>
-                        <select v-model="systemSettings.timezone" class="input-field mt-1">
-                          <option value="Europe/Istanbul">Europe/Istanbul</option>
-                          <option value="UTC">UTC</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.language') }}</label>
-                        <select v-model="systemSettings.language" class="input-field mt-1">
-                          <option value="tr">Türkçe</option>
-                          <option value="en">English</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Production Settings -->
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.production_settings') }}</h4>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.default_batch_size') }}</label>
-                        <input
-                          v-model.number="systemSettings.defaultBatchSize"
-                          type="number"
-                          class="input-field mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.quality_check_required') }}</label>
-                        <div class="mt-2">
-                          <label class="flex items-center">
-                            <input
-                              v-model="systemSettings.qualityCheckRequired"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.enable_by_default') }}</span>
-                          </label>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                      <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.system_maintenance') }}</h4>
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.database_cleanup') }}</label>
+                          <p class="text-sm text-gray-600 mb-2">{{ $t('settings.cleanup_description') }}</p>
+                          <button
+                            @click="cleanupDatabase"
+                            class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                          >
+                            {{ $t('settings.clean_database') }}
+                          </button>
                         </div>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.waste_threshold') }}</label>
-                        <input
-                          v-model.number="systemSettings.wasteThreshold"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="100"
-                          class="input-field mt-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Notification Settings -->
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.notification_settings') }}</h4>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.email_notifications') }}</label>
-                        <div class="mt-2 space-y-2">
-                          <label class="flex items-center">
-                            <input
-                              v-model="notificationSettings.emailOrders"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.order_updates') }}</span>
-                          </label>
-                          <label class="flex items-center">
-                            <input
-                              v-model="notificationSettings.emailProduction"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.production_alerts') }}</span>
-                          </label>
-                          <label class="flex items-center">
-                            <input
-                              v-model="notificationSettings.emailInventory"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.low_stock_alerts') }}</span>
-                          </label>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">{{ $t('settings.cache_management') }}</label>
+                          <p class="text-sm text-gray-600 mb-2">{{ $t('settings.cache_description') }}</p>
+                          <button
+                            @click="clearCache"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                          >
+                            {{ $t('settings.clear_cache') }}
+                          </button>
                         </div>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.sms_notifications') }}</label>
-                        <div class="mt-2">
-                          <label class="flex items-center">
-                            <input
-                              v-model="notificationSettings.smsEnabled"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.enable_sms_alerts') }}</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Security Settings -->
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.security_settings') }}</h4>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.session_timeout') }}</label>
-                        <input
-                          v-model.number="securitySettings.sessionTimeout"
-                          type="number"
-                          min="5"
-                          max="480"
-                          class="input-field mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.password_policy') }}</label>
-                        <div class="mt-2 space-y-2">
-                          <label class="flex items-center">
-                            <input
-                              v-model="securitySettings.passwordMinLength"
-                              type="number"
-                              min="6"
-                              max="20"
-                              class="input-field w-20"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.minimum_length') }}</span>
-                          </label>
-                          <label class="flex items-center">
-                            <input
-                              v-model="securitySettings.passwordRequireSpecial"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.require_special_characters') }}</span>
-                          </label>
-                        </div>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.two_factor_authentication') }}</label>
-                        <div class="mt-2">
-                          <label class="flex items-center">
-                            <input
-                              v-model="securitySettings.twoFactorEnabled"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.enable_2fa') }}</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex justify-end">
-                  <button
-                    @click="saveSystemSettings"
-                    class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    {{ $t('settings.save_settings') }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Backup & Maintenance -->
-              <div v-if="activeTab === 'backup'" class="space-y-6">
-                <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.backup_maintenance') }}</h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- Backup Settings -->
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.backup_settings') }}</h4>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.auto_backup') }}</label>
-                        <div class="mt-2">
-                          <label class="flex items-center">
-                            <input
-                              v-model="backupSettings.autoBackup"
-                              type="checkbox"
-                              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            />
-                            <span class="ml-2 text-sm text-gray-700">{{ $t('settings.enable_automatic_backups') }}</span>
-                          </label>
-                        </div>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.backup_frequency') }}</label>
-                        <select v-model="backupSettings.frequency" class="input-field mt-1">
-                          <option value="daily">{{ $t('settings.daily') }}</option>
-                          <option value="weekly">{{ $t('settings.weekly') }}</option>
-                          <option value="monthly">{{ $t('settings.monthly') }}</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.retention_period') }}</label>
-                        <select v-model="backupSettings.retention" class="input-field mt-1">
-                          <option value="7">{{ $t('settings.days_7') }}</option>
-                          <option value="30">{{ $t('settings.days_30') }}</option>
-                          <option value="90">{{ $t('settings.days_90') }}</option>
-                          <option value="365">{{ $t('settings.year_1') }}</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Maintenance -->
-                  <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $t('settings.system_maintenance') }}</h4>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.database_cleanup') }}</label>
-                        <p class="text-sm text-gray-600 mb-2">{{ $t('settings.cleanup_description') }}</p>
-                        <button
-                          @click="cleanupDatabase"
-                          class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-md text-sm font-medium"
-                        >
-                          {{ $t('settings.clean_database') }}
-                        </button>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.cache_management') }}</label>
-                        <p class="text-sm text-gray-600 mb-2">{{ $t('settings.cache_description') }}</p>
-                        <button
-                          @click="clearCache"
-                          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium"
-                        >
-                          {{ $t('settings.clear_cache') }}
-                        </button>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ $t('settings.system_health') }}</label>
-                        <p class="text-sm text-gray-600 mb-2">{{ $t('settings.health_description') }}</p>
-                        <button
-                          @click="checkSystemHealth"
-                          class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium"
-                        >
-                          {{ $t('settings.health_check') }}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -483,10 +474,9 @@
         </div>
       </div>
     </main>
-
     <!-- Add User Modal -->
-    <div v-if="showAddUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white">
+    <div v-if="showAddUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">{{ $t('settings.add_new_user') }}</h3>
@@ -580,8 +570,8 @@
     </div>
 
     <!-- Edit User Modal -->
-    <div v-if="showEditUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white">
+    <div v-if="showEditUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">{{ $t('common.edit') }} {{ $t('common.user') }}</h3>
@@ -675,7 +665,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { locale, t } = useI18n()
@@ -686,6 +676,9 @@ const showAddUserModal = ref(false)
 const showEditUserModal = ref(false)
 const showAddRoleModal = ref(false)
 const editingUser = ref(null)
+
+// Accordion state
+const expandedAccordions = ref(['users']) // Start with users expanded
 
 // Language Settings
 const defaultLanguage = ref(localStorage.getItem('app-default-language') || 'en')
@@ -700,12 +693,48 @@ const settingsTabs = ref([
   { id: 'backup', name: t('settings.backup') }
 ])
 
+// Accordion functions
+function toggleAccordion (tabId) {
+  const index = expandedAccordions.value.indexOf(tabId)
+  if (index > -1) {
+    expandedAccordions.value.splice(index, 1)
+  } else {
+    expandedAccordions.value.push(tabId)
+  }
+}
+
+function getTabIcon (tabId) {
+  const icons = {
+    users: '👥',
+    roles: '🔐',
+    language: '🌐',
+    system: '⚙️',
+    backup: '💾'
+  }
+  return icons[tabId] || '📋'
+}
+
+// ESC key handler
+function handleKeydown (event) {
+  if (event.key === 'Escape') {
+    closeModal()
+  }
+}
+
+// Modal close function
+function closeModal () {
+  showAddUserModal.value = false
+  showEditUserModal.value = false
+  showAddRoleModal.value = false
+  editingUser.value = null
+}
+
 // Users Data
 const users = ref([
   {
     id: 1,
     name: 'Ahmet Yılmaz',
-    email: 'ahmet@olgahan.com',
+    email: 'ahmet@demo.com',
     role: t('settings.roles.admin'),
     department: 'Üretim',
     isActive: true,
@@ -714,7 +743,7 @@ const users = ref([
   {
     id: 2,
     name: 'Mehmet Kaya',
-    email: 'mehmet@olgahan.com',
+    email: 'mehmet@demo.com',
     role: t('settings.roles.operator'),
     department: 'Paketleme',
     isActive: true,
@@ -723,7 +752,7 @@ const users = ref([
   {
     id: 3,
     name: 'Ayşe Demir',
-    email: 'ayse@olgahan.com',
+    email: 'ayse@demo.com',
     role: t('settings.roles.manager'),
     department: 'Depo',
     isActive: false,
@@ -732,7 +761,7 @@ const users = ref([
   {
     id: 4,
     name: 'Fatma Özkan',
-    email: 'fatma@olgahan.com',
+    email: 'fatma@demo.com',
     role: t('settings.roles.manager'),
     department: 'Üretim',
     isActive: true,
@@ -741,7 +770,7 @@ const users = ref([
   {
     id: 5,
     name: 'Ali Çelik',
-    email: 'ali@olgahan.com',
+    email: 'ali@demo.com',
     role: t('settings.roles.operator'),
     department: 'Üretim',
     isActive: true,
@@ -750,7 +779,7 @@ const users = ref([
   {
     id: 6,
     name: 'Zeynep Arslan',
-    email: 'zeynep@olgahan.com',
+    email: 'zeynep@demo.com',
     role: t('settings.roles.operator'),
     department: 'Depo',
     isActive: true,
@@ -759,7 +788,7 @@ const users = ref([
   {
     id: 7,
     name: 'Mustafa Yıldız',
-    email: 'mustafa@olgahan.com',
+    email: 'mustafa@demo.com',
     role: t('settings.roles.operator'),
     department: 'Sevkiyat',
     isActive: true,
@@ -768,7 +797,7 @@ const users = ref([
   {
     id: 8,
     name: 'Elif Korkmaz',
-    email: 'elif@olgahan.com',
+    email: 'elif@demo.com',
     role: t('settings.roles.manager'),
     department: 'Paketleme',
     isActive: true,
@@ -777,7 +806,7 @@ const users = ref([
   {
     id: 9,
     name: 'Hasan Güneş',
-    email: 'hasan@olgahan.com',
+    email: 'hasan@demo.com',
     role: t('settings.roles.operator'),
     department: 'Plasiyer',
     isActive: false,
@@ -786,7 +815,7 @@ const users = ref([
   {
     id: 10,
     name: 'Selin Aktaş',
-    email: 'selin@olgahan.com',
+    email: 'selin@demo.com',
     role: t('settings.roles.manager'),
     department: 'Sevkiyat',
     isActive: true,
@@ -795,7 +824,7 @@ const users = ref([
   {
     id: 11,
     name: 'Burak Şahin',
-    email: 'burak@olgahan.com',
+    email: 'burak@demo.com',
     role: t('settings.roles.operator'),
     department: 'Üretim',
     isActive: true,
@@ -804,7 +833,7 @@ const users = ref([
   {
     id: 12,
     name: 'Gülay Yılmaz',
-    email: 'gulay@olgahan.com',
+    email: 'gulay@demo.com',
     role: t('settings.roles.manager'),
     department: 'Plasiyer',
     isActive: true,
@@ -839,7 +868,7 @@ const roles = ref([
 
 // System Settings
 const systemSettings = ref({
-  companyName: 'Olgahan Kimya',
+  companyName: 'Demo Kimya',
   currency: 'TRY',
   timezone: 'Europe/Istanbul',
   language: 'tr',
@@ -848,21 +877,21 @@ const systemSettings = ref({
   wasteThreshold: 5.0
 })
 
-// Notification Settings
-const notificationSettings = ref({
-  emailOrders: true,
-  emailProduction: true,
-  emailInventory: true,
-  smsEnabled: false
-})
+// Notification Settings (commented out as not used in current accordion design)
+// const notificationSettings = ref({
+//   emailOrders: true,
+//   emailProduction: true,
+//   emailInventory: true,
+//   smsEnabled: false
+// })
 
-// Security Settings
-const securitySettings = ref({
-  sessionTimeout: 60,
-  passwordMinLength: 8,
-  passwordRequireSpecial: true,
-  twoFactorEnabled: false
-})
+// Security Settings (commented out as not used in current accordion design)
+// const securitySettings = ref({
+//   sessionTimeout: 60,
+//   passwordMinLength: 8,
+//   passwordRequireSpecial: true,
+//   twoFactorEnabled: false
+// })
 
 // Backup Settings
 const backupSettings = ref({
@@ -947,13 +976,18 @@ function clearCache () {
   }
 }
 
-function checkSystemHealth () {
-  // TODO: Implement system health check
-  console.log('System health check initiated')
-}
+// function checkSystemHealth () {
+//   // TODO: Implement system health check
+//   console.log('System health check initiated')
+// }
 
 // Lifecycle
 onMounted(() => {
   // Load settings data
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>

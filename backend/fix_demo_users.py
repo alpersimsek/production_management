@@ -40,22 +40,22 @@ def fix_demo_users():
         # Define users with correct roles
         users_to_fix = [
             # Admin Users
-            {"email": "ahmet@olgahan.com", "password": "admin123", "role": admin_role},
+            {"email": "ahmet@demo.com", "password": "admin123", "role": admin_role},
             
             # Manager Users
-            {"email": "fatma@olgahan.com", "password": "manager123", "role": manager_role},
-            {"email": "ayse@olgahan.com", "password": "manager123", "role": manager_role},
-            {"email": "elif@olgahan.com", "password": "manager123", "role": manager_role},
-            {"email": "selin@olgahan.com", "password": "manager123", "role": manager_role},
-            {"email": "gulay@olgahan.com", "password": "manager123", "role": manager_role},
+            {"email": "fatma@demo.com", "password": "manager123", "role": manager_role},
+            {"email": "ayse@demo.com", "password": "manager123", "role": manager_role},
+            {"email": "elif@demo.com", "password": "manager123", "role": manager_role},
+            {"email": "selin@demo.com", "password": "manager123", "role": manager_role},
+            {"email": "gulay@demo.com", "password": "manager123", "role": manager_role},
             
             # Operator Users
-            {"email": "mehmet@olgahan.com", "password": "operator123", "role": operator_role},
-            {"email": "ali@olgahan.com", "password": "operator123", "role": operator_role},
-            {"email": "zeynep@olgahan.com", "password": "operator123", "role": operator_role},
-            {"email": "mustafa@olgahan.com", "password": "operator123", "role": operator_role},
-            {"email": "hasan@olgahan.com", "password": "operator123", "role": operator_role},
-            {"email": "burak@olgahan.com", "password": "operator123", "role": operator_role},
+            {"email": "mehmet@demo.com", "password": "operator123", "role": operator_role},
+            {"email": "ali@demo.com", "password": "operator123", "role": operator_role},
+            {"email": "zeynep@demo.com", "password": "operator123", "role": operator_role},
+            {"email": "mustafa@demo.com", "password": "operator123", "role": operator_role},
+            {"email": "hasan@demo.com", "password": "operator123", "role": operator_role},
+            {"email": "burak@demo.com", "password": "operator123", "role": operator_role},
         ]
         
         fixed_count = 0

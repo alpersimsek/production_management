@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Upload Script for Olgahan Kimya ERP to OCI Server
+# Upload Script for Demo Kimya ERP to OCI Server
 # This script helps upload your application files to the OCI server
 
 set -e
@@ -27,11 +27,11 @@ print_error() {
 SERVER_IP="145.241.236.172"
 KEY_FILE=""
 USERNAME="ubuntu"
-REMOTE_DIR="/home/ubuntu/olgahan-erp"
+REMOTE_DIR="/home/ubuntu/demo-erp"
 
 # Help function
 show_help() {
-    echo "Upload Script for Olgahan Kimya ERP"
+    echo "Upload Script for Demo Kimya ERP"
     echo ""
     echo "Usage: $0 [OPTIONS]"
     echo ""
@@ -39,7 +39,7 @@ show_help() {
     echo "  -k, --key FILE     SSH private key file (required)"
     echo "  -s, --server IP    Server IP address (default: 145.241.236.172)"
     echo "  -u, --user USER    Username (default: ubuntu)"
-    echo "  -d, --dir DIR      Remote directory (default: /home/ubuntu/olgahan-erp)"
+    echo "  -d, --dir DIR      Remote directory (default: /home/ubuntu/demo-erp)"
     echo "  -h, --help         Show this help message"
     echo ""
     echo "Examples:"

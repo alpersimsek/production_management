@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Demo Users Seeding Script for Olgahan Kimya ERP
+Demo Users Seeding Script for Demo Kimya ERP
 Creates all test users with proper roles and departments
 """
 
@@ -96,7 +96,7 @@ def create_demo_users(db, roles):
         # Admin Users
         {
             "full_name": "Ahmet Yılmaz",
-            "email": "ahmet@olgahan.com",
+            "email": "ahmet@demo.com",
             "password": "admin123",
             "role_id": role_map["admin"],
             "department": "Üretim",
@@ -106,7 +106,7 @@ def create_demo_users(db, roles):
         # Manager Users
         {
             "full_name": "Fatma Özkan",
-            "email": "fatma@olgahan.com",
+            "email": "fatma@demo.com",
             "password": "manager123",
             "role_id": role_map["manager"],
             "department": "Üretim",
@@ -114,7 +114,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Ayşe Demir",
-            "email": "ayse@olgahan.com",
+            "email": "ayse@demo.com",
             "password": "manager123",
             "role_id": role_map["manager"],
             "department": "Depo",
@@ -122,7 +122,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Elif Korkmaz",
-            "email": "elif@olgahan.com",
+            "email": "elif@demo.com",
             "password": "manager123",
             "role_id": role_map["manager"],
             "department": "Paketleme",
@@ -130,7 +130,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Selin Aktaş",
-            "email": "selin@olgahan.com",
+            "email": "selin@demo.com",
             "password": "manager123",
             "role_id": role_map["manager"],
             "department": "Sevkiyat",
@@ -138,7 +138,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Gülay Yılmaz",
-            "email": "gulay@olgahan.com",
+            "email": "gulay@demo.com",
             "password": "manager123",
             "role_id": role_map["manager"],
             "department": "Plasiyer",
@@ -148,7 +148,7 @@ def create_demo_users(db, roles):
         # Operator Users
         {
             "full_name": "Mehmet Kaya",
-            "email": "mehmet@olgahan.com",
+            "email": "mehmet@demo.com",
             "password": "operator123",
             "role_id": role_map["operator"],
             "department": "Paketleme",
@@ -156,7 +156,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Ali Çelik",
-            "email": "ali@olgahan.com",
+            "email": "ali@demo.com",
             "password": "operator123",
             "role_id": role_map["operator"],
             "department": "Üretim",
@@ -164,7 +164,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Zeynep Arslan",
-            "email": "zeynep@olgahan.com",
+            "email": "zeynep@demo.com",
             "password": "operator123",
             "role_id": role_map["operator"],
             "department": "Depo",
@@ -172,7 +172,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Mustafa Yıldız",
-            "email": "mustafa@olgahan.com",
+            "email": "mustafa@demo.com",
             "password": "operator123",
             "role_id": role_map["operator"],
             "department": "Sevkiyat",
@@ -180,7 +180,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Hasan Güneş",
-            "email": "hasan@olgahan.com",
+            "email": "hasan@demo.com",
             "password": "operator123",
             "role_id": role_map["operator"],
             "department": "Plasiyer",
@@ -188,7 +188,7 @@ def create_demo_users(db, roles):
         },
         {
             "full_name": "Burak Şahin",
-            "email": "burak@olgahan.com",
+            "email": "burak@demo.com",
             "password": "operator123",
             "role_id": role_map["operator"],
             "department": "Üretim",

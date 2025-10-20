@@ -1,4 +1,4 @@
-# 🚀 Olgahan Kimya ERP - OCI Deployment Ready!
+# 🚀 Demo Kimya ERP - OCI Deployment Ready!
 
 ## 📋 Deployment Files Created
 
@@ -41,14 +41,14 @@ ssh -i your-key.pem ubuntu@145.241.236.172
 
 **Option B: Manual upload**
 ```bash
-# Upload your project files to /home/ubuntu/olgahan-erp
+# Upload your project files to /home/ubuntu/demo-erp
 # You can use SCP, SFTP, or any file transfer method
-scp -r -i your-key.pem ./ ubuntu@145.241.236.172:/home/ubuntu/olgahan-erp/
+scp -r -i your-key.pem ./ ubuntu@145.241.236.172:/home/ubuntu/demo-erp/
 ```
 
 ### Step 3: Deploy Application
 ```bash
-cd /home/ubuntu/olgahan-erp
+cd /home/ubuntu/demo-erp
 chmod +x deploy.sh
 ./deploy.sh
 ```
@@ -64,9 +64,9 @@ Once deployed, your application will be available at:
 
 ## 🔐 Default Login Credentials
 
-- **Admin**: admin@olgahan.com / admin123
-- **Manager**: manager@olgahan.com / manager123
-- **Operator**: operator@olgahan.com / operator123
+- **Admin**: admin@demo.com / admin123
+- **Manager**: manager@demo.com / manager123
+- **Operator**: operator@demo.com / operator123
 
 ## 🏗️ Architecture Overview
 
@@ -145,7 +145,7 @@ If you encounter any issues:
 
 ## 🎉 Congratulations!
 
-Your Olgahan Kimya ERP system is ready for production deployment on OCI!
+Your Demo Kimya ERP system is ready for production deployment on OCI!
 
 The application includes:
 - Complete factory production management

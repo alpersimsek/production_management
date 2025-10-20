@@ -1,4 +1,4 @@
-# Olgahan Kimya ERP
+# Demo Kimya ERP
 
 A comprehensive ERP system for chemical production management built with FastAPI + PostgreSQL + Vue 3.
 

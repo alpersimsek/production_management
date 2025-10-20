@@ -1,5 +1,5 @@
 {
-  "name": "olgahan-erp-frontend",
+  "name": "demo-erp-frontend",
   "version": "0.0.1",
   "scripts": {
     "serve": "vue-cli-service serve",

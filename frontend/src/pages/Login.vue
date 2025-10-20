@@ -171,7 +171,7 @@
           <div class="grid grid-cols-1 gap-3">
             <!-- Admin User -->
             <div
-              @click="fillCredentials('ahmet@olgahan.com', 'admin123')"
+              @click="fillCredentials('ahmet@demo.com', 'admin123')"
               class="p-3 bg-gradient-to-r from-primary-50 to-primary-100 rounded-lg border border-primary-200 cursor-pointer hover:from-primary-100 hover:to-primary-200 transition-all duration-200 hover:shadow-md group"
             >
               <div class="flex items-center justify-between">
@@ -183,7 +183,7 @@
                   </div>
                   <div>
                     <p class="font-medium text-secondary-900 group-hover:text-primary-700">Ahmet Yılmaz (Admin)</p>
-                    <p class="text-sm text-secondary-600">ahmet@olgahan.com</p>
+                    <p class="text-sm text-secondary-600">ahmet@demo.com</p>
                   </div>
                 </div>
                 <div class="text-xs text-secondary-500 group-hover:text-primary-600">
@@ -194,7 +194,7 @@
 
             <!-- Manager User -->
             <div
-              @click="fillCredentials('fatma@olgahan.com', 'manager123')"
+              @click="fillCredentials('fatma@demo.com', 'manager123')"
               class="p-3 bg-gradient-to-r from-secondary-50 to-secondary-100 rounded-lg border border-secondary-200 cursor-pointer hover:from-secondary-100 hover:to-secondary-200 transition-all duration-200 hover:shadow-md group"
             >
               <div class="flex items-center justify-between">
@@ -206,7 +206,7 @@
                   </div>
                   <div>
                     <p class="font-medium text-secondary-900 group-hover:text-secondary-700">Fatma Özkan (Manager)</p>
-                    <p class="text-sm text-secondary-600">fatma@olgahan.com</p>
+                    <p class="text-sm text-secondary-600">fatma@demo.com</p>
                   </div>
                 </div>
                 <div class="text-xs text-secondary-500 group-hover:text-secondary-600">
@@ -217,7 +217,7 @@
 
             <!-- Operator User -->
             <div
-              @click="fillCredentials('mehmet@olgahan.com', 'operator123')"
+              @click="fillCredentials('mehmet@demo.com', 'operator123')"
               class="p-3 bg-gradient-to-r from-success-50 to-success-100 rounded-lg border border-success-200 cursor-pointer hover:from-success-100 hover:to-success-200 transition-all duration-200 hover:shadow-md group"
             >
               <div class="flex items-center justify-between">
@@ -230,7 +230,7 @@
                   </div>
                   <div>
                     <p class="font-medium text-secondary-900 group-hover:text-success-700">Mehmet Kaya (Operator)</p>
-                    <p class="text-sm text-secondary-600">mehmet@olgahan.com</p>
+                    <p class="text-sm text-secondary-600">mehmet@demo.com</p>
                   </div>
                 </div>
                 <div class="text-xs text-secondary-500 group-hover:text-success-600">

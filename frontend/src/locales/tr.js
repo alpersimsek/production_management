@@ -736,13 +736,22 @@ export default {
   // Settings
   settings: {
     system_settings: 'Sistem Ayarları',
+    user_management: 'Kullanıcı Yönetimi',
+    add_user: 'Kullanıcı Ekle',
+    showing_tab: 'Sekme gösteriliyor',
+    showing_user: 'Kullanıcı gösteriliyor',
+    tab_descriptions: {
+      users: 'Sistem kullanıcıları, roller ve izinleri yönetin',
+      roles: 'Kullanıcı rolleri ve erişim seviyelerini yapılandırın',
+      language: 'Uygulama dili ve yerelleştirmeyi ayarlayın',
+      system: 'Sistem genelinde ayarları ve tercihleri yapılandırın',
+      backup: 'Yedeklemeleri ve sistem bakımını yönetin'
+    },
     users: 'Kullanıcılar',
     roles_label: 'Roller',
     language: 'Dil',
     system: 'Sistem',
     backup: 'Yedekleme',
-    user_management: 'Kullanıcı Yönetimi',
-    add_user: 'Kullanıcı Ekle',
     role_management: 'Rol Yönetimi',
     add_role: 'Rol Ekle',
     users_count: 'kullanıcı',

@@ -2,7 +2,7 @@ from celery import Celery
 from .config import settings
 
 celery = Celery(
-    "olgahan",
+    "demo",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
 )
