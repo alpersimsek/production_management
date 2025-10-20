@@ -1006,145 +1006,8 @@ function formatDateTime (dateString) {
 async function loadPackagingJobs () {
   loading.value = true
   try {
-    // Mock data for now
-    packagingJobs.value = [
-      {
-        id: 1,
-        job_number: 'PKG-2024-001',
-        production_job_id: 1,
-        product_id: 1,
-        product_name: 'Market Poşeti 30x40',
-        lot_number: 'LOT-2024-001',
-        quantity: 1000,
-        unit: 'kg',
-        package_type: 'bag',
-        package_size: '1kg',
-        status: 'in_progress',
-        priority: 'high',
-        progress: 75,
-        start_date: '2024-01-15T08:00:00Z',
-        expected_end_date: '2024-01-20T17:00:00Z',
-        completed_at: null,
-        operator_id: 1,
-        operator_name: 'Ahmet Yılmaz',
-        packaging_line_id: 1,
-        packaging_line_name: 'Packaging Line 1',
-        batch_size: 100,
-        packages_per_batch: 10,
-        quality_check_required: true,
-        sample_size: 10,
-        tolerance: 2.5,
-        quality_status: 'Passed',
-        label_type: 'qr_code',
-        batch_number: 'BATCH-2024-001',
-        production_date: '2024-01-15',
-        expiry_date: '2025-01-15',
-        notes: 'High priority packaging for new product launch',
-        created_at: '2024-01-15T07:30:00Z'
-      },
-      {
-        id: 2,
-        job_number: 'PKG-2024-002',
-        production_job_id: 2,
-        product_id: 2,
-        product_name: 'Bulaşık Deterjanı',
-        lot_number: 'LOT-2024-002',
-        quantity: 500,
-        unit: 'kg',
-        package_type: 'bottle',
-        package_size: '500ml',
-        status: 'scheduled',
-        priority: 'medium',
-        progress: 0,
-        start_date: null,
-        expected_end_date: '2024-01-25T17:00:00Z',
-        completed_at: null,
-        operator_id: null,
-        operator_name: null,
-        packaging_line_id: 2,
-        packaging_line_name: 'Packaging Line 2',
-        batch_size: 50,
-        packages_per_batch: 5,
-        quality_check_required: true,
-        sample_size: 5,
-        tolerance: 1.0,
-        quality_status: 'Pending',
-        label_type: 'barcode',
-        batch_number: 'BATCH-2024-002',
-        production_date: '2024-01-20',
-        expiry_date: '2026-01-20',
-        notes: 'Regular packaging batch',
-        created_at: '2024-01-20T09:15:00Z'
-      },
-      {
-        id: 3,
-        job_number: 'PKG-2024-003',
-        production_job_id: 3,
-        product_id: 3,
-        product_name: 'Temizlik Malzemesi',
-        lot_number: 'LOT-2024-003',
-        quantity: 200,
-        unit: 'kg',
-        package_type: 'tube',
-        package_size: '250ml',
-        status: 'completed',
-        priority: 'low',
-        progress: 100,
-        start_date: '2024-01-10T08:00:00Z',
-        expected_end_date: '2024-01-12T17:00:00Z',
-        completed_at: '2024-01-12T16:30:00Z',
-        operator_id: 2,
-        operator_name: 'Mehmet Kaya',
-        packaging_line_id: 3,
-        packaging_line_name: 'Packaging Line 3',
-        batch_size: 25,
-        packages_per_batch: 2,
-        quality_check_required: false,
-        sample_size: 0,
-        tolerance: 0,
-        quality_status: 'N/A',
-        label_type: 'both',
-        batch_number: 'BATCH-2024-003',
-        production_date: '2024-01-10',
-        expiry_date: '2025-01-10',
-        notes: 'Completed successfully',
-        created_at: '2024-01-10T07:45:00Z'
-      },
-      {
-        id: 4,
-        job_number: 'PKG-2024-004',
-        production_job_id: 1,
-        product_id: 4,
-        product_name: 'Market Poşeti 20x30',
-        lot_number: 'LOT-2024-004',
-        quantity: 600,
-        unit: 'kg',
-        package_type: 'bag',
-        package_size: '500g',
-        status: 'paused',
-        priority: 'medium',
-        progress: 40,
-        start_date: '2024-01-18T08:00:00Z',
-        expected_end_date: '2024-01-22T17:00:00Z',
-        completed_at: null,
-        operator_id: 1,
-        operator_name: 'Ahmet Yılmaz',
-        packaging_line_id: 1,
-        packaging_line_name: 'Packaging Line 1',
-        batch_size: 75,
-        packages_per_batch: 8,
-        quality_check_required: true,
-        sample_size: 8,
-        tolerance: 2.0,
-        quality_status: 'In Progress',
-        label_type: 'qr_code',
-        batch_number: 'BATCH-2024-004',
-        production_date: '2024-01-18',
-        expiry_date: '2025-01-18',
-        notes: 'Paused due to label shortage',
-        created_at: '2024-01-18T07:30:00Z'
-      }
-    ]
+    // Load data from API
+    // Mock data removed
     totalJobs.value = packagingJobs.value.length
   } catch (error) {
     console.error('Error loading packaging jobs:', error)
@@ -1155,13 +1018,8 @@ async function loadPackagingJobs () {
 
 async function loadProductionJobs () {
   try {
-    // Mock data for now
-    productionJobs.value = [
-      { id: 1, job_number: 'PJ-2024-001', product_name: 'Market Poşeti 30x40', unit: 'kg' },
-      { id: 2, job_number: 'PJ-2024-002', product_name: 'Bulaşık Deterjanı', unit: 'kg' },
-      { id: 3, job_number: 'PJ-2024-003', product_name: 'Temizlik Malzemesi', unit: 'kg' },
-      { id: 4, job_number: 'PJ-2024-004', product_name: 'Market Poşeti 20x30', unit: 'kg' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading production jobs:', error)
   }
@@ -1169,13 +1027,8 @@ async function loadProductionJobs () {
 
 async function loadProducts () {
   try {
-    // Mock data for now
-    products.value = [
-      { id: 1, name: 'Market Poşeti 30x40', code: 'POS001', unit: 'kg' },
-      { id: 2, name: 'Bulaşık Deterjanı', code: 'DET001', unit: 'kg' },
-      { id: 3, name: 'Temizlik Malzemesi', code: 'ALS001', unit: 'kg' },
-      { id: 4, name: 'Market Poşeti 20x30', code: 'POS002', unit: 'kg' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading products:', error)
   }
@@ -1183,12 +1036,8 @@ async function loadProducts () {
 
 async function loadPackagingLines () {
   try {
-    // Mock data for now
-    packagingLines.value = [
-      { id: 1, name: 'Packaging Line 1', type: 'Automatic' },
-      { id: 2, name: 'Packaging Line 2', type: 'Semi-Automatic' },
-      { id: 3, name: 'Packaging Line 3', type: 'Manual' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading packaging lines:', error)
   }
@@ -1196,12 +1045,8 @@ async function loadPackagingLines () {
 
 async function loadOperators () {
   try {
-    // Mock data for now
-    operators.value = [
-      { id: 1, name: 'Ahmet Yılmaz' },
-      { id: 2, name: 'Mehmet Kaya' },
-      { id: 3, name: 'Ali Demir' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading operators:', error)
   }

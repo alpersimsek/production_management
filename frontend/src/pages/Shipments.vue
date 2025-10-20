@@ -953,121 +953,8 @@ function formatDateTime (dateString) {
 async function loadShipments () {
   loading.value = true
   try {
-    // Mock data for now
-    shipments.value = [
-      {
-        id: 1,
-        shipment_number: 'SHIP-2024-001',
-        order_id: 1,
-        order_number: 'ORD-2024-001',
-        customer_id: 1,
-        customer_name: 'ABC Company',
-        priority: 'high',
-        status: 'in_transit',
-        ship_date: '2024-01-15',
-        expected_delivery_date: '2024-01-18',
-        delivered_at: null,
-        delivery_address: 'Atatürk Mahallesi, İş Merkezi No:15',
-        destination_city: 'Istanbul',
-        destination_state: 'Istanbul',
-        destination_postal_code: '34000',
-        destination_country: 'Türkiye',
-        contact_phone: '+90 212 123 4567',
-        shipping_method: 'express',
-        carrier: 'yurtici',
-        tracking_number: 'YT123456789',
-        weight: 25.5,
-        dimensions: '40 x 30 x 20',
-        shipping_cost: 45.00,
-        item_count: 3,
-        special_instructions: 'Fragile - Handle with care',
-        created_at: '2024-01-15T08:00:00Z'
-      },
-      {
-        id: 2,
-        shipment_number: 'SHIP-2024-002',
-        order_id: 2,
-        order_number: 'ORD-2024-002',
-        customer_id: 2,
-        customer_name: 'XYZ Ltd.',
-        priority: 'medium',
-        status: 'delivered',
-        ship_date: '2024-01-10',
-        expected_delivery_date: '2024-01-12',
-        delivered_at: '2024-01-12T14:30:00Z',
-        delivery_address: 'Cumhuriyet Caddesi, Plaza Kat:5',
-        destination_city: 'Ankara',
-        destination_state: 'Ankara',
-        destination_postal_code: '06000',
-        destination_country: 'Türkiye',
-        contact_phone: '+90 312 987 6543',
-        shipping_method: 'standard',
-        carrier: 'mng',
-        tracking_number: 'MNG987654321',
-        weight: 15.0,
-        dimensions: '30 x 25 x 15',
-        shipping_cost: 25.00,
-        item_count: 2,
-        special_instructions: 'Office hours delivery only',
-        created_at: '2024-01-10T09:15:00Z'
-      },
-      {
-        id: 3,
-        shipment_number: 'SHIP-2024-003',
-        order_id: 3,
-        order_number: 'ORD-2024-003',
-        customer_id: 3,
-        customer_name: 'DEF Corp',
-        priority: 'urgent',
-        status: 'out_for_delivery',
-        ship_date: '2024-01-20',
-        expected_delivery_date: '2024-01-20',
-        delivered_at: null,
-        delivery_address: 'Kızılay Mahallesi, İş Merkezi No:8',
-        destination_city: 'Izmir',
-        destination_state: 'Izmir',
-        destination_postal_code: '35000',
-        destination_country: 'Türkiye',
-        contact_phone: '+90 232 555 1234',
-        shipping_method: 'overnight',
-        carrier: 'dhl',
-        tracking_number: 'DHL555666777',
-        weight: 8.5,
-        dimensions: '25 x 20 x 10',
-        shipping_cost: 85.00,
-        item_count: 1,
-        special_instructions: 'Urgent delivery - Call before delivery',
-        created_at: '2024-01-20T07:30:00Z'
-      },
-      {
-        id: 4,
-        shipment_number: 'SHIP-2024-004',
-        order_id: 4,
-        order_number: 'ORD-2024-004',
-        customer_id: 1,
-        customer_name: 'ABC Company',
-        priority: 'low',
-        status: 'preparing',
-        ship_date: null,
-        expected_delivery_date: '2024-01-25',
-        delivered_at: null,
-        delivery_address: 'Merkez Mahallesi, Fabrika No:12',
-        destination_city: 'Bursa',
-        destination_state: 'Bursa',
-        destination_postal_code: '16000',
-        destination_country: 'Türkiye',
-        contact_phone: '+90 224 777 8888',
-        shipping_method: 'freight',
-        carrier: 'ptt',
-        tracking_number: null,
-        weight: 150.0,
-        dimensions: '100 x 80 x 60',
-        shipping_cost: 120.00,
-        item_count: 5,
-        special_instructions: 'Heavy items - Use forklift',
-        created_at: '2024-01-22T10:00:00Z'
-      }
-    ]
+    // Load data from API
+    // Mock data removed
     totalShipments.value = shipments.value.length
   } catch (error) {
     console.error('Error loading shipments:', error)
@@ -1078,13 +965,8 @@ async function loadShipments () {
 
 async function loadOrders () {
   try {
-    // Mock data for now
-    orders.value = [
-      { id: 1, order_number: 'ORD-2024-001', customer_name: 'ABC Company' },
-      { id: 2, order_number: 'ORD-2024-002', customer_name: 'XYZ Ltd.' },
-      { id: 3, order_number: 'ORD-2024-003', customer_name: 'DEF Corp' },
-      { id: 4, order_number: 'ORD-2024-004', customer_name: 'ABC Company' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading orders:', error)
   }
@@ -1092,12 +974,8 @@ async function loadOrders () {
 
 async function loadCustomers () {
   try {
-    // Mock data for now
-    customers.value = [
-      { id: 1, name: 'ABC Company' },
-      { id: 2, name: 'XYZ Ltd.' },
-      { id: 3, name: 'DEF Corp' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading customers:', error)
   }

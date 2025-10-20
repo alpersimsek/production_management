@@ -678,7 +678,7 @@ const showAddRoleModal = ref(false)
 const editingUser = ref(null)
 
 // Accordion state
-const expandedAccordions = ref(['users']) // Start with users expanded
+const expandedAccordions = ref([]) // Start with users expanded
 
 // Language Settings
 const defaultLanguage = ref(localStorage.getItem('app-default-language') || 'en')
@@ -730,141 +730,10 @@ function closeModal () {
 }
 
 // Users Data
-const users = ref([
-  {
-    id: 1,
-    name: 'Ahmet Yılmaz',
-    email: 'ahmet@demo.com',
-    role: t('settings.roles.admin'),
-    department: 'Üretim',
-    isActive: true,
-    lastLogin: '2024-01-20T10:30:00Z'
-  },
-  {
-    id: 2,
-    name: 'Mehmet Kaya',
-    email: 'mehmet@demo.com',
-    role: t('settings.roles.operator'),
-    department: 'Paketleme',
-    isActive: true,
-    lastLogin: '2024-01-20T09:15:00Z'
-  },
-  {
-    id: 3,
-    name: 'Ayşe Demir',
-    email: 'ayse@demo.com',
-    role: t('settings.roles.manager'),
-    department: 'Depo',
-    isActive: false,
-    lastLogin: '2024-01-15T14:20:00Z'
-  },
-  {
-    id: 4,
-    name: 'Fatma Özkan',
-    email: 'fatma@demo.com',
-    role: t('settings.roles.manager'),
-    department: 'Üretim',
-    isActive: true,
-    lastLogin: '2024-01-20T08:45:00Z'
-  },
-  {
-    id: 5,
-    name: 'Ali Çelik',
-    email: 'ali@demo.com',
-    role: t('settings.roles.operator'),
-    department: 'Üretim',
-    isActive: true,
-    lastLogin: '2024-01-20T11:20:00Z'
-  },
-  {
-    id: 6,
-    name: 'Zeynep Arslan',
-    email: 'zeynep@demo.com',
-    role: t('settings.roles.operator'),
-    department: 'Depo',
-    isActive: true,
-    lastLogin: '2024-01-20T07:30:00Z'
-  },
-  {
-    id: 7,
-    name: 'Mustafa Yıldız',
-    email: 'mustafa@demo.com',
-    role: t('settings.roles.operator'),
-    department: 'Sevkiyat',
-    isActive: true,
-    lastLogin: '2024-01-19T16:45:00Z'
-  },
-  {
-    id: 8,
-    name: 'Elif Korkmaz',
-    email: 'elif@demo.com',
-    role: t('settings.roles.manager'),
-    department: 'Paketleme',
-    isActive: true,
-    lastLogin: '2024-01-20T09:00:00Z'
-  },
-  {
-    id: 9,
-    name: 'Hasan Güneş',
-    email: 'hasan@demo.com',
-    role: t('settings.roles.operator'),
-    department: 'Plasiyer',
-    isActive: false,
-    lastLogin: '2024-01-18T13:15:00Z'
-  },
-  {
-    id: 10,
-    name: 'Selin Aktaş',
-    email: 'selin@demo.com',
-    role: t('settings.roles.manager'),
-    department: 'Sevkiyat',
-    isActive: true,
-    lastLogin: '2024-01-20T12:10:00Z'
-  },
-  {
-    id: 11,
-    name: 'Burak Şahin',
-    email: 'burak@demo.com',
-    role: t('settings.roles.operator'),
-    department: 'Üretim',
-    isActive: true,
-    lastLogin: '2024-01-20T10:45:00Z'
-  },
-  {
-    id: 12,
-    name: 'Gülay Yılmaz',
-    email: 'gulay@demo.com',
-    role: t('settings.roles.manager'),
-    department: 'Plasiyer',
-    isActive: true,
-    lastLogin: '2024-01-19T15:30:00Z'
-  }
-])
+const users = ref([])
 
 // Roles Data
-const roles = ref([
-  {
-    id: 1,
-    name: t('settings.roles.admin'),
-    description: t('settings.role_descriptions.admin'),
-    userCount: 1,
-    permissions: [t('settings.permissions.all_permissions'), t('settings.permissions.user_management'), t('settings.permissions.system_settings')]
-  },
-  {
-    id: 2,
-    name: t('settings.roles.manager'),
-    description: t('settings.role_descriptions.manager'),
-    userCount: 5,
-    permissions: [t('settings.permissions.view_reports'), t('settings.permissions.manage_orders'), t('settings.permissions.view_analytics')]
-  },
-  {
-    id: 3,
-    name: t('settings.roles.operator'),
-    description: t('settings.role_descriptions.operator'),
-    userCount: 6,
-    permissions: [t('settings.permissions.production_jobs'), t('settings.permissions.quality_control'), t('settings.permissions.inventory_updates')]
-  }
-])
+const roles = ref([])
 
 // System Settings
 const systemSettings = ref({
@@ -927,13 +796,11 @@ function toggleUserStatus (user) {
 
 function editRole (role) {
   // TODO: Implement edit role functionality
-  console.log('Edit role:', role)
 }
 
 function deleteRole (role) {
   if (confirm(t('settings.delete_role_confirm', { roleName: role.name }))) {
     // TODO: Implement delete role functionality
-    console.log('Delete role:', role)
   }
 }
 
@@ -945,12 +812,10 @@ function updateUser () {
   }
   showEditUserModal.value = false
   editingUser.value = null
-  console.log('User updated:', editingUser.value)
 }
 
 function saveSystemSettings () {
   // TODO: Implement save system settings functionality
-  console.log('Save system settings')
 }
 
 function updateDefaultLanguage () {
@@ -959,26 +824,22 @@ function updateDefaultLanguage () {
   window.dispatchEvent(new CustomEvent('default-language-changed', {
     detail: { language: defaultLanguage.value }
   }))
-  console.log('Default language updated to:', defaultLanguage.value)
 }
 
 function cleanupDatabase () {
   if (confirm(t('settings.cleanup_database_confirm'))) {
     // TODO: Implement database cleanup
-    console.log('Database cleanup initiated')
   }
 }
 
 function clearCache () {
   if (confirm(t('settings.clear_cache_confirm'))) {
     // TODO: Implement cache clearing
-    console.log('Cache cleared')
   }
 }
 
 // function checkSystemHealth () {
 //   // TODO: Implement system health check
-//   console.log('System health check initiated')
 // }
 
 // Lifecycle

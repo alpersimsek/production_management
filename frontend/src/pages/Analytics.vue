@@ -544,18 +544,18 @@ const tabTouchStartY = ref(0)
 const tabIsDragging = ref(false)
 
 // KPI Data
-const totalRevenue = ref(1250000)
-const revenueGrowth = ref(12.5)
-const completedOrders = ref(156)
-const ordersGrowth = ref(8.3)
-const productionEfficiency = ref(87.2)
-const efficiencyGrowth = ref(5.1)
-const inventoryValue = ref(450000)
-const inventoryGrowth = ref(15.7)
+const totalRevenue = ref(0)
+const revenueGrowth = ref(0)
+const completedOrders = ref(0)
+const ordersGrowth = ref(0)
+const productionEfficiency = ref(0)
+const efficiencyGrowth = ref(0)
+const inventoryValue = ref(0)
+const inventoryGrowth = ref(0)
 
 // Chart Data
-const revenueData = ref([85000, 92000, 88000, 105000, 98000, 112000, 125000])
-const productionData = ref([1200, 1350, 1280, 1450, 1380, 1520, 1680])
+const revenueData = ref([])
+const productionData = ref([])
 
 // Analytics Tabs
 const analyticsTabs = ref([
@@ -778,70 +778,56 @@ function handleKeydown (event) {
 }
 
 // Production Analytics
-const machineUtilization = ref([
-  { name: 'Extrusion Line 1', utilization: 85 },
-  { name: 'Mixing Tank 1', utilization: 92 },
-  { name: 'Packaging Line 1', utilization: 78 },
-  { name: 'Quality Control', utilization: 88 }
-])
+const machineUtilization = ref([])
 
 const qualityMetrics = ref({
-  passRate: 94.2,
-  defectRate: 3.1,
-  reworkRate: 2.7
+  passRate: 0,
+  defectRate: 0,
+  reworkRate: 0
 })
 
 const wasteMetrics = ref({
-  totalWaste: 1250,
-  recycled: 890,
-  disposed: 360
+  totalWaste: 0,
+  recycled: 0,
+  disposed: 0
 })
 
 // Sales Analytics
-const topProducts = ref([
-  { name: 'Market Poşeti 30x40', revenue: 450000 },
-  { name: 'Bulaşık Deterjanı', revenue: 320000 },
-  { name: 'Temizlik Malzemesi', revenue: 280000 },
-  { name: 'Endüstriyel Temizlik', revenue: 200000 }
-])
+const topProducts = ref([])
 
 const customerMetrics = ref({
-  totalCustomers: 45,
-  newCustomers: 8,
-  repeatOrders: 78
+  totalCustomers: 0,
+  newCustomers: 0,
+  repeatOrders: 0
 })
 
 // Inventory Analytics
 const stockLevels = ref({
-  inStock: 156,
-  lowStock: 12,
-  outOfStock: 3
+  inStock: 0,
+  lowStock: 0,
+  outOfStock: 0
 })
 
-const turnoverRates = ref([
-  { name: 'Raw Materials', rate: 4.2 },
-  { name: 'Finished Goods', rate: 6.8 },
-  { name: 'Packaging', rate: 8.1 }
-])
+const turnoverRates = ref([])
 
 const warehouseMetrics = ref({
-  pickAccuracy: 98.5,
-  fulfillmentRate: 96.2,
-  avgPickTime: 12.3
+  pickAccuracy: 0,
+  fulfillmentRate: 0,
+  avgPickTime: 0
 })
 
 // Financial Analytics
 const costAnalysis = ref({
-  rawMaterials: 450000,
-  labor: 280000,
-  overhead: 150000,
-  shipping: 75000
+  rawMaterials: 0,
+  labor: 0,
+  overhead: 0,
+  shipping: 0
 })
 
 const profitability = ref({
-  grossMargin: 35.2,
-  netMargin: 18.7,
-  roi: 24.3
+  grossMargin: 0,
+  netMargin: 0,
+  roi: 0
 })
 
 // Methods
@@ -856,7 +842,6 @@ function getMonthName (index) {
 
 function exportReport () {
   // TODO: Implement report export functionality
-  console.log('Exporting analytics report...')
 }
 
 // Lifecycle

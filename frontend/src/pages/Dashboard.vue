@@ -225,9 +225,9 @@ const currentDateTime = computed(() => {
 const stats = ref([
   {
     name: t('dashboard.total_orders'),
-    value: '1,234',
-    change: '+12%',
-    changeColor: 'text-success-600',
+    value: '0',
+    change: '0%',
+    changeColor: 'text-secondary-600',
     period: t('dashboard.this_month'),
     icon: 'DocumentTextIcon',
     iconBg: 'bg-primary-100',
@@ -235,9 +235,9 @@ const stats = ref([
   },
   {
     name: t('dashboard.active_production'),
-    value: '8',
-    change: '+2%',
-    changeColor: 'text-success-600',
+    value: '0',
+    change: '0%',
+    changeColor: 'text-secondary-600',
     period: t('dashboard.this_week'),
     icon: 'CogIcon',
     iconBg: 'bg-success-100',
@@ -245,9 +245,9 @@ const stats = ref([
   },
   {
     name: t('dashboard.pending_shipments'),
-    value: '23',
-    change: '-5%',
-    changeColor: 'text-error-600',
+    value: '0',
+    change: '0%',
+    changeColor: 'text-secondary-600',
     period: t('dashboard.this_week'),
     icon: 'TruckIcon',
     iconBg: 'bg-warning-100',
@@ -255,9 +255,9 @@ const stats = ref([
   },
   {
     name: t('dashboard.revenue'),
-    value: '₺2.4M',
-    change: '+18%',
-    changeColor: 'text-success-600',
+    value: '₺0',
+    change: '0%',
+    changeColor: 'text-secondary-600',
     period: t('dashboard.this_month'),
     icon: 'CurrencyDollarIcon',
     iconBg: 'bg-secondary-100',
@@ -266,36 +266,7 @@ const stats = ref([
 ])
 
 // Recent orders data
-const recentOrders = ref([
-  {
-    id: 'ORD-001',
-    customer: 'ABC Kimya Ltd.',
-    status: 'Processing',
-    amount: 45000,
-    date: new Date('2024-01-15')
-  },
-  {
-    id: 'ORD-002',
-    customer: 'XYZ Deterjan A.Ş.',
-    status: 'Shipped',
-    amount: 32000,
-    date: new Date('2024-01-14')
-  },
-  {
-    id: 'ORD-003',
-    customer: 'DEF Temizlik Ürünleri',
-    status: 'Delivered',
-    amount: 28000,
-    date: new Date('2024-01-13')
-  },
-  {
-    id: 'ORD-004',
-    customer: 'GHI Kimya San.',
-    status: 'Pending',
-    amount: 55000,
-    date: new Date('2024-01-12')
-  }
-])
+const recentOrders = ref([])
 
 // Quick actions
 const quickActions = ref([
@@ -326,26 +297,7 @@ const quickActions = ref([
 ])
 
 // Production jobs
-const productionJobs = ref([
-  {
-    id: 1,
-    name: 'Poşet Deterjan',
-    progress: 75,
-    quantity: 500
-  },
-  {
-    id: 2,
-    name: 'Sıvı Deterjan',
-    progress: 45,
-    quantity: 300
-  },
-  {
-    id: 3,
-    name: 'Çamaşır Suyu',
-    progress: 90,
-    quantity: 200
-  }
-])
+const productionJobs = ref([])
 
 const getStatusClasses = (status) => {
   const classes = {
@@ -367,6 +319,5 @@ const formatDate = (date) => {
 
 onMounted(() => {
   // Load dashboard data
-  console.log('Dashboard loaded')
 })
 </script>

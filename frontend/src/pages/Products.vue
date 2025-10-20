@@ -927,72 +927,9 @@ function getStatusColor (status) {
 async function loadProducts () {
   loading.value = true
   try {
-    // Mock data for now
-    products.value = [
-      {
-        id: 1,
-        code: 'POS001',
-        name: 'Market Poşeti 30x40',
-        product_type: 'poset',
-        unit: 'kg',
-        efficiency: 95.5,
-        is_active: true,
-        created_at: '2024-01-15T10:30:00Z'
-      },
-      {
-        id: 2,
-        code: 'DET001',
-        name: 'Bulaşık Deterjanı',
-        product_type: 'deterjan',
-        unit: 'kg',
-        efficiency: 92.0,
-        is_active: true,
-        created_at: '2024-01-20T14:15:00Z'
-      },
-      {
-        id: 3,
-        code: 'ALS001',
-        name: 'Temizlik Malzemesi',
-        product_type: 'al-sat',
-        unit: 'adet',
-        efficiency: 88.5,
-        is_active: false,
-        created_at: '2024-01-25T09:45:00Z'
-      }
-    ]
-
-    // Mock formulas data
-    formulas.value = [
-      {
-        id: 1,
-        product_id: 1,
-        version: '1.0',
-        valid_from: '2024-01-01',
-        valid_to: null,
-        is_active: true,
-        created_at: '2024-01-15T10:30:00Z'
-      },
-      {
-        id: 2,
-        product_id: 1,
-        version: '1.1',
-        valid_from: '2024-02-01',
-        valid_to: null,
-        is_active: true,
-        created_at: '2024-02-01T14:15:00Z'
-      },
-      {
-        id: 3,
-        product_id: 2,
-        version: '2.0',
-        valid_from: '2024-01-20',
-        valid_to: '2024-12-31',
-        is_active: true,
-        created_at: '2024-01-20T09:45:00Z'
-      }
-    ]
-
-    console.log('Formulas loaded:', formulas.value.length)
+    // Load products from API
+    products.value = []
+    formulas.value = []
   } catch (error) {
     console.error('Error loading products:', error)
   } finally {
@@ -1014,27 +951,8 @@ function viewFormulas (product) {
 
 async function loadFormulas (productId) {
   try {
-    // Mock data for now
-    formulas.value = [
-      {
-        id: 1,
-        product_id: productId,
-        version: '1.0',
-        valid_from: '2024-01-01',
-        valid_to: null,
-        is_active: true,
-        created_at: '2024-01-15T10:30:00Z'
-      },
-      {
-        id: 2,
-        product_id: productId,
-        version: '1.1',
-        valid_from: '2024-02-01',
-        valid_to: null,
-        is_active: false,
-        created_at: '2024-02-01T14:15:00Z'
-      }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading formulas:', error)
   }

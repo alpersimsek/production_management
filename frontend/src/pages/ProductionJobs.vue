@@ -938,126 +938,8 @@ function formatDateTime (dateString) {
 async function loadProductionJobs () {
   loading.value = true
   try {
-    // Mock data for now
-    productionJobs.value = [
-      {
-        id: 1,
-        job_number: 'PJ-2024-001',
-        order_id: 1,
-        order_number: 'ORD-2024-001',
-        product_id: 1,
-        product_name: 'Market Poşeti 30x40',
-        quantity: 1000,
-        unit: 'kg',
-        status: 'in_progress',
-        priority: 'high',
-        progress: 65,
-        start_date: '2024-01-15T08:00:00Z',
-        expected_end_date: '2024-01-20T17:00:00Z',
-        completed_at: null,
-        operator_id: 1,
-        operator_name: 'Ahmet Yılmaz',
-        machine_id: 1,
-        machine_name: 'Extrusion Line 1',
-        formula_id: 1,
-        formula_version: '1.0',
-        batch_size: 100,
-        quality_check_required: true,
-        sample_size: 10,
-        tolerance: 2.5,
-        quality_status: 'Passed',
-        notes: 'High priority order for new product launch',
-        created_at: '2024-01-15T07:30:00Z'
-      },
-      {
-        id: 2,
-        job_number: 'PJ-2024-002',
-        order_id: 2,
-        order_number: 'ORD-2024-002',
-        product_id: 2,
-        product_name: 'Bulaşık Deterjanı',
-        quantity: 500,
-        unit: 'kg',
-        status: 'scheduled',
-        priority: 'medium',
-        progress: 0,
-        start_date: null,
-        expected_end_date: '2024-01-25T17:00:00Z',
-        completed_at: null,
-        operator_id: null,
-        operator_name: null,
-        machine_id: 2,
-        machine_name: 'Mixing Tank 2',
-        formula_id: 2,
-        formula_version: '1.1',
-        batch_size: 50,
-        quality_check_required: true,
-        sample_size: 5,
-        tolerance: 1.0,
-        quality_status: 'Pending',
-        notes: 'Regular production batch',
-        created_at: '2024-01-20T09:15:00Z'
-      },
-      {
-        id: 3,
-        job_number: 'PJ-2024-003',
-        order_id: 3,
-        order_number: 'ORD-2024-003',
-        product_id: 3,
-        product_name: 'Temizlik Malzemesi',
-        quantity: 200,
-        unit: 'kg',
-        status: 'completed',
-        priority: 'low',
-        progress: 100,
-        start_date: '2024-01-10T08:00:00Z',
-        expected_end_date: '2024-01-12T17:00:00Z',
-        completed_at: '2024-01-12T16:30:00Z',
-        operator_id: 2,
-        operator_name: 'Mehmet Kaya',
-        machine_id: 3,
-        machine_name: 'Packaging Line 1',
-        formula_id: 3,
-        formula_version: '2.0',
-        batch_size: 25,
-        quality_check_required: false,
-        sample_size: 0,
-        tolerance: 0,
-        quality_status: 'N/A',
-        notes: 'Completed successfully',
-        created_at: '2024-01-10T07:45:00Z'
-      },
-      {
-        id: 4,
-        job_number: 'PJ-2024-004',
-        order_id: 1,
-        order_number: 'ORD-2024-001',
-        product_id: 4,
-        product_name: 'Market Poşeti 20x30',
-        quantity: 600,
-        unit: 'kg',
-        status: 'paused',
-        priority: 'medium',
-        progress: 30,
-        start_date: '2024-01-18T08:00:00Z',
-        expected_end_date: '2024-01-22T17:00:00Z',
-        completed_at: null,
-        operator_id: 1,
-        operator_name: 'Ahmet Yılmaz',
-        machine_id: 1,
-        machine_name: 'Extrusion Line 1',
-        formula_id: 4,
-        formula_version: '1.2',
-        batch_size: 75,
-        quality_check_required: true,
-        sample_size: 8,
-        tolerance: 2.0,
-        quality_status: 'In Progress',
-        notes: 'Paused due to material shortage',
-        created_at: '2024-01-18T07:30:00Z'
-      }
-    ]
-    totalJobs.value = productionJobs.value.length
+    // Load production jobs from API
+    productionJobs.value = []
   } catch (error) {
     console.error('Error loading production jobs:', error)
   } finally {
@@ -1067,12 +949,8 @@ async function loadProductionJobs () {
 
 async function loadOrders () {
   try {
-    // Mock data for now
-    orders.value = [
-      { id: 1, order_number: 'ORD-2024-001', customer_name: 'ABC Company' },
-      { id: 2, order_number: 'ORD-2024-002', customer_name: 'XYZ Ltd.' },
-      { id: 3, order_number: 'ORD-2024-003', customer_name: 'DEF Corp' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading orders:', error)
   }
@@ -1080,13 +958,8 @@ async function loadOrders () {
 
 async function loadProducts () {
   try {
-    // Mock data for now
-    products.value = [
-      { id: 1, name: 'Market Poşeti 30x40', code: 'POS001', unit: 'kg' },
-      { id: 2, name: 'Bulaşık Deterjanı', code: 'DET001', unit: 'kg' },
-      { id: 3, name: 'Temizlik Malzemesi', code: 'ALS001', unit: 'kg' },
-      { id: 4, name: 'Market Poşeti 20x30', code: 'POS002', unit: 'kg' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading products:', error)
   }
@@ -1094,12 +967,8 @@ async function loadProducts () {
 
 async function loadMachines () {
   try {
-    // Mock data for now
-    machines.value = [
-      { id: 1, name: 'Extrusion Line 1', type: 'Extrusion' },
-      { id: 2, name: 'Mixing Tank 2', type: 'Mixing' },
-      { id: 3, name: 'Packaging Line 1', type: 'Packaging' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading machines:', error)
   }
@@ -1107,12 +976,8 @@ async function loadMachines () {
 
 async function loadOperators () {
   try {
-    // Mock data for now
-    operators.value = [
-      { id: 1, name: 'Ahmet Yılmaz' },
-      { id: 2, name: 'Mehmet Kaya' },
-      { id: 3, name: 'Ali Demir' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading operators:', error)
   }
@@ -1120,13 +985,8 @@ async function loadOperators () {
 
 async function loadFormulas () {
   try {
-    // Mock data for now
-    formulas.value = [
-      { id: 1, version: '1.0', name: 'Standard Formula' },
-      { id: 2, version: '1.1', name: 'Updated Formula' },
-      { id: 3, version: '2.0', name: 'New Formula' },
-      { id: 4, version: '1.2', name: 'Revised Formula' }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading formulas:', error)
   }

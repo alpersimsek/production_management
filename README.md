@@ -9,6 +9,22 @@ A comprehensive ERP system for chemical production management built with FastAPI
 
 ## Quick Start
 
+### Database Setup
+```bash
+cd backend
+python reset_db.py      # Reset database schema
+python minimal_seed.py  # Create admin user only
+```
+
+### Login
+- **Email**: admin@demo.com
+- **Password**: admin123
+
+### Add Data
+- All users, customers, products, etc. are added through the frontend
+- No mock data - everything is created via the UI
+
+### Docker Setup (Alternative)
 1. Start infrastructure services:
 ```bash
 docker compose up -d db redis
@@ -17,7 +33,7 @@ docker compose up -d db redis
 2. Run migrations and seed data:
 ```bash
 docker compose exec api alembic upgrade head
-docker compose exec api python seed.py
+docker compose exec api python minimal_seed.py
 ```
 
 3. Start all services:
@@ -36,5 +52,5 @@ Use F5 in VSCode to start the full stack with hot reload and debugging support.
 
 ## Default Login
 
-- Email: admin@local
-- Password: admin
+- **Email**: admin@demo.com
+- **Password**: admin123

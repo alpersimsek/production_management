@@ -823,77 +823,8 @@ function formatDate (dateString) {
 async function loadWarehouses () {
   loading.value = true
   try {
-    // Mock data for now
-    warehouses.value = [
-      {
-        id: 1,
-        name: 'Raw Materials Warehouse',
-        code: 'WH-001',
-        type: 'raw_materials',
-        status: 'active',
-        location: 'Building A, Floor 1',
-        manager: 'Ahmet Yılmaz',
-        capacity: 1000,
-        capacity_unit: 'kg',
-        used_capacity: 750,
-        temperature_range: '15-25°C',
-        humidity_range: '40-60%',
-        item_count: 45,
-        description: 'Main warehouse for raw materials storage',
-        created_at: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: 2,
-        name: 'Finished Goods Warehouse',
-        code: 'WH-002',
-        type: 'finished_goods',
-        status: 'active',
-        location: 'Building B, Floor 1',
-        manager: 'Mehmet Kaya',
-        capacity: 500,
-        capacity_unit: 'pallet',
-        used_capacity: 320,
-        temperature_range: '18-22°C',
-        humidity_range: '45-55%',
-        item_count: 28,
-        description: 'Warehouse for finished products',
-        created_at: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: 3,
-        name: 'Packaging Materials Warehouse',
-        code: 'WH-003',
-        type: 'packaging',
-        status: 'active',
-        location: 'Building C, Floor 1',
-        manager: 'Ali Demir',
-        capacity: 200,
-        capacity_unit: 'm3',
-        used_capacity: 150,
-        temperature_range: '20-25°C',
-        humidity_range: '50-60%',
-        item_count: 15,
-        description: 'Storage for packaging materials',
-        created_at: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: 4,
-        name: 'General Warehouse',
-        code: 'WH-004',
-        type: 'general',
-        status: 'maintenance',
-        location: 'Building D, Floor 1',
-        manager: 'Zeynep Ak',
-        capacity: 300,
-        capacity_unit: 'unit',
-        used_capacity: 0,
-        temperature_range: '15-30°C',
-        humidity_range: '30-70%',
-        item_count: 0,
-        description: 'General purpose warehouse',
-        created_at: '2024-01-01T00:00:00Z'
-      }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading warehouses:', error)
   } finally {
@@ -903,53 +834,8 @@ async function loadWarehouses () {
 
 async function loadRecentOperations () {
   try {
-    // Mock data for now
-    recentOperations.value = [
-      {
-        id: 1,
-        date: '2024-01-20T10:30:00Z',
-        type: 'receipt',
-        warehouse_name: 'Raw Materials Warehouse',
-        product_name: 'Plastic Granules',
-        quantity: 500,
-        unit: 'kg',
-        status: 'completed',
-        operator_name: 'Ahmet Yılmaz'
-      },
-      {
-        id: 2,
-        date: '2024-01-20T09:15:00Z',
-        type: 'transfer',
-        warehouse_name: 'Finished Goods Warehouse',
-        product_name: 'Market Poşeti 30x40',
-        quantity: 1000,
-        unit: 'kg',
-        status: 'completed',
-        operator_name: 'Mehmet Kaya'
-      },
-      {
-        id: 3,
-        date: '2024-01-19T16:45:00Z',
-        type: 'adjustment',
-        warehouse_name: 'Packaging Materials Warehouse',
-        product_name: 'Labels',
-        quantity: -50,
-        unit: 'unit',
-        status: 'completed',
-        operator_name: 'Ali Demir'
-      },
-      {
-        id: 4,
-        date: '2024-01-19T14:20:00Z',
-        type: 'Receipt',
-        warehouse_name: 'Raw Materials Warehouse',
-        product_name: 'Chemical Additives',
-        quantity: 200,
-        unit: 'kg',
-        status: 'pending',
-        operator_name: 'Zeynep Ak'
-      }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading recent operations:', error)
   }
@@ -957,59 +843,8 @@ async function loadRecentOperations () {
 
 async function loadInventoryItems () {
   try {
-    // Mock data for now
-    inventoryItems.value = [
-      {
-        id: 1,
-        product_name: 'Plastic Granules',
-        warehouse_name: 'Raw Materials Warehouse',
-        quantity: 500,
-        unit: 'kg',
-        unit_price: 25.50,
-        status: 'in_stock',
-        last_updated: '2024-01-20T10:30:00Z'
-      },
-      {
-        id: 2,
-        product_name: 'Market Poşeti 30x40',
-        warehouse_name: 'Finished Goods Warehouse',
-        quantity: 1000,
-        unit: 'kg',
-        unit_price: 45.00,
-        status: 'in_stock',
-        last_updated: '2024-01-20T09:15:00Z'
-      },
-      {
-        id: 3,
-        product_name: 'Labels',
-        warehouse_name: 'Packaging Materials Warehouse',
-        quantity: 5,
-        unit: 'unit',
-        unit_price: 0.50,
-        status: 'low_stock',
-        last_updated: '2024-01-19T16:45:00Z'
-      },
-      {
-        id: 4,
-        product_name: 'Chemical Additives',
-        warehouse_name: 'Raw Materials Warehouse',
-        quantity: 0,
-        unit: 'kg',
-        unit_price: 150.00,
-        status: 'out_of_stock',
-        last_updated: '2024-01-19T14:20:00Z'
-      },
-      {
-        id: 5,
-        product_name: 'Bulaşık Deterjanı',
-        warehouse_name: 'Finished Goods Warehouse',
-        quantity: 300,
-        unit: 'kg',
-        unit_price: 35.00,
-        status: 'in_stock',
-        last_updated: '2024-01-18T11:00:00Z'
-      }
-    ]
+    // Load data from API
+    // Mock data removed
   } catch (error) {
     console.error('Error loading inventory items:', error)
   }
