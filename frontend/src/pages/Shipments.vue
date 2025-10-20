@@ -71,7 +71,7 @@
             </div>
           </div>
 
-          <!-- Shipments Table -->
+          <!-- Shipments List -->
           <div class="bg-white shadow overflow-hidden sm:rounded-md">
             <div v-if="loading" class="p-6 text-center">
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -82,7 +82,8 @@
               {{ $t('shipments.no_shipments_found') }}
             </div>
 
-            <div v-else class="overflow-x-auto">
+            <!-- Desktop table -->
+            <div v-else class="hidden lg:block overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
@@ -208,6 +209,51 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Mobile carousel -->
+            <div v-if="shipments.length > 0" class="block lg:hidden p-4">
+              <div class="text-sm text-gray-500 mb-2 text-center">
+                {{ $t('shipments.showing_shipment') }} {{ currentShipmentIndex + 1 }} {{ $t('common.of') }} {{ filteredShipments.length }} — {{ $t('orders.swipe_hint') }}
+              </div>
+              <div
+                class="bg-white rounded-lg shadow-md overflow-hidden select-none"
+                @touchstart.passive="handleShipTouchStart"
+                @touchmove.prevent="handleShipTouchMove"
+                @touchend="handleShipTouchEnd"
+                @mousedown.prevent="handleShipMouseDown"
+                @mousemove.prevent="handleShipMouseMove"
+                @mouseup.prevent="handleShipMouseUp"
+                @mouseleave.prevent="handleShipMouseUp"
+              >
+                <div class="p-4" v-if="currentShipment">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="text-base font-semibold text-gray-900">{{ currentShipment.shipment_number }}</div>
+                    <span :class="getStatusColor(currentShipment.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ formatStatus(currentShipment.status) }}</span>
+                  </div>
+                  <div class="space-y-1 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.order_number') }}:</span><span class="text-gray-900">{{ currentShipment.order_number }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.customer') }}:</span><span class="text-gray-900">{{ currentShipment.customer_name }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.destination') }}:</span><span class="text-gray-900">{{ currentShipment.destination_city }}, {{ currentShipment.destination_country }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.items') }}:</span><span class="text-gray-900">{{ currentShipment.item_count }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.priority') }}:</span><span class="text-gray-900"><span :class="getPriorityColor(currentShipment.priority)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ formatPriority(currentShipment.priority) }}</span></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.ship_date') }}:</span><span class="text-gray-900">{{ currentShipment.ship_date ? formatDate(currentShipment.ship_date) : '-' }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('shipments.expected_delivery') }}:</span><span class="text-gray-900">{{ currentShipment.expected_delivery_date ? formatDate(currentShipment.expected_delivery_date) : '-' }}</span></div>
+                  </div>
+                  <div class="flex gap-3 mt-3">
+                    <button @click="viewShipment(currentShipment)" class="text-blue-600 hover:text-blue-900 text-sm">{{ $t('shipments.view') }}</button>
+                    <button @click="editShipment(currentShipment)" class="text-primary-600 hover:text-primary-900 text-sm">{{ $t('shipments.edit') }}</button>
+                    <button v-if="currentShipment.status === 'pending' || currentShipment.status === 'preparing'" @click="prepareShipment(currentShipment)" class="text-green-600 hover:text-green-900 text-sm">{{ $t('shipments.prepare') }}</button>
+                    <button v-if="currentShipment.status === 'ready_for_pickup'" @click="shipShipment(currentShipment)" class="text-blue-600 hover:text-blue-900 text-sm">{{ $t('shipments.ship') }}</button>
+                    <button v-if="currentShipment.status === 'in_transit'" @click="deliverShipment(currentShipment)" class="text-green-600 hover:text-green-900 text-sm">{{ $t('shipments.deliver') }}</button>
+                    <button @click="trackShipment(currentShipment)" class="text-purple-600 hover:text-purple-900 text-sm">{{ $t('shipments.track') }}</button>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-between mt-3">
+                <button @click="previousShipment" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+                <button @click="nextShipment" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
+              </div>
+            </div>
           </div>
 
           <!-- Pagination -->
@@ -278,8 +324,8 @@
     </main>
 
     <!-- Add/Edit Shipment Modal -->
-    <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+    <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">
@@ -541,8 +587,8 @@
     </div>
 
     <!-- Shipment Details Modal -->
-    <div v-if="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+    <div v-if="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">
@@ -701,8 +747,8 @@
     </div>
 
     <!-- Tracking Modal -->
-    <div v-if="showTrackingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white">
+    <div v-if="showTrackingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">{{ $t('shipments.track_shipment') }}</h3>
@@ -762,7 +808,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -785,6 +831,12 @@ const editingShipment = ref(null)
 const selectedShipment = ref(null)
 const trackingNumber = ref('')
 const trackingResult = ref(null)
+
+// Mobile carousel state
+const currentShipmentIndex = ref(0)
+const shipTouchStartX = ref(0)
+const shipTouchStartY = ref(0)
+const shipIsDragging = ref(false)
 
 // Pagination
 const currentPage = ref(1)
@@ -841,6 +893,8 @@ const filteredShipments = computed(() => {
 
   return filtered
 })
+
+const currentShipment = computed(() => filteredShipments.value[currentShipmentIndex.value] || null)
 
 const totalPages = computed(() => Math.ceil(totalShipments.value / itemsPerPage.value))
 
@@ -1248,6 +1302,64 @@ function closeModal () {
   }
 }
 
+// Carousel navigation
+function nextShipment () {
+  if (filteredShipments.value.length === 0) return
+  currentShipmentIndex.value = (currentShipmentIndex.value + 1) % filteredShipments.value.length
+}
+
+function previousShipment () {
+  if (filteredShipments.value.length === 0) return
+  currentShipmentIndex.value = (currentShipmentIndex.value - 1 + filteredShipments.value.length) % filteredShipments.value.length
+}
+
+function handleShipTouchStart (e) {
+  const touch = e.touches[0]
+  shipTouchStartX.value = touch.clientX
+  shipTouchStartY.value = touch.clientY
+  shipIsDragging.value = true
+}
+
+function handleShipTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleShipTouchEnd (e) {
+  if (!shipIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - shipTouchStartX.value
+  shipIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextShipment()
+  else if (dx > threshold) previousShipment()
+}
+
+function handleShipMouseDown (e) {
+  shipTouchStartX.value = e.clientX
+  shipTouchStartY.value = e.clientY
+  shipIsDragging.value = true
+}
+
+function handleShipMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleShipMouseUp (e) {
+  if (!shipIsDragging.value) return
+  const dx = e.clientX - shipTouchStartX.value
+  shipIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextShipment()
+  else if (dx > threshold) previousShipment()
+}
+
+// ESC to close modals
+function handleKeydown (event) {
+  if (event.key === 'Escape') {
+    closeModal()
+  }
+}
+
 // Pagination methods
 function goToPage (page) {
   currentPage.value = page
@@ -1278,5 +1390,10 @@ onMounted(() => {
   loadShipments()
   loadOrders()
   loadCustomers()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
 })
 </script>

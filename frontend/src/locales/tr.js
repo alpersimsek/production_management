@@ -24,6 +24,8 @@ export default {
     close: 'Kapat',
     open: 'Aç',
     view: 'Görüntüle',
+    view_all: 'Tümünü Görüntüle',
+    of: '/',
     details: 'Detaylar',
     actions: 'İşlemler',
     status: 'Durum',
@@ -44,7 +46,6 @@ export default {
     refresh: 'Yenile',
     showing: 'Gösterilen',
     to: 'ile',
-    of: 'arası',
     results: 'sonuç',
     user: 'Kullanıcı',
     role: 'Rol',
@@ -55,7 +56,8 @@ export default {
     never: 'Hiç',
     deactivate: 'Pasifleştir',
     activate: 'Aktifleştir',
-    update: 'Güncelle'
+    update: 'Güncelle',
+    start_date: 'Başlangıç Tarihi'
   },
 
   // Navigation
@@ -83,19 +85,62 @@ export default {
     forgot_password: 'Şifremi Unuttum?',
     login_button: 'Giriş Yap',
     login_success: 'Giriş başarılı',
-    login_error: 'Giriş başarısız',
-    logout_success: 'Çıkış başarılı',
+    welcome_message: 'DEMO ERP sisteminize hoş geldiniz',
+    login_subtitle: 'Devam etmek için hesabınıza giriş yapın',
+    email_placeholder: 'E-posta adresinizi girin',
+    password_placeholder: 'Şifrenizi girin',
+    email_required: 'E-posta gereklidir',
+    email_invalid: 'Lütfen geçerli bir e-posta adresi girin',
+    password_required: 'Şifre gereklidir',
+    password_min_length: 'Şifre en az 6 karakter olmalıdır',
     invalid_credentials: 'Geçersiz e-posta veya şifre',
-    session_expired: 'Oturum süresi doldu, lütfen tekrar giriş yapın'
+    login_error: 'Giriş başarısız. Lütfen tekrar deneyin.',
+    logging_in: 'Giriş yapılıyor...',
+    copyright: `© ${new Date().getFullYear()} DEMO ERP. Tüm hakları saklıdır.`,
+    logout_success: 'Çıkış başarılı',
+    session_expired: 'Oturum süresi doldu, lütfen tekrar giriş yapın',
+    demo_users: 'Demo Kullanıcılar',
+    click_to_fill: 'Bilgileri doldurmak için tıklayın',
+    admin_user: 'Yönetici Kullanıcı',
+    manager_user: 'Müdür Kullanıcı',
+    operator_user: 'Operatör Kullanıcı'
   },
 
   // Dashboard
   dashboard: {
     title: 'Panel',
     welcome: 'Hoş Geldiniz',
+    welcome_message: 'DEMO ERP panonuza hoş geldiniz',
+    welcome_user: 'Hoş geldiniz, {name}!',
+    recent_orders: 'Son Siparişler',
+    latest_customer_orders: 'Son müşteri siparişleri',
+    order: 'Sipariş',
+    customer: 'Müşteri',
+    status: 'Durum',
+    amount: 'Tutar',
+    date: 'Tarih',
     quick_actions: 'Hızlı İşlemler',
+    common_tasks: 'Yaygın görevler',
+    production_status: 'Üretim Durumu',
+    current_operations: 'Mevcut operasyonlar',
+    complete: 'tamamlandı',
+    units: 'birim',
+    sales_overview: 'Satış Genel Bakış',
+    monthly_sales_performance: 'Aylık satış performansı',
+    production_efficiency: 'Üretim Verimliliği',
+    manufacturing_performance: 'Üretim performansı',
+    chart_placeholder_sales: 'Grafik yer tutucu - Satış verileri',
+    chart_placeholder_production: 'Grafik yer tutucu - Üretim verileri',
+    total_orders: 'Toplam Siparişler',
+    active_production: 'Aktif Üretim',
+    pending_shipments: 'Bekleyen Sevkiyatlar',
+    revenue: 'Gelir',
+    this_month: 'bu ay',
+    this_week: 'bu hafta',
     new_order: 'Yeni Sipariş',
+    add_customer: 'Müşteri Ekle',
     start_production: 'Üretimi Başlat',
+    view_analytics: 'Analizleri Görüntüle',
     manage_inventory: 'Envanteri Yönet',
     track_shipment: 'Sevkiyatı Takip Et',
     metrics: {
@@ -174,7 +219,12 @@ export default {
     remove: 'Kaldır',
     saving: 'Kaydediliyor...',
     save_order: 'Siparişi Kaydet',
-    order_details: 'Sipariş Detayları'
+    order_details: 'Sipariş Detayları',
+    customer_info: 'Müşteri Bilgileri',
+    more_items: 'daha fazla ürün',
+    unknown_product: 'Bilinmeyen Ürün',
+    showing_order: 'Sipariş gösteriliyor',
+    swipe_hint: 'Kaydırmak için sürükleyin'
   },
   customers: {
     title: 'Müşteriler',
@@ -187,7 +237,7 @@ export default {
     tax_number: 'Vergi Numarası',
     created: 'Oluşturuldu',
     customer_name_placeholder: 'Müşteri adı',
-    email_placeholder: 'musteri@ornek.com',
+    email_placeholder: 'musteri[at]ornek.com',
     phone_placeholder: '+90 555 123 4567',
     address_placeholder: 'Müşteri adresi',
     tax_number_placeholder: '1234567890',
@@ -202,7 +252,14 @@ export default {
     status: {
       active: 'Aktif',
       inactive: 'Pasif'
-    }
+    },
+    showing_customer: 'Müşteri gösteriliyor',
+    swipe_hint: 'Kaydırmak için sürükleyin',
+    no_email: 'E-posta yok',
+    no_phone: 'Telefon yok',
+    no_tax_number: 'Vergi numarası yok',
+    no_orders: 'Sipariş yok',
+    last_order: 'Son Sipariş'
   },
   products: {
     title: 'Ürünler',
@@ -237,7 +294,7 @@ export default {
     types: {
       poset: 'Poşet',
       deterjan: 'Deterjan',
-      al_sat: 'Al-Sat'
+      'al-sat': 'Al-Sat'
     },
     units: {
       kg: 'Kilogram (kg)',
@@ -247,7 +304,15 @@ export default {
     status: {
       active: 'Aktif',
       inactive: 'Pasif'
-    }
+    },
+    showing_product: 'Ürün gösteriliyor',
+    swipe_hint: 'Kaydırmak için sürükleyin',
+    no_unit: 'Birim yok',
+    no_efficiency: 'Verimlilik yok',
+    showing_formula: 'Formül gösteriliyor',
+    valid_from: 'Geçerlilik Başlangıcı',
+    valid_to: 'Geçerlilik Bitişi',
+    no_end_date: 'Bitiş tarihi yok'
   },
   production: {
     title: 'Üretim İşleri',
@@ -258,6 +323,8 @@ export default {
     all_products: 'Tüm Ürünler',
     all_priorities: 'Tüm Öncelikler',
     loading: 'Üretim işleri yükleniyor...',
+    showing_job: 'Gösterilen iş',
+    swipe_hint: 'Geçiş için kaydırın',
     no_jobs_found: 'Üretim işi bulunamadı.',
     job_number: 'İş #',
     product: 'Ürün',
@@ -330,6 +397,8 @@ export default {
     all_products: 'Tüm Ürünler',
     all_priorities: 'Tüm Öncelikler',
     loading: 'Paketleme işleri yükleniyor...',
+    showing_job: 'Gösterilen iş',
+    swipe_hint: 'Geçiş için kaydırın',
     no_jobs_found: 'Paketleme işi bulunamadı.',
     job_number: 'İş #',
     product: 'Ürün',
@@ -540,7 +609,10 @@ export default {
       completed: 'Tamamlandı',
       pending: 'Beklemede',
       failed: 'Başarısız'
-    }
+    },
+    showing_warehouse: 'Depo gösteriliyor',
+    showing_item: 'Öğe gösteriliyor',
+    showing_operation: 'İşlem gösteriliyor'
   },
 
   // Shipments
@@ -577,8 +649,9 @@ export default {
     next: 'Sonraki',
     showing: 'Gösterilen',
     to: 'ile',
-    of: 'arası',
+    of: '/',
     results: 'sonuç',
+    showing_shipment: 'Sevkiyat gösteriliyor',
     shipment_statuses: {
       pending: 'Beklemede',
       preparing: 'Hazırlanıyor',
@@ -781,6 +854,16 @@ export default {
     weekly_weighing: 'Haftalık Tartım',
     waste_threshold: 'Atık Eşiği',
     efficiency_rate: 'Verimlilik Oranı',
+    showing_kpi: 'KPI gösteriliyor',
+    showing_chart: 'Grafik gösteriliyor',
+    showing_tab: 'Sekme gösteriliyor',
+    tab_descriptions: {
+      production: 'Makine kullanımı, kalite metrikleri ve atık yönetimi dahil üretim analitikleri',
+      sales: 'En iyi ürünler ve müşteri analizi dahil satış analitikleri',
+      inventory: 'Stok seviyeleri, devir hızları ve depo performansı dahil envanter analitikleri',
+      financial: 'Maliyet analizi ve karlılık metrikleri dahil finansal analitikler'
+    },
+    view_tab_content: 'Sekme İçeriğini Görüntüle',
     quality_score: 'Kalite Skoru'
   },
 

@@ -61,7 +61,7 @@
             </div>
           </div>
 
-          <!-- Production Jobs Table -->
+          <!-- Production Jobs Table / Cards -->
           <div class="bg-white shadow overflow-hidden sm:rounded-md">
             <div v-if="loading" class="p-6 text-center">
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -72,7 +72,8 @@
               {{ $t('production.no_jobs_found') }}
             </div>
 
-            <div v-else class="overflow-x-auto">
+            <!-- Desktop Table -->
+            <div v-if="productionJobs.length > 0" class="hidden lg:block overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
@@ -208,6 +209,63 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Mobile Cards - Carousel -->
+            <div v-if="productionJobs.length > 0" class="block lg:hidden p-4">
+              <div v-if="filteredJobs.length > 0" class="space-y-3">
+                <!-- Header with counter and nav -->
+                <div class="flex items-center justify-between">
+                  <div class="text-sm text-gray-500">
+                    {{ $t('production.showing_job') }} {{ currentJobIndex + 1 }} {{ $t('common.of') }} {{ filteredJobs.length }}
+                  </div>
+                  <div class="flex space-x-2">
+                    <button @click="previousJob" :disabled="currentJobIndex === 0" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button @click="nextJob" :disabled="currentJobIndex >= filteredJobs.length - 1" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Swipe hint -->
+                <div class="text-center text-xs text-gray-400">{{ $t('production.swipe_hint') }}</div>
+
+                <!-- Card -->
+                <div
+                  v-if="currentJob"
+                  @touchstart.stop="handleJobTouchStart"
+                  @touchmove.prevent.stop="handleJobTouchMove"
+                  @touchend.stop="handleJobTouchEnd"
+                  @mousedown="handleJobMouseDown"
+                  @mousemove="handleJobMouseMove"
+                  @mouseup="handleJobMouseUp"
+                  @mouseleave="handleJobMouseUp"
+                  class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 select-none cursor-grab active:cursor-grabbing"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-base font-semibold text-gray-900">#{{ currentJob.job_number }}</h3>
+                    <span :class="getStatusColor(currentJob.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ $t('production.status.' + currentJob.status) }}</span>
+                  </div>
+                  <div class="grid grid-cols-1 gap-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('production.product') }}:</span><span class="text-gray-900">{{ currentJob.product_name }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('production.order') }}:</span><span class="text-gray-900">{{ currentJob.order_number }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('common.quantity') }}:</span><span class="text-gray-900">{{ currentJob.quantity }} {{ currentJob.unit }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('production.priority_label') }}:</span><span :class="getPriorityColor(currentJob.priority)" class="px-2 py-0.5 rounded text-xs font-medium">{{ $t('production.priority.' + currentJob.priority) }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('common.start_date') }}:</span><span class="text-gray-900">{{ currentJob.start_date }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('production.expected_end_date') }}:</span><span class="text-gray-900">{{ currentJob.expected_end_date }}</span></div>
+                  </div>
+                  <div class="flex justify-end space-x-2 mt-3 pt-3 border-t border-gray-100">
+                    <button @click="viewJob(currentJob)" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">{{ $t('common.view') }}</button>
+                    <button @click="editJob(currentJob)" class="px-3 py-1 text-sm bg-primary-600 text-white rounded-md hover:bg-primary-700">{{ $t('common.edit') }}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Pagination -->
@@ -278,8 +336,8 @@
     </main>
 
     <!-- Add/Edit Production Job Modal -->
-    <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+    <div v-if="showAddModal || showEditModal" @click="closeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div @click.stop class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">
@@ -511,8 +569,8 @@
     </div>
 
     <!-- Job Details Modal -->
-    <div v-if="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+    <div v-if="showDetailsModal" @click="showDetailsModal = false" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div @click.stop class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">
@@ -686,6 +744,13 @@ const showEditModal = ref(false)
 const showDetailsModal = ref(false)
 const editingJob = ref(null)
 const selectedJob = ref(null)
+// ESC key to close modals
+function handleKeydown (event) {
+  if (event.key === 'Escape') {
+    if (showAddModal.value || showEditModal.value) closeModal()
+    if (showDetailsModal.value) showDetailsModal.value = false
+  }
+}
 
 // Pagination
 const currentPage = ref(1)
@@ -738,6 +803,86 @@ const filteredJobs = computed(() => {
 
   return filtered
 })
+
+// Mobile carousel computed/state
+const currentJobIndex = ref(0)
+const currentJob = computed(() => filteredJobs.value[currentJobIndex.value] || null)
+
+// Touch state for swipe
+const jobTouchStartX = ref(0)
+const jobTouchStartY = ref(0)
+const jobIsDragging = ref(false)
+// end coords not required; using deltas directly
+
+function nextJob () {
+  if (currentJobIndex.value < filteredJobs.value.length - 1) currentJobIndex.value++
+}
+function previousJob () {
+  if (currentJobIndex.value > 0) currentJobIndex.value--
+}
+function handleJobTouchStart (e) {
+  const t = e.touches[0]
+  jobTouchStartX.value = t.clientX
+  jobTouchStartY.value = t.clientY
+  jobIsDragging.value = false
+}
+function handleJobTouchMove (e) {
+  if (!jobTouchStartX.value && !jobTouchStartY.value) return
+  const t = e.touches[0]
+  const dx = t.clientX - jobTouchStartX.value
+  const dy = t.clientY - jobTouchStartY.value
+  if (Math.abs(dx) > Math.abs(dy)) {
+    jobIsDragging.value = true
+    e.preventDefault()
+  }
+}
+function handleJobTouchEnd (e) {
+  if (!jobIsDragging.value) return
+  const t = e.changedTouches[0]
+  const dx = t.clientX - jobTouchStartX.value
+  if (Math.abs(dx) > 50) {
+    if (dx > 0) {
+      previousJob()
+    } else {
+      nextJob()
+    }
+  }
+  jobTouchStartX.value = 0
+  jobTouchStartY.value = 0
+  jobIsDragging.value = false
+}
+
+// Mouse drag (desktop parity like Products)
+function handleJobMouseDown (e) {
+  jobTouchStartX.value = e.clientX
+  jobTouchStartY.value = e.clientY
+  jobIsDragging.value = false
+}
+function handleJobMouseMove (e) {
+  if (!jobTouchStartX.value && !jobTouchStartY.value) return
+  const dx = e.clientX - jobTouchStartX.value
+  const dy = e.clientY - jobTouchStartY.value
+  if (Math.abs(dx) > Math.abs(dy)) jobIsDragging.value = true
+}
+function handleJobMouseUp (e) {
+  if (!jobIsDragging.value) return
+  const dx = e.clientX - jobTouchStartX.value
+  if (Math.abs(dx) > 50) {
+    if (dx > 0) {
+      previousJob()
+    } else {
+      nextJob()
+    }
+  }
+  jobTouchStartX.value = 0
+  jobTouchStartY.value = 0
+  jobIsDragging.value = false
+}
+
+// Reset index on filters
+watch([searchQuery, statusFilter, productFilter, priorityFilter], () => { currentJobIndex.value = 0 })
+
+// Minimal modal closer kept earlier was duplicate; consolidated below
 
 const totalPages = computed(() => Math.ceil(totalJobs.value / itemsPerPage.value))
 
@@ -1208,5 +1353,6 @@ onMounted(() => {
   loadMachines()
   loadOperators()
   loadFormulas()
+  document.addEventListener('keydown', handleKeydown)
 })
 </script>

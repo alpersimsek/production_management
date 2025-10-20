@@ -138,3 +138,4 @@ When integrating with the backend API, ensure:
 - Session management is properly implemented
 - Password hashing is secure (bcrypt recommended)
 
+

@@ -14,13 +14,24 @@ from app.models import *
 
 config = context.config
 if config.get_main_option('sqlalchemy.url', default=None) is None:
-    # Use environment variable or default
-    database_url = os.getenv('DATABASE_URL', 'postgresql+psycopg://olgahan:olgahan@localhost:5433/olgahan')
-    config.set_main_option('sqlalchemy.url', database_url)
+    from app.config import settings as app_settings
+    config.set_main_option('sqlalchemy.url', app_settings.DATABASE_URL)
 
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
 fileConfig(config.config_file_name)
 
+# add your model's MetaData object here
+# for 'autogenerate' support
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
+
 
 def run_migrations_offline():
     url = config.get_main_option("sqlalchemy.url")

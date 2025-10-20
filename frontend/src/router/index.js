@@ -19,7 +19,7 @@ const router = createRouter({
     { path: '/login', name: 'login', component: Login },
     {
       path: '/',
-      component: () => import('@/layouts/DefaultLayout.vue'),
+      component: () => import('@/components/layout/AppLayout.vue'),
       beforeEnter: authGuard,
       children: [
         { path: '', redirect: { name: 'dashboard' } },

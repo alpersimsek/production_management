@@ -26,7 +26,8 @@
       <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
           <!-- KPI Cards -->
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <!-- Desktop Grid -->
+          <div class="hidden lg:grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
             <div class="bg-white overflow-hidden shadow rounded-lg">
               <div class="p-5">
                 <div class="flex items-center">
@@ -128,8 +129,49 @@
             </div>
           </div>
 
+          <!-- Mobile KPI Carousel -->
+          <div class="block lg:hidden mb-8">
+            <div class="text-sm text-gray-500 mb-2 text-center">
+              {{ $t('analytics.showing_kpi') }} {{ currentKpiIndex + 1 }} {{ $t('common.of') }} {{ kpiCards.length }} — {{ $t('orders.swipe_hint') }}
+            </div>
+            <div
+              class="bg-white overflow-hidden shadow rounded-lg select-none"
+              @touchstart.passive="handleKpiTouchStart"
+              @touchmove.prevent="handleKpiTouchMove"
+              @touchend="handleKpiTouchEnd"
+            >
+              <div class="p-5" v-if="currentKpiCard">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <svg class="h-6 w-6" :class="currentKpiCard.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="currentKpiCard.iconPath"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">{{ currentKpiCard.title }}</dt>
+                      <dd class="flex items-baseline">
+                        <div class="text-2xl font-semibold text-gray-900">
+                          {{ currentKpiCard.value }}
+                        </div>
+                        <div class="ml-2 flex items-baseline text-sm font-semibold" :class="currentKpiCard.growthColor">
+                          +{{ currentKpiCard.growth }}%
+                        </div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between mt-3">
+              <button @click="previousKpi" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+              <button @click="nextKpi" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
+            </div>
+          </div>
+
           <!-- Charts Section -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <!-- Desktop Charts -->
+          <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Revenue Chart -->
             <div class="bg-white shadow rounded-lg p-6">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Revenue Trend</h3>
@@ -161,9 +203,42 @@
             </div>
           </div>
 
+          <!-- Mobile Charts Carousel -->
+          <div class="block lg:hidden mb-8">
+            <div class="text-sm text-gray-500 mb-2 text-center">
+              {{ $t('analytics.showing_chart') }} {{ currentChartIndex + 1 }} {{ $t('common.of') }} {{ charts.length }} — {{ $t('orders.swipe_hint') }}
+            </div>
+            <div
+              class="bg-white shadow rounded-lg select-none"
+              @touchstart.passive="handleChartTouchStart"
+              @touchmove.prevent="handleChartTouchMove"
+              @touchend="handleChartTouchEnd"
+            >
+              <div class="p-6" v-if="currentChart">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ currentChart.title }}</h3>
+                <div class="h-64 flex items-end justify-between space-x-2">
+                  <div v-for="(value, index) in currentChart.data" :key="index" class="flex flex-col items-center">
+                    <div
+                      class="rounded-t"
+                      :class="currentChart.barColor"
+                      :style="{ height: (value / Math.max(...currentChart.data)) * 200 + 'px', width: '20px' }"
+                    ></div>
+                    <span class="text-xs text-gray-500 mt-2">{{ currentChart.formatValue(value) }}</span>
+                    <span class="text-xs text-gray-400">{{ getMonthName(index) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between mt-3">
+              <button @click="previousChart" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+              <button @click="nextChart" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
+            </div>
+          </div>
+
           <!-- Detailed Analytics Tabs -->
           <div class="bg-white shadow rounded-lg">
-            <div class="border-b border-gray-200">
+            <!-- Desktop Tabs -->
+            <div class="hidden lg:block border-b border-gray-200">
               <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
                 <button
                   v-for="tab in analyticsTabs"
@@ -181,10 +256,86 @@
               </nav>
             </div>
 
+            <!-- Mobile Tab Carousel -->
+            <div class="block lg:hidden border-b border-gray-200">
+              <div class="text-sm text-gray-500 mb-2 text-center px-6 pt-4">
+                {{ $t('analytics.showing_tab') }} {{ currentTabIndex + 1 }} {{ $t('common.of') }} {{ analyticsTabs.length }} — {{ $t('orders.swipe_hint') }}
+              </div>
+              <div
+                class="px-6 pb-4 select-none"
+                @touchstart.passive="handleTabTouchStart"
+                @touchmove.prevent="handleTabTouchMove"
+                @touchend="handleTabTouchEnd"
+              >
+                <div class="bg-primary-50 border border-primary-200 rounded-lg p-4" v-if="currentTab">
+                  <h3 class="text-lg font-medium text-primary-900 mb-2">{{ currentTab.name }}</h3>
+                  <p class="text-sm text-primary-700 mb-3">{{ $t(`analytics.tab_descriptions.${currentTab.id}`) }}</p>
+                  <button
+                    @click="activeTab = currentTab.id"
+                    class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    {{ $t('analytics.view_tab_content') }}
+                  </button>
+                </div>
+              </div>
+              <div class="flex justify-between px-6 pb-4">
+                <button @click="previousTab" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+                <button @click="nextTab" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
+              </div>
+            </div>
+
             <div class="p-6">
               <!-- Production Analytics -->
               <div v-if="activeTab === 'production'" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Desktop Grid -->
+                <div class="hidden lg:grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Machine Utilization</h4>
+                    <div class="space-y-2">
+                      <div v-for="machine in machineUtilization" :key="machine.name" class="flex justify-between">
+                        <span class="text-sm text-gray-600">{{ machine.name }}</span>
+                        <span class="text-sm font-medium">{{ machine.utilization }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Quality Metrics</h4>
+                    <div class="space-y-2">
+                      <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Pass Rate</span>
+                        <span class="text-sm font-medium text-green-600">{{ qualityMetrics.passRate }}%</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Defect Rate</span>
+                        <span class="text-sm font-medium text-red-600">{{ qualityMetrics.defectRate }}%</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Rework Rate</span>
+                        <span class="text-sm font-medium text-yellow-600">{{ qualityMetrics.reworkRate }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Waste Management</h4>
+                    <div class="space-y-2">
+                      <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Total Waste</span>
+                        <span class="text-sm font-medium">{{ wasteMetrics.totalWaste }}kg</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Recycled</span>
+                        <span class="text-sm font-medium text-green-600">{{ wasteMetrics.recycled }}kg</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Disposed</span>
+                        <span class="text-sm font-medium text-red-600">{{ wasteMetrics.disposed }}kg</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mobile Production Cards -->
+                <div class="block lg:hidden space-y-4">
                   <div class="bg-gray-50 p-4 rounded-lg">
                     <h4 class="text-sm font-medium text-gray-900 mb-2">Machine Utilization</h4>
                     <div class="space-y-2">
@@ -364,11 +515,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 
 // Data
 const selectedPeriod = ref('30')
 const activeTab = ref('production')
+
+// Carousel indices
+const currentKpiIndex = ref(0)
+const currentChartIndex = ref(0)
+const currentTabIndex = ref(0)
+
+// Touch/Mouse handling
+const kpiTouchStartX = ref(0)
+const kpiTouchStartY = ref(0)
+const kpiIsDragging = ref(false)
+const chartTouchStartX = ref(0)
+const chartTouchStartY = ref(0)
+const chartIsDragging = ref(false)
+const tabTouchStartX = ref(0)
+const tabTouchStartY = ref(0)
+const tabIsDragging = ref(false)
 
 // KPI Data
 const totalRevenue = ref(1250000)
@@ -391,6 +558,278 @@ const analyticsTabs = ref([
   { id: 'inventory', name: 'Inventory' },
   { id: 'financial', name: 'Financial' }
 ])
+
+// Computed properties for carousels
+const kpiCards = computed(() => [
+  {
+    title: 'Total Revenue',
+    value: `₺${formatNumber(totalRevenue.value)}`,
+    growth: revenueGrowth.value,
+    growthColor: 'text-green-600',
+    iconColor: 'text-green-400',
+    iconPath: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1'
+  },
+  {
+    title: 'Orders Completed',
+    value: completedOrders.value.toString(),
+    growth: ordersGrowth.value,
+    growthColor: 'text-blue-600',
+    iconColor: 'text-blue-400',
+    iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'
+  },
+  {
+    title: 'Production Efficiency',
+    value: `${productionEfficiency.value}%`,
+    growth: efficiencyGrowth.value,
+    growthColor: 'text-purple-600',
+    iconColor: 'text-purple-400',
+    iconPath: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'
+  },
+  {
+    title: 'Inventory Value',
+    value: `₺${formatNumber(inventoryValue.value)}`,
+    growth: inventoryGrowth.value,
+    growthColor: 'text-orange-600',
+    iconColor: 'text-orange-400',
+    iconPath: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
+  }
+])
+
+const charts = computed(() => [
+  {
+    title: 'Revenue Trend',
+    data: revenueData.value,
+    barColor: 'bg-primary-500',
+    formatValue: (value) => formatNumber(value)
+  },
+  {
+    title: 'Production Output',
+    data: productionData.value,
+    barColor: 'bg-green-500',
+    formatValue: (value) => `${value}kg`
+  }
+])
+
+const currentKpiCard = computed(() => kpiCards.value[currentKpiIndex.value])
+const currentChart = computed(() => charts.value[currentChartIndex.value])
+const currentTab = computed(() => analyticsTabs.value[currentTabIndex.value])
+
+// Carousel navigation
+function nextKpi () {
+  currentKpiIndex.value = (currentKpiIndex.value + 1) % kpiCards.value.length
+}
+
+function previousKpi () {
+  currentKpiIndex.value = currentKpiIndex.value === 0 ? kpiCards.value.length - 1 : currentKpiIndex.value - 1
+}
+
+function nextChart () {
+  currentChartIndex.value = (currentChartIndex.value + 1) % charts.value.length
+}
+
+function previousChart () {
+  currentChartIndex.value = currentChartIndex.value === 0 ? charts.value.length - 1 : currentChartIndex.value - 1
+}
+
+function nextTab () {
+  currentTabIndex.value = (currentTabIndex.value + 1) % analyticsTabs.value.length
+}
+
+function previousTab () {
+  currentTabIndex.value = currentTabIndex.value === 0 ? analyticsTabs.value.length - 1 : currentTabIndex.value - 1
+}
+
+// Touch/Mouse handlers for KPI
+function handleKpiTouchStart (event) {
+  kpiTouchStartX.value = event.touches[0].clientX
+  kpiTouchStartY.value = event.touches[0].clientY
+  kpiIsDragging.value = false
+}
+
+function handleKpiTouchMove (event) {
+  if (!kpiIsDragging.value) {
+    const deltaX = Math.abs(event.touches[0].clientX - kpiTouchStartX.value)
+    const deltaY = Math.abs(event.touches[0].clientY - kpiTouchStartY.value)
+    if (deltaX > deltaY && deltaX > 10) {
+      kpiIsDragging.value = true
+    }
+  }
+}
+
+function handleKpiTouchEnd (event) {
+  if (kpiIsDragging.value) {
+    const deltaX = event.changedTouches[0].clientX - kpiTouchStartX.value
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        previousKpi()
+      } else {
+        nextKpi()
+      }
+    }
+  }
+  kpiIsDragging.value = false
+}
+
+function handleKpiMouseDown (event) {
+  kpiTouchStartX.value = event.clientX
+  kpiTouchStartY.value = event.clientY
+  kpiIsDragging.value = false
+}
+
+function handleKpiMouseMove (event) {
+  if (!kpiIsDragging.value) {
+    const deltaX = Math.abs(event.clientX - kpiTouchStartX.value)
+    const deltaY = Math.abs(event.clientY - kpiTouchStartY.value)
+    if (deltaX > deltaY && deltaX > 10) {
+      kpiIsDragging.value = true
+    }
+  }
+}
+
+function handleKpiMouseUp (event) {
+  if (kpiIsDragging.value) {
+    const deltaX = event.clientX - kpiTouchStartX.value
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        previousKpi()
+      } else {
+        nextKpi()
+      }
+    }
+  }
+  kpiIsDragging.value = false
+}
+
+// Touch/Mouse handlers for Charts
+function handleChartTouchStart (event) {
+  chartTouchStartX.value = event.touches[0].clientX
+  chartTouchStartY.value = event.touches[0].clientY
+  chartIsDragging.value = false
+}
+
+function handleChartTouchMove (event) {
+  if (!chartIsDragging.value) {
+    const deltaX = Math.abs(event.touches[0].clientX - chartTouchStartX.value)
+    const deltaY = Math.abs(event.touches[0].clientY - chartTouchStartY.value)
+    if (deltaX > deltaY && deltaX > 10) {
+      chartIsDragging.value = true
+    }
+  }
+}
+
+function handleChartTouchEnd (event) {
+  if (chartIsDragging.value) {
+    const deltaX = event.changedTouches[0].clientX - chartTouchStartX.value
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        previousChart()
+      } else {
+        nextChart()
+      }
+    }
+  }
+  chartIsDragging.value = false
+}
+
+function handleChartMouseDown (event) {
+  chartTouchStartX.value = event.clientX
+  chartTouchStartY.value = event.clientY
+  chartIsDragging.value = false
+}
+
+function handleChartMouseMove (event) {
+  if (!chartIsDragging.value) {
+    const deltaX = Math.abs(event.clientX - chartTouchStartX.value)
+    const deltaY = Math.abs(event.clientY - chartTouchStartY.value)
+    if (deltaX > deltaY && deltaX > 10) {
+      chartIsDragging.value = true
+    }
+  }
+}
+
+function handleChartMouseUp (event) {
+  if (chartIsDragging.value) {
+    const deltaX = event.clientX - chartTouchStartX.value
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        previousChart()
+      } else {
+        nextChart()
+      }
+    }
+  }
+  chartIsDragging.value = false
+}
+
+// Touch/Mouse handlers for Tabs
+function handleTabTouchStart (event) {
+  tabTouchStartX.value = event.touches[0].clientX
+  tabTouchStartY.value = event.touches[0].clientY
+  tabIsDragging.value = false
+}
+
+function handleTabTouchMove (event) {
+  if (!tabIsDragging.value) {
+    const deltaX = Math.abs(event.touches[0].clientX - tabTouchStartX.value)
+    const deltaY = Math.abs(event.touches[0].clientY - tabTouchStartY.value)
+    if (deltaX > deltaY && deltaX > 10) {
+      tabIsDragging.value = true
+    }
+  }
+}
+
+function handleTabTouchEnd (event) {
+  if (tabIsDragging.value) {
+    const deltaX = event.changedTouches[0].clientX - tabTouchStartX.value
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        previousTab()
+      } else {
+        nextTab()
+      }
+    }
+  }
+  tabIsDragging.value = false
+}
+
+function handleTabMouseDown (event) {
+  tabTouchStartX.value = event.clientX
+  tabTouchStartY.value = event.clientY
+  tabIsDragging.value = false
+}
+
+function handleTabMouseMove (event) {
+  if (!tabIsDragging.value) {
+    const deltaX = Math.abs(event.clientX - tabTouchStartX.value)
+    const deltaY = Math.abs(event.clientY - tabTouchStartY.value)
+    if (deltaX > deltaY && deltaX > 10) {
+      tabIsDragging.value = true
+    }
+  }
+}
+
+function handleTabMouseUp (event) {
+  if (tabIsDragging.value) {
+    const deltaX = event.clientX - tabTouchStartX.value
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        previousTab()
+      } else {
+        nextTab()
+      }
+    }
+  }
+  tabIsDragging.value = false
+}
+
+// ESC key handler
+function handleKeydown (event) {
+  if (event.key === 'Escape') {
+    // Close any modals if they exist
+    // For now, just prevent default behavior
+    event.preventDefault()
+  }
+}
 
 // Production Analytics
 const machineUtilization = ref([
@@ -477,5 +916,10 @@ function exportReport () {
 // Lifecycle
 onMounted(() => {
   // Load analytics data
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>

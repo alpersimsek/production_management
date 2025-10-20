@@ -1,9 +1,20 @@
 <template>
   <div class="language-switcher">
+    <!-- Mobile: Icon Only -->
     <select
       :value="currentLanguage"
       @change="changeLanguage"
-      class="bg-primary-600 text-white text-sm rounded px-2 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-primary-300"
+      class="lg:hidden bg-transparent text-secondary-600 text-sm rounded px-1 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-primary-300 w-8 h-8 flex items-center justify-center"
+    >
+      <option value="en">🇺🇸</option>
+      <option value="tr">🇹🇷</option>
+    </select>
+
+    <!-- Desktop: Full Text -->
+    <select
+      :value="currentLanguage"
+      @change="changeLanguage"
+      class="hidden lg:block bg-primary-600 text-white text-sm rounded px-2 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-primary-300"
     >
       <option value="en">🇺🇸 English</option>
       <option value="tr">🇹🇷 Türkçe</option>
@@ -38,5 +49,13 @@ function changeLanguage (event) {
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
+}
+
+/* Mobile icon-only style */
+.language-switcher select.lg\:hidden {
+  background-image: none;
+  padding-right: 0.25rem;
+  padding-left: 0.25rem;
+  font-size: 1rem;
 }
 </style>

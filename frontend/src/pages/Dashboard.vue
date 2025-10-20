@@ -1,163 +1,372 @@
 <template>
-  <div>
-    <header class="bg-white shadow">
-      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                <h1 class="text-3xl font-bold text-gray-900">{{ $t('dashboard.title') }}</h1>
+  <div class="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-10 -right-10 w-16 h-16 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-primary-100 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+      <div class="absolute -bottom-10 -left-10 w-16 h-16 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-secondary-100 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div class="absolute top-10 left-10 w-16 h-16 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-success-100 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 p-2 sm:p-4 lg:p-6">
+      <!-- Welcome Header -->
+      <div class="mb-3 sm:mb-4 lg:mb-6">
+        <div class="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg border border-white/30 p-3 sm:p-4 lg:p-6">
+          <div class="text-center sm:text-left">
+            <h1 class="text-base sm:text-lg lg:text-xl font-bold text-secondary-900 mb-1">
+              {{ $t('dashboard.welcome_user', { name: authStore.user?.full_name || authStore.user?.email || 'User' }) }}
+            </h1>
+            <p class="text-xs sm:text-sm text-secondary-600">
+              {{ currentDateTime }}
+            </p>
+          </div>
+        </div>
       </div>
-    </header>
 
-    <main>
-      <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-          <div class="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ $t('dashboard.welcome') }}, {{ authStore.user?.full_name || authStore.user?.email }}!</h2>
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4 lg:mb-6">
+        <div
+          v-for="(stat, index) in stats"
+          :key="stat.name"
+          class="group bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-md border border-white/30 p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all duration-200"
+          :style="{ animationDelay: `${index * 50}ms` }"
+        >
+          <div class="text-center">
+            <div :class="stat.iconBg" class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <component :is="stat.icon" :class="stat.iconColor" class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            </div>
+            <p class="text-xs sm:text-sm font-medium text-secondary-600 mb-1 truncate">{{ stat.name }}</p>
+            <p class="text-lg sm:text-xl lg:text-2xl font-bold text-secondary-900 mb-1">{{ stat.value }}</p>
+            <div :class="stat.changeColor" class="flex items-center justify-center text-xs font-medium">
+              <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+              </svg>
+              {{ stat.change }}
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Metrics Cards -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-              <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                      <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">{{ $t('dashboard.metrics.orders') }}</dt>
-                        <dd class="flex items-baseline">
-                          <div class="text-2xl font-semibold text-gray-900">
-                            24
-                          </div>
-                          <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                            +10%
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
-                </div>
+      <!-- Main Content -->
+      <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+        <!-- Recent Orders -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg border border-white/30 overflow-hidden">
+          <div class="p-3 sm:p-4 lg:p-6 border-b border-secondary-200/50">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h3 class="text-sm sm:text-base lg:text-lg font-bold text-secondary-900">{{ $t('dashboard.recent_orders') }}</h3>
+                <p class="text-xs sm:text-sm text-secondary-600">{{ $t('dashboard.latest_customer_orders') }}</p>
               </div>
-
-              <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">{{ $t('dashboard.metrics.production_jobs') }}</dt>
-                        <dd class="flex items-baseline">
-                          <div class="text-2xl font-semibold text-gray-900">
-                            12
-                          </div>
-                          <div class="ml-2 flex items-baseline text-sm font-semibold text-red-600">
-                            -5%
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                class="text-xs"
+                @click="router.push('/orders')"
+              >
+                {{ $t('common.view_all') }}
+              </BaseButton>
+            </div>
+          </div>
+          <div class="p-3 sm:p-4 lg:p-6">
+            <!-- Mobile Card Layout -->
+            <div class="space-y-2 sm:space-y-3">
+              <div
+                v-for="(order, index) in recentOrders.slice(0, 3)"
+                :key="order.id"
+                class="bg-gradient-to-r from-secondary-50/50 to-secondary-100/50 rounded-lg p-3 border border-secondary-200/50"
+                :style="{ animationDelay: `${index * 50}ms` }"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold text-secondary-900">#{{ order.id }}</p>
+                    <p class="text-xs text-secondary-600 truncate">{{ order.customer }}</p>
                   </div>
+                  <span :class="getStatusClasses(order.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ml-2">
+                    {{ order.status }}
+                  </span>
                 </div>
-              </div>
-
-              <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">{{ $t('dashboard.metrics.inventory_items') }}</dt>
-                        <dd class="flex items-baseline">
-                          <div class="text-2xl font-semibold text-gray-900">
-                            156
-                          </div>
-                          <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                            +20%
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                      <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0-8H8m-4 0h.01M16 4v8m0-8h-2m-4 6h4m-4 4h4m-6 0h.01"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">{{ $t('dashboard.metrics.shipments') }}</dt>
-                        <dd class="flex items-baseline">
-                          <div class="text-2xl font-semibold text-gray-900">
-                            8
-                          </div>
-                          <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                            +15%
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
+                <div class="flex justify-between items-center">
+                  <p class="text-sm font-semibold text-secondary-900">₺{{ order.amount.toLocaleString() }}</p>
+                  <p class="text-xs text-secondary-600">{{ formatDate(order.date) }}</p>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Quick Actions -->
-            <div class="mb-8">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">{{ $t('dashboard.quick_actions') }}</h3>
-              <div class="flex flex-wrap gap-4">
-                <router-link to="/orders" class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">
-                  {{ $t('dashboard.new_order') }}
-                </router-link>
-                <router-link to="/production-jobs" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">
-                  {{ $t('dashboard.start_production') }}
-                </router-link>
-                <router-link to="/warehouses" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">
-                  {{ $t('dashboard.manage_inventory') }}
-                </router-link>
-                <router-link to="/shipments" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">
-                  {{ $t('dashboard.track_shipment') }}
-                </router-link>
+        <!-- Quick Actions -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg border border-white/30 overflow-hidden">
+          <div class="p-3 sm:p-4 lg:p-6 border-b border-secondary-200/50">
+            <h3 class="text-sm sm:text-base lg:text-lg font-bold text-secondary-900">{{ $t('dashboard.quick_actions') }}</h3>
+            <p class="text-xs sm:text-sm text-secondary-600">{{ $t('dashboard.common_tasks') }}</p>
+          </div>
+          <div class="p-3 sm:p-4 lg:p-6">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
+              <BaseButton
+                v-for="(action, index) in quickActions.slice(0, 4)"
+                :key="action.name"
+                :variant="action.variant"
+                :icon="action.icon"
+                full-width
+                size="sm"
+                class="group hover:scale-105 transition-transform duration-200 text-xs sm:text-sm py-2"
+                :style="{ animationDelay: `${index * 50}ms` }"
+                @click="action.action"
+              >
+                {{ action.name }}
+              </BaseButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- Production Status -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg border border-white/30 overflow-hidden">
+          <div class="p-3 sm:p-4 lg:p-6 border-b border-secondary-200/50">
+            <h3 class="text-sm sm:text-base lg:text-lg font-bold text-secondary-900">{{ $t('dashboard.production_status') }}</h3>
+            <p class="text-xs sm:text-sm text-secondary-600">{{ $t('dashboard.current_operations') }}</p>
+          </div>
+          <div class="p-3 sm:p-4 lg:p-6">
+            <div class="space-y-3">
+              <div
+                v-for="(job, index) in productionJobs"
+                :key="job.id"
+                class="bg-gradient-to-r from-secondary-50/50 to-secondary-100/50 rounded-lg p-3 border border-secondary-200/50"
+                :style="{ animationDelay: `${index * 50}ms` }"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center flex-1">
+                    <div class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-success-500 mr-2 animate-pulse"></div>
+                    <div class="flex-1">
+                      <p class="text-xs sm:text-sm font-semibold text-secondary-900 truncate">{{ job.name }}</p>
+                      <p class="text-xs text-secondary-600">{{ job.progress }}% {{ $t('dashboard.complete') }}</p>
+                    </div>
+                  </div>
+                  <div class="text-right ml-2">
+                    <p class="text-xs sm:text-sm font-bold text-secondary-900">{{ job.quantity }}</p>
+                    <p class="text-xs text-secondary-600">{{ $t('dashboard.units') }}</p>
+                  </div>
+                </div>
+                <div class="w-full bg-secondary-200 rounded-full h-1.5 sm:h-2">
+                  <div
+                    class="bg-gradient-to-r from-success-500 to-success-600 h-1.5 sm:h-2 rounded-full transition-all duration-1000"
+                    :style="{ width: `${job.progress}%` }"
+                  ></div>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Recent Activity -->
-            <div class="mb-8">
-              <h3 class="text-xl font-semibold text-gray-800 mb-3">{{ $t('dashboard.recent_activity') }}</h3>
-              <div class="bg-white rounded-lg shadow p-4">
-                <div class="space-y-3">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span class="text-sm text-gray-600">{{ $t('dashboard.activity.order_created', { orderNumber: '#ORD-20241201-0001' }) }}</span>
-                    <span class="text-xs text-gray-400">{{ $t('dashboard.time.hours_ago', { hours: 2 }) }}</span>
-                  </div>
-                  <div class="flex items-center space-x-3">
-                    <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span class="text-sm text-gray-600">{{ $t('dashboard.activity.production_started', { jobNumber: '#PJ-001' }) }}</span>
-                    <span class="text-xs text-gray-400">{{ $t('dashboard.time.hours_ago', { hours: 4 }) }}</span>
-                  </div>
-                  <div class="flex items-center space-x-3">
-                    <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <span class="text-sm text-gray-600">{{ $t('dashboard.activity.receipt_approved', { receiptNumber: '#WR-001' }) }}</span>
-                    <span class="text-xs text-gray-400">{{ $t('dashboard.time.hours_ago', { hours: 6 }) }}</span>
-                  </div>
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+          <div class="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg border border-white/30 overflow-hidden">
+            <div class="p-3 sm:p-4 lg:p-6 border-b border-secondary-200/50">
+              <h3 class="text-sm sm:text-base lg:text-lg font-bold text-secondary-900">{{ $t('dashboard.sales_overview') }}</h3>
+              <p class="text-xs sm:text-sm text-secondary-600">{{ $t('dashboard.monthly_sales_performance') }}</p>
+            </div>
+            <div class="p-3 sm:p-4 lg:p-6">
+              <div class="h-24 sm:h-32 lg:h-40 xl:h-48 flex items-center justify-center bg-gradient-to-br from-primary-50/50 to-primary-100/50 rounded-lg border border-primary-200/50">
+                <div class="text-center">
+                  <svg class="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-primary-400 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <p class="text-xs sm:text-sm text-secondary-500">{{ $t('dashboard.chart_placeholder_sales') }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg border border-white/30 overflow-hidden">
+            <div class="p-3 sm:p-4 lg:p-6 border-b border-secondary-200/50">
+              <h3 class="text-sm sm:text-base lg:text-lg font-bold text-secondary-900">{{ $t('dashboard.production_efficiency') }}</h3>
+              <p class="text-xs sm:text-sm text-secondary-600">{{ $t('dashboard.manufacturing_performance') }}</p>
+            </div>
+            <div class="p-3 sm:p-4 lg:p-6">
+              <div class="h-24 sm:h-32 lg:h-40 xl:h-48 flex items-center justify-center bg-gradient-to-br from-success-50/50 to-success-100/50 rounded-lg border border-success-200/50">
+                <div class="text-center">
+                  <svg class="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-success-400 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <p class="text-xs sm:text-sm text-secondary-500">{{ $t('dashboard.chart_placeholder_production') }}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/store/auth'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
+const router = useRouter()
+const { t } = useI18n()
 const authStore = useAuthStore()
+
+// Current date and time
+const currentDateTime = computed(() => {
+  return new Intl.DateTimeFormat('tr-TR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date())
+})
+
+// Stats data
+const stats = ref([
+  {
+    name: t('dashboard.total_orders'),
+    value: '1,234',
+    change: '+12%',
+    changeColor: 'text-success-600',
+    period: t('dashboard.this_month'),
+    icon: 'DocumentTextIcon',
+    iconBg: 'bg-primary-100',
+    iconColor: 'text-primary-600'
+  },
+  {
+    name: t('dashboard.active_production'),
+    value: '8',
+    change: '+2%',
+    changeColor: 'text-success-600',
+    period: t('dashboard.this_week'),
+    icon: 'CogIcon',
+    iconBg: 'bg-success-100',
+    iconColor: 'text-success-600'
+  },
+  {
+    name: t('dashboard.pending_shipments'),
+    value: '23',
+    change: '-5%',
+    changeColor: 'text-error-600',
+    period: t('dashboard.this_week'),
+    icon: 'TruckIcon',
+    iconBg: 'bg-warning-100',
+    iconColor: 'text-warning-600'
+  },
+  {
+    name: t('dashboard.revenue'),
+    value: '₺2.4M',
+    change: '+18%',
+    changeColor: 'text-success-600',
+    period: t('dashboard.this_month'),
+    icon: 'CurrencyDollarIcon',
+    iconBg: 'bg-secondary-100',
+    iconColor: 'text-secondary-600'
+  }
+])
+
+// Recent orders data
+const recentOrders = ref([
+  {
+    id: 'ORD-001',
+    customer: 'ABC Kimya Ltd.',
+    status: 'Processing',
+    amount: 45000,
+    date: new Date('2024-01-15')
+  },
+  {
+    id: 'ORD-002',
+    customer: 'XYZ Deterjan A.Ş.',
+    status: 'Shipped',
+    amount: 32000,
+    date: new Date('2024-01-14')
+  },
+  {
+    id: 'ORD-003',
+    customer: 'DEF Temizlik Ürünleri',
+    status: 'Delivered',
+    amount: 28000,
+    date: new Date('2024-01-13')
+  },
+  {
+    id: 'ORD-004',
+    customer: 'GHI Kimya San.',
+    status: 'Pending',
+    amount: 55000,
+    date: new Date('2024-01-12')
+  }
+])
+
+// Quick actions
+const quickActions = ref([
+  {
+    name: t('dashboard.new_order'),
+    variant: 'primary',
+    icon: 'PlusIcon',
+    action: () => router.push('/orders')
+  },
+  {
+    name: t('dashboard.add_customer'),
+    variant: 'secondary',
+    icon: 'UserPlusIcon',
+    action: () => router.push('/customers')
+  },
+  {
+    name: t('dashboard.start_production'),
+    variant: 'success',
+    icon: 'PlayIcon',
+    action: () => router.push('/production-jobs')
+  },
+  {
+    name: t('dashboard.view_analytics'),
+    variant: 'ghost',
+    icon: 'ChartBarIcon',
+    action: () => router.push('/analytics')
+  }
+])
+
+// Production jobs
+const productionJobs = ref([
+  {
+    id: 1,
+    name: 'Poşet Deterjan',
+    progress: 75,
+    quantity: 500
+  },
+  {
+    id: 2,
+    name: 'Sıvı Deterjan',
+    progress: 45,
+    quantity: 300
+  },
+  {
+    id: 3,
+    name: 'Çamaşır Suyu',
+    progress: 90,
+    quantity: 200
+  }
+])
+
+const getStatusClasses = (status) => {
+  const classes = {
+    Pending: 'bg-warning-100 text-warning-800',
+    Processing: 'bg-primary-100 text-primary-800',
+    Shipped: 'bg-secondary-100 text-secondary-800',
+    Delivered: 'bg-success-100 text-success-800'
+  }
+  return classes[status] || 'bg-secondary-100 text-secondary-800'
+}
+
+const formatDate = (date) => {
+  return new Intl.DateTimeFormat('tr-TR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date)
+}
+
+onMounted(() => {
+  // Load dashboard data
+  console.log('Dashboard loaded')
+})
 </script>

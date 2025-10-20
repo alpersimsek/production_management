@@ -60,16 +60,13 @@
             </div>
           </div>
 
-          <!-- Warehouse Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Warehouse Cards: Desktop grid -->
+          <div class="hidden lg:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div v-for="warehouse in filteredWarehouses" :key="warehouse.id" class="bg-white rounded-lg shadow-md overflow-hidden">
               <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="text-lg font-semibold text-gray-900">{{ formatWarehouseName(warehouse.type) }}</h3>
-                  <span
-                    :class="getStatusColor(warehouse.status)"
-                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                  >
+                  <span :class="getStatusColor(warehouse.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
                     {{ t(`warehouse.status_types.${warehouse.status}`) }}
                   </span>
                 </div>
@@ -93,47 +90,102 @@
                   </div>
                 </div>
 
-                <!-- Capacity Bar -->
                 <div class="mb-4">
                   <div class="flex justify-between text-xs text-gray-500 mb-1">
                     <span>{{ $t('warehouse.capacity_usage') }}</span>
                     <span>{{ Math.round((warehouse.used_capacity / warehouse.capacity) * 100) }}%</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      :class="getCapacityColor(warehouse.used_capacity / warehouse.capacity)"
-                      class="h-2 rounded-full transition-all duration-300"
-                      :style="{ width: `${(warehouse.used_capacity / warehouse.capacity) * 100}%` }"
-                    ></div>
+                    <div :class="getCapacityColor(warehouse.used_capacity / warehouse.capacity)" class="h-2 rounded-full transition-all duration-300" :style="{ width: `${(warehouse.used_capacity / warehouse.capacity) * 100}%` }"></div>
                   </div>
                 </div>
 
-                <!-- Actions -->
                 <div class="flex justify-between items-center">
                   <div class="text-sm text-gray-500">
                     {{ warehouse.item_count }} {{ $t('warehouse.items') }}
                   </div>
                   <div class="flex gap-2">
-                    <button
-                      @click="viewWarehouse(warehouse)"
-                      class="text-blue-600 hover:text-blue-900 text-sm"
-                    >
-                      {{ $t('warehouse.view') }}
-                    </button>
-                    <button
-                      @click="editWarehouse(warehouse)"
-                      class="text-primary-600 hover:text-primary-900 text-sm"
-                    >
-                      {{ $t('warehouse.edit') }}
-                    </button>
-                    <button
-                      @click="manageInventory(warehouse)"
-                      class="text-green-600 hover:text-green-900 text-sm"
-                    >
-                      {{ $t('warehouse.inventory') }}
-                    </button>
+                    <button @click="viewWarehouse(warehouse)" class="text-blue-600 hover:text-blue-900 text-sm">{{ $t('warehouse.view') }}</button>
+                    <button @click="editWarehouse(warehouse)" class="text-primary-600 hover:text-primary-900 text-sm">{{ $t('warehouse.edit') }}</button>
+                    <button @click="manageInventory(warehouse)" class="text-green-600 hover:text-green-900 text-sm">{{ $t('warehouse.inventory') }}</button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Warehouse Cards: Mobile carousel -->
+          <div class="block lg:hidden mb-8">
+            <div v-if="filteredWarehouses.length === 0" class="text-center text-gray-500 py-8">
+              {{ $t('messages.no_data') }}
+            </div>
+            <div v-else class="relative">
+              <div class="text-sm text-gray-500 mb-2 text-center">
+                {{ $t('warehouse.showing_warehouse') }} {{ currentWarehouseIndex + 1 }} {{ $t('common.of') }} {{ filteredWarehouses.length }} — {{ $t('orders.swipe_hint') }}
+              </div>
+              <div
+                class="bg-white rounded-lg shadow-md overflow-hidden select-none"
+                @touchstart.passive="handleWhTouchStart"
+                @touchmove.prevent="handleWhTouchMove"
+                @touchend="handleWhTouchEnd"
+                @mousedown.prevent="handleWhMouseDown"
+                @mousemove.prevent="handleWhMouseMove"
+                @mouseup.prevent="handleWhMouseUp"
+                @mouseleave.prevent="handleWhMouseUp"
+              >
+                <div class="p-6" v-if="currentWarehouse">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ formatWarehouseName(currentWarehouse.type) }}</h3>
+                    <span :class="getStatusColor(currentWarehouse.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                      {{ t(`warehouse.status_types.${currentWarehouse.status}`) }}
+                    </span>
+                  </div>
+
+                  <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-500">{{ $t('warehouse.type') }}:</span>
+                      <span class="text-gray-900">{{ formatWarehouseType(currentWarehouse.type) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-500">{{ $t('warehouse.location') }}:</span>
+                      <span class="text-gray-900">{{ currentWarehouse.location }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-500">{{ $t('warehouse.capacity') }}:</span>
+                      <span class="text-gray-900">{{ currentWarehouse.capacity }} {{ currentWarehouse.capacity_unit }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-500">{{ $t('warehouse.used') }}:</span>
+                      <span class="text-gray-900">{{ currentWarehouse.used_capacity }} {{ currentWarehouse.capacity_unit }}</span>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                      <span>{{ $t('warehouse.capacity_usage') }}</span>
+                      <span>{{ Math.round((currentWarehouse.used_capacity / currentWarehouse.capacity) * 100) }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div :class="getCapacityColor(currentWarehouse.used_capacity / currentWarehouse.capacity)" class="h-2 rounded-full transition-all duration-300" :style="{ width: `${(currentWarehouse.used_capacity / currentWarehouse.capacity) * 100}%` }"></div>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                      {{ currentWarehouse.item_count }} {{ $t('warehouse.items') }}
+                    </div>
+                    <div class="flex gap-2">
+                      <button @click="viewWarehouse(currentWarehouse)" class="text-blue-600 hover:text-blue-900 text-sm">{{ $t('warehouse.view') }}</button>
+                      <button @click="editWarehouse(currentWarehouse)" class="text-primary-600 hover:text-primary-900 text-sm">{{ $t('warehouse.edit') }}</button>
+                      <button @click="manageInventory(currentWarehouse)" class="text-green-600 hover:text-green-900 text-sm">{{ $t('warehouse.inventory') }}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-between mt-3">
+                <button @click="previousWarehouse" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+                <button @click="nextWarehouse" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
               </div>
             </div>
           </div>
@@ -143,64 +195,70 @@
             <div class="px-6 py-4 border-b border-gray-200">
               <h3 class="text-lg font-medium text-gray-900">{{ $t('warehouse.recent_operations') }}</h3>
             </div>
-            <div class="overflow-x-auto">
+            <!-- Desktop table -->
+            <div class="hidden lg:block overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.date') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.operation') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.warehouse') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.product') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.quantity') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.status') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.operator') }}
-                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.date') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.operation') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.warehouse') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.product') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.quantity') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.status') }}</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.operator') }}</th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="operation in recentOperations" :key="operation.id" class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDate(operation.date) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ formatOperationType(operation.type) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ operation.warehouse_name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ operation.product_name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ operation.quantity }} {{ operation.unit }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        :class="getOperationStatusColor(operation.status)"
-                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                      >
-                        {{ formatOperationStatus(operation.status) }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ operation.operator_name }}
-                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(operation.date) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatOperationType(operation.type) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ operation.warehouse_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ operation.product_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ operation.quantity }} {{ operation.unit }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap"><span :class="getOperationStatusColor(operation.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ formatOperationStatus(operation.status) }}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ operation.operator_name }}</td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <!-- Mobile carousel -->
+            <div class="block lg:hidden p-4">
+              <div v-if="recentOperations.length === 0" class="text-center text-gray-500 py-4">{{ $t('messages.no_data') }}</div>
+              <div v-else>
+                <div class="text-sm text-gray-500 mb-2 text-center">
+                  {{ $t('warehouse.showing_operation') }} {{ currentOperationIndex + 1 }} {{ $t('common.of') }} {{ recentOperations.length }} — {{ $t('orders.swipe_hint') }}
+                </div>
+                <div
+                  class="bg-white rounded-lg shadow-md overflow-hidden select-none"
+                  @touchstart.passive="handleOpTouchStart"
+                  @touchmove.prevent="handleOpTouchMove"
+                  @touchend="handleOpTouchEnd"
+                  @mousedown.prevent="handleOpMouseDown"
+                  @mousemove.prevent="handleOpMouseMove"
+                  @mouseup.prevent="handleOpMouseUp"
+                  @mouseleave.prevent="handleOpMouseUp"
+                >
+                  <div class="p-4" v-if="currentOperation">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="text-base font-semibold text-gray-900">{{ formatOperationType(currentOperation.type) }}</div>
+                      <span :class="getOperationStatusColor(currentOperation.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ formatOperationStatus(currentOperation.status) }}</span>
+                    </div>
+                    <div class="space-y-1 text-sm">
+                      <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.date') }}:</span><span class="text-gray-900">{{ formatDate(currentOperation.date) }}</span></div>
+                      <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.warehouse') }}:</span><span class="text-gray-900">{{ currentOperation.warehouse_name }}</span></div>
+                      <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.product') }}:</span><span class="text-gray-900">{{ currentOperation.product_name }}</span></div>
+                      <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.quantity') }}:</span><span class="text-gray-900">{{ currentOperation.quantity }} {{ currentOperation.unit }}</span></div>
+                      <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.operator') }}:</span><span class="text-gray-900">{{ currentOperation.operator_name }}</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex justify-between mt-3">
+                  <button @click="previousOperation" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+                  <button @click="nextOperation" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -208,8 +266,8 @@
     </main>
 
     <!-- Add/Edit Warehouse Modal -->
-    <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white">
+    <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">
@@ -367,8 +425,8 @@
     </div>
 
     <!-- Warehouse Details Modal -->
-    <div v-if="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+    <div v-if="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">
@@ -480,8 +538,8 @@
     </div>
 
     <!-- Inventory Overview Modal -->
-    <div v-if="showInventoryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-6xl shadow-lg rounded-md bg-white">
+    <div v-if="showInventoryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click="closeModal">
+      <div class="relative top-10 mx-auto p-5 border w-4/5 max-w-6xl shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">{{ $t('warehouse.inventory_overview') }}</h3>
@@ -516,66 +574,71 @@
               </div>
             </div>
 
-            <!-- Inventory Table -->
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.product') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.warehouse') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.quantity') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.unit_price') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.total_value') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.status') }}
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {{ $t('warehouse.last_updated') }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="item in inventoryItems" :key="item.id" class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {{ item.product_name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ item.warehouse_name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ item.quantity }} {{ item.unit }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₺{{ item.unit_price }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₺{{ (item.quantity * item.unit_price).toLocaleString() }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        :class="getStockStatusColor(item.status)"
-                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                      >
-                        {{ formatStockStatus(item.status) }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDate(item.last_updated) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- Inventory Table (Desktop) -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.product') }}</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.warehouse') }}</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.quantity') }}</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.unit_price') }}</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.total_value') }}</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.status') }}</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $t('warehouse.last_updated') }}</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="item in inventoryItems" :key="item.id" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.product_name }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.warehouse_name }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.quantity }} {{ item.unit }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₺{{ item.unit_price }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₺{{ (item.quantity * item.unit_price).toLocaleString() }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap"><span :class="getStockStatusColor(item.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ formatStockStatus(item.status) }}</span></td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(item.last_updated) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Inventory Cards (Mobile Carousel) -->
+          <div class="block lg:hidden">
+            <div v-if="inventoryItems.length === 0" class="text-center text-gray-500 py-4">{{ $t('messages.no_data') }}</div>
+            <div v-else class="relative">
+              <div class="text-sm text-gray-500 mb-2 text-center">
+                {{ $t('warehouse.showing_item') }} {{ currentInventoryIndex + 1 }} {{ $t('common.of') }} {{ inventoryItems.length }} — {{ $t('orders.swipe_hint') }}
+              </div>
+              <div
+                class="bg-white rounded-lg shadow-md overflow-hidden select-none"
+                @touchstart.passive="handleInvTouchStart"
+                @touchmove.prevent="handleInvTouchMove"
+                @touchend="handleInvTouchEnd"
+                @mousedown.prevent="handleInvMouseDown"
+                @mousemove.prevent="handleInvMouseMove"
+                @mouseup.prevent="handleInvMouseUp"
+                @mouseleave.prevent="handleInvMouseUp"
+              >
+                <div class="p-4" v-if="currentInventoryItem">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="text-base font-semibold text-gray-900">{{ currentInventoryItem.product_name }}</div>
+                    <span :class="getStockStatusColor(currentInventoryItem.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">{{ formatStockStatus(currentInventoryItem.status) }}</span>
+                  </div>
+                  <div class="space-y-1 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.warehouse') }}:</span><span class="text-gray-900">{{ currentInventoryItem.warehouse_name }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.quantity') }}:</span><span class="text-gray-900">{{ currentInventoryItem.quantity }} {{ currentInventoryItem.unit }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.unit_price') }}:</span><span class="text-gray-900">₺{{ currentInventoryItem.unit_price }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.total_value') }}:</span><span class="text-gray-900">₺{{ (currentInventoryItem.quantity * currentInventoryItem.unit_price).toLocaleString() }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">{{ $t('warehouse.last_updated') }}:</span><span class="text-gray-900">{{ formatDate(currentInventoryItem.last_updated) }}</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-between mt-3">
+                <button @click="previousInventoryItem" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.previous') }}</button>
+                <button @click="nextInventoryItem" class="px-3 py-2 text-sm bg-gray-100 rounded">{{ $t('common.next') }}</button>
+              </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -584,7 +647,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 // Initialize i18n
@@ -605,6 +668,24 @@ const showDetailsModal = ref(false)
 const showInventoryModal = ref(false)
 const editingWarehouse = ref(null)
 const selectedWarehouse = ref(null)
+
+// Carousel state - Warehouses (mobile)
+const currentWarehouseIndex = ref(0)
+const whTouchStartX = ref(0)
+const whTouchStartY = ref(0)
+const whIsDragging = ref(false)
+
+// Carousel state - Inventory (mobile)
+const currentInventoryIndex = ref(0)
+const invTouchStartX = ref(0)
+const invTouchStartY = ref(0)
+const invIsDragging = ref(false)
+
+// Carousel state - Recent operations (mobile)
+const currentOperationIndex = ref(0)
+const opTouchStartX = ref(0)
+const opTouchStartY = ref(0)
+const opIsDragging = ref(false)
 
 const warehouseForm = ref({
   name: '',
@@ -643,6 +724,10 @@ const filteredWarehouses = computed(() => {
 
   return filtered
 })
+
+const currentWarehouse = computed(() => filteredWarehouses.value[currentWarehouseIndex.value] || null)
+const currentInventoryItem = computed(() => inventoryItems.value[currentInventoryIndex.value] || null)
+const currentOperation = computed(() => recentOperations.value[currentOperationIndex.value] || null)
 
 const totalItems = computed(() => inventoryItems.value.length)
 const totalValue = computed(() => inventoryItems.value.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))
@@ -1011,10 +1096,175 @@ function closeModal () {
   }
 }
 
+// Carousel navigation - Warehouses
+function nextWarehouse () {
+  if (filteredWarehouses.value.length === 0) return
+  currentWarehouseIndex.value = (currentWarehouseIndex.value + 1) % filteredWarehouses.value.length
+}
+
+function previousWarehouse () {
+  if (filteredWarehouses.value.length === 0) return
+  currentWarehouseIndex.value = (currentWarehouseIndex.value - 1 + filteredWarehouses.value.length) % filteredWarehouses.value.length
+}
+
+function handleWhTouchStart (e) {
+  const touch = e.touches[0]
+  whTouchStartX.value = touch.clientX
+  whTouchStartY.value = touch.clientY
+  whIsDragging.value = true
+}
+
+function handleWhTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleWhTouchEnd (e) {
+  if (!whIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - whTouchStartX.value
+  whIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextWarehouse()
+  else if (dx > threshold) previousWarehouse()
+}
+
+function handleWhMouseDown (e) {
+  whTouchStartX.value = e.clientX
+  whTouchStartY.value = e.clientY
+  whIsDragging.value = true
+}
+
+function handleWhMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleWhMouseUp (e) {
+  if (!whIsDragging.value) return
+  const dx = e.clientX - whTouchStartX.value
+  whIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextWarehouse()
+  else if (dx > threshold) previousWarehouse()
+}
+
+// Carousel navigation - Inventory
+function nextInventoryItem () {
+  if (inventoryItems.value.length === 0) return
+  currentInventoryIndex.value = (currentInventoryIndex.value + 1) % inventoryItems.value.length
+}
+
+function previousInventoryItem () {
+  if (inventoryItems.value.length === 0) return
+  currentInventoryIndex.value = (currentInventoryIndex.value - 1 + inventoryItems.value.length) % inventoryItems.value.length
+}
+
+function handleInvTouchStart (e) {
+  const touch = e.touches[0]
+  invTouchStartX.value = touch.clientX
+  invTouchStartY.value = touch.clientY
+  invIsDragging.value = true
+}
+
+function handleInvTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleInvTouchEnd (e) {
+  if (!invIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - invTouchStartX.value
+  invIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextInventoryItem()
+  else if (dx > threshold) previousInventoryItem()
+}
+
+function handleInvMouseDown (e) {
+  invTouchStartX.value = e.clientX
+  invTouchStartY.value = e.clientY
+  invIsDragging.value = true
+}
+
+function handleInvMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleInvMouseUp (e) {
+  if (!invIsDragging.value) return
+  const dx = e.clientX - invTouchStartX.value
+  invIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextInventoryItem()
+  else if (dx > threshold) previousInventoryItem()
+}
+
+// Carousel navigation - Operations
+function nextOperation () {
+  if (recentOperations.value.length === 0) return
+  currentOperationIndex.value = (currentOperationIndex.value + 1) % recentOperations.value.length
+}
+
+function previousOperation () {
+  if (recentOperations.value.length === 0) return
+  currentOperationIndex.value = (currentOperationIndex.value - 1 + recentOperations.value.length) % recentOperations.value.length
+}
+
+function handleOpTouchStart (e) {
+  const touch = e.touches[0]
+  opTouchStartX.value = touch.clientX
+  opTouchStartY.value = touch.clientY
+  opIsDragging.value = true
+}
+
+function handleOpTouchMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleOpTouchEnd (e) {
+  if (!opIsDragging.value) return
+  const touch = e.changedTouches[0]
+  const dx = touch.clientX - opTouchStartX.value
+  opIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextOperation()
+  else if (dx > threshold) previousOperation()
+}
+
+function handleOpMouseDown (e) {
+  opTouchStartX.value = e.clientX
+  opTouchStartY.value = e.clientY
+  opIsDragging.value = true
+}
+
+function handleOpMouseMove (e) {
+  // intentionally left blank (no-op)
+}
+
+function handleOpMouseUp (e) {
+  if (!opIsDragging.value) return
+  const dx = e.clientX - opTouchStartX.value
+  opIsDragging.value = false
+  const threshold = 40
+  if (dx < -threshold) nextOperation()
+  else if (dx > threshold) previousOperation()
+}
+
+// ESC to close modals
+function handleKeydown (event) {
+  if (event.key === 'Escape') {
+    closeModal()
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   loadWarehouses()
   loadRecentOperations()
   loadInventoryItems()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
 })
 </script>

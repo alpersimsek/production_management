@@ -24,6 +24,8 @@ export default {
     close: 'Close',
     open: 'Open',
     view: 'View',
+    view_all: 'View All',
+    of: 'of',
     details: 'Details',
     actions: 'Actions',
     status: 'Status',
@@ -44,7 +46,6 @@ export default {
     refresh: 'Refresh',
     showing: 'Showing',
     to: 'to',
-    of: 'of',
     results: 'results',
     user: 'User',
     role: 'Role',
@@ -55,7 +56,8 @@ export default {
     never: 'Never',
     deactivate: 'Deactivate',
     activate: 'Activate',
-    update: 'Update'
+    update: 'Update',
+    start_date: 'Start Date'
   },
 
   // Navigation
@@ -83,19 +85,62 @@ export default {
     forgot_password: 'Forgot Password?',
     login_button: 'Sign In',
     login_success: 'Login successful',
-    login_error: 'Login failed',
-    logout_success: 'Logout successful',
+    welcome_message: 'Welcome to your DEMO ERP system',
+    login_subtitle: 'Sign in to your account to continue',
+    email_placeholder: 'Enter your email address',
+    password_placeholder: 'Enter your password',
+    email_required: 'Email is required',
+    email_invalid: 'Please enter a valid email address',
+    password_required: 'Password is required',
+    password_min_length: 'Password must be at least 6 characters',
     invalid_credentials: 'Invalid email or password',
-    session_expired: 'Session expired, please login again'
+    login_error: 'Login failed. Please try again.',
+    logging_in: 'Signing in...',
+    copyright: `© ${new Date().getFullYear()} DEMO ERP. All rights reserved.`,
+    logout_success: 'Logout successful',
+    session_expired: 'Session expired, please login again',
+    demo_users: 'Demo Users',
+    click_to_fill: 'Click to fill credentials',
+    admin_user: 'Admin User',
+    manager_user: 'Manager User',
+    operator_user: 'Operator User'
   },
 
   // Dashboard
   dashboard: {
     title: 'Dashboard',
     welcome: 'Welcome',
+    welcome_message: 'Welcome to your DEMO ERP dashboard',
+    welcome_user: 'Welcome, {name}!',
+    recent_orders: 'Recent Orders',
+    latest_customer_orders: 'Latest customer orders',
+    order: 'Order',
+    customer: 'Customer',
+    status: 'Status',
+    amount: 'Amount',
+    date: 'Date',
     quick_actions: 'Quick Actions',
+    common_tasks: 'Common tasks',
+    production_status: 'Production Status',
+    current_operations: 'Current operations',
+    complete: 'complete',
+    units: 'units',
+    sales_overview: 'Sales Overview',
+    monthly_sales_performance: 'Monthly sales performance',
+    production_efficiency: 'Production Efficiency',
+    manufacturing_performance: 'Manufacturing performance',
+    chart_placeholder_sales: 'Chart placeholder - Sales data',
+    chart_placeholder_production: 'Chart placeholder - Production data',
+    total_orders: 'Total Orders',
+    active_production: 'Active Production',
+    pending_shipments: 'Pending Shipments',
+    revenue: 'Revenue',
+    this_month: 'this month',
+    this_week: 'this week',
     new_order: 'New Order',
+    add_customer: 'Add Customer',
     start_production: 'Start Production',
+    view_analytics: 'View Analytics',
     manage_inventory: 'Manage Inventory',
     track_shipment: 'Track Shipment',
     metrics: {
@@ -174,7 +219,12 @@ export default {
     remove: 'Remove',
     saving: 'Saving...',
     save_order: 'Save Order',
-    order_details: 'Order Details'
+    order_details: 'Order Details',
+    customer_info: 'Customer Information',
+    more_items: 'more items',
+    unknown_product: 'Unknown Product',
+    showing_order: 'Showing order',
+    swipe_hint: 'Swipe to navigate'
   },
   customers: {
     title: 'Customers',
@@ -187,7 +237,7 @@ export default {
     tax_number: 'Tax Number',
     created: 'Created',
     customer_name_placeholder: 'Customer name',
-    email_placeholder: 'customer@example.com',
+    email_placeholder: 'customer[at]example.com',
     phone_placeholder: '+90 555 123 4567',
     address_placeholder: 'Customer address',
     tax_number_placeholder: '1234567890',
@@ -202,7 +252,14 @@ export default {
     status: {
       active: 'Active',
       inactive: 'Inactive'
-    }
+    },
+    showing_customer: 'Showing customer',
+    swipe_hint: 'Swipe to navigate',
+    no_email: 'No email',
+    no_phone: 'No phone',
+    no_tax_number: 'No tax number',
+    no_orders: 'No orders',
+    last_order: 'Last Order'
   },
   products: {
     title: 'Products',
@@ -237,7 +294,7 @@ export default {
     types: {
       poset: 'Poşet',
       deterjan: 'Deterjan',
-      al_sat: 'Al-Sat'
+      'al-sat': 'Al-Sat'
     },
     units: {
       kg: 'Kilogram (kg)',
@@ -247,7 +304,15 @@ export default {
     status: {
       active: 'Active',
       inactive: 'Inactive'
-    }
+    },
+    showing_product: 'Showing product',
+    swipe_hint: 'Swipe to navigate',
+    no_unit: 'No unit',
+    no_efficiency: 'No efficiency',
+    showing_formula: 'Showing formula',
+    valid_from: 'Valid From',
+    valid_to: 'Valid To',
+    no_end_date: 'No end date'
   },
   production: {
     title: 'Production Jobs',
@@ -258,6 +323,8 @@ export default {
     all_products: 'All Products',
     all_priorities: 'All Priorities',
     loading: 'Loading production jobs...',
+    showing_job: 'Showing job',
+    swipe_hint: 'Swipe to navigate',
     no_jobs_found: 'No production jobs found.',
     job_number: 'Job #',
     product: 'Product',
@@ -330,6 +397,8 @@ export default {
     all_products: 'All Products',
     all_priorities: 'All Priorities',
     loading: 'Loading packaging jobs...',
+    showing_job: 'Showing job',
+    swipe_hint: 'Swipe to navigate',
     no_jobs_found: 'No packaging jobs found.',
     job_number: 'Job #',
     product: 'Product',
@@ -540,7 +609,10 @@ export default {
       completed: 'Completed',
       pending: 'Pending',
       failed: 'Failed'
-    }
+    },
+    showing_warehouse: 'Showing warehouse',
+    showing_item: 'Showing item',
+    showing_operation: 'Showing operation'
   },
 
   // Shipments
@@ -579,6 +651,7 @@ export default {
     to: 'to',
     of: 'of',
     results: 'results',
+    showing_shipment: 'Showing shipment',
     shipment_statuses: {
       pending: 'Pending',
       preparing: 'Preparing',
@@ -781,6 +854,16 @@ export default {
     weekly_weighing: 'Weekly Weighing',
     waste_threshold: 'Waste Threshold',
     efficiency_rate: 'Efficiency Rate',
+    showing_kpi: 'Showing KPI',
+    showing_chart: 'Showing chart',
+    showing_tab: 'Showing tab',
+    tab_descriptions: {
+      production: 'Production analytics including machine utilization, quality metrics, and waste management',
+      sales: 'Sales analytics including top products and customer analysis',
+      inventory: 'Inventory analytics including stock levels, turnover rates, and warehouse performance',
+      financial: 'Financial analytics including cost analysis and profitability metrics'
+    },
+    view_tab_content: 'View Tab Content',
     quality_score: 'Quality Score'
   },
 
